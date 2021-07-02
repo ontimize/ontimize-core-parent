@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Hashtable;
 import java.util.ResourceBundle;
 
@@ -427,7 +429,13 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
 
         } else if (value instanceof String) {
 
-            ((JTextField) this.dataField).setText((String) value);
+            try {
+                IntegerDocument document = (IntegerDocument) ((JTextField) this.dataField).getDocument();
+                document.setValue(NumberFormat.getInstance().parse(value.toString()));
+            } catch (ParseException e) {
+                ((JTextField) this.dataField).setText((String) value);
+            }
+
             this.valueSave = this.getNumericalValue();
             this.setInnerValue(this.valueSave);
             this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
