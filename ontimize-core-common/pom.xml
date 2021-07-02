@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.ontimize</groupId>
 		<artifactId>ontimize-core-parent</artifactId>
-		<version>6.0.9</version>
+		<version>6.0.10</version>
 	</parent>
 	<artifactId>ontimize-core-common</artifactId>
   

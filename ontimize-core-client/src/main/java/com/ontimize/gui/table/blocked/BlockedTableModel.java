@@ -61,7 +61,7 @@ public class BlockedTableModel extends AbstractTableModel implements OTableModel
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        this.setValueAt(aValue, rowIndex, columnIndex);
+        this.tableSorter.setValueAt(aValue, rowIndex, columnIndex);
     }
 
     @Override
