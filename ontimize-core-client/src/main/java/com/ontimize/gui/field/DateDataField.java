@@ -461,7 +461,11 @@ public class DateDataField extends TextFieldDataField implements OpenDialog, Fre
         if (this.emphasizeInvalidDate) {
             DateDocument doc = (DateDocument) ((JTextField) this.dataField).getDocument();
             if (doc.isValid()) {
-                ((JTextField) this.dataField).setForeground(this.fontColor);
+                if (this.isRequired()) {
+                    ((JTextField) this.dataField).setForeground(DataField.requiredFieldForegroundColor);
+                } else {
+                    ((JTextField) this.dataField).setForeground(this.fontColor);
+                }
             } else {
                 Color foreground = ((JTextField) this.dataField).getForeground();
                 if (!Color.red.equals(foreground)){
