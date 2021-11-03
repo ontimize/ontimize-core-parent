@@ -35,6 +35,7 @@ import com.ontimize.gui.OpenDialog;
 import com.ontimize.gui.SearchValue;
 import com.ontimize.gui.ValueEvent;
 import com.ontimize.gui.field.document.AdvancedRealDocument;
+import com.ontimize.gui.field.document.IntegerDocument;
 import com.ontimize.gui.field.document.RealDocument;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.help.HelpUtilities;
@@ -87,6 +88,35 @@ public class RealDataField extends TextFieldDataField implements OpenDialog, Fre
     }
 
     /**
+     * Removes format from field.
+     * <p>
+     *
+     * @see RealDocument#unFormat()
+     */
+    protected void unFormat() {
+
+        boolean selectAll = this.isSelectedAll();
+        try {
+            Object oNewValue = this.getInnerValue();
+            this.setInnerListenerEnabled(false);
+            RealDocument document = (RealDocument) ((JTextField) this.dataField).getDocument();
+            document.remove(0, document.getLength());
+            document.insertString(0, oNewValue.toString().replace('.', document.getDecimalSeparator()), null);
+            this.setInnerListenerEnabled(true);
+            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+            this.setInnerValue(oNewValue);
+        } catch (Exception ex) {
+            RealDataField.logger.trace(null, ex);
+        } finally {
+
+            if (selectAll) {
+                ((JTextField) this.dataField).selectAll();
+            }
+            this.setInnerListenerEnabled(true);
+        }
+    }
+
+    /**
      * The class constructor. It initializes the parameters, adds focus listener, sets alignment and
      * optionally replaces the decimal separator.
      * <p>
@@ -97,6 +127,13 @@ public class RealDataField extends TextFieldDataField implements OpenDialog, Fre
         this.init(parameters);
         this.installValidationDocumentListener();
         ((JTextField) this.dataField).addFocusListener(new FocusAdapter() {
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                if ((!RealDataField.this.isEmpty()) && !e.isTemporary()) {
+                    RealDataField.this.unFormat();
+                }
+            }
 
             @Override
             public void focusLost(FocusEvent e) {

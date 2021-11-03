@@ -109,6 +109,13 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
         ((JTextField) this.dataField).addFocusListener(new FocusAdapter() {
 
             @Override
+            public void focusGained(FocusEvent e) {
+                if ((!IntegerDataField.this.isEmpty()) && !e.isTemporary()) {
+                    IntegerDataField.this.unFormat();
+                }
+            }
+
+            @Override
             public void focusLost(FocusEvent e) {
                 if ((!IntegerDataField.this.isEmpty()) && (!e.isTemporary())) {
                     IntegerDataField.this.format();
@@ -391,6 +398,36 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
                 this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
                 this.setInnerValue(oNewValue);
             }
+        } catch (Exception ex) {
+            IntegerDataField.logger.trace(null, ex);
+        } finally {
+
+            if (selectAll) {
+                ((JTextField) this.dataField).selectAll();
+            }
+            this.setInnerListenerEnabled(true);
+        }
+    }
+
+    /**
+     * Removes format from field.
+     * <p>
+     *
+     * @see IntegerDocument#unFormat()
+     */
+    protected void unFormat() {
+
+        boolean selectAll = this.isSelectedAll();
+        try {
+            Object oNewValue = this.getInnerValue();
+            this.setInnerListenerEnabled(false);
+            IntegerDocument document = (IntegerDocument) ((JTextField) this.dataField).getDocument();
+            document.remove(0, document.getLength());
+            document.insertString(0, oNewValue.toString(), null);
+            this.setInnerListenerEnabled(true);
+
+            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+            this.setInnerValue(oNewValue);
         } catch (Exception ex) {
             IntegerDataField.logger.trace(null, ex);
         } finally {
