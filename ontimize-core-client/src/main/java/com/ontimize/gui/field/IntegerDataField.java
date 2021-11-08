@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Hashtable;
 import java.util.ResourceBundle;
 
@@ -20,6 +22,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
@@ -106,6 +109,13 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
         ((JTextField) this.dataField).addFocusListener(new FocusAdapter() {
 
             @Override
+            public void focusGained(FocusEvent e) {
+                if ((!IntegerDataField.this.isEmpty()) && !e.isTemporary()) {
+                    IntegerDataField.this.unFormat();
+                }
+            }
+
+            @Override
             public void focusLost(FocusEvent e) {
                 if ((!IntegerDataField.this.isEmpty()) && (!e.isTemporary())) {
                     IntegerDataField.this.format();
@@ -128,9 +138,19 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
     protected void colorSelection(DocumentEvent e) {
         IntegerDocument doc = (IntegerDocument) ((JTextField) this.dataField).getDocument();
         if (doc.isRight()) {
-            ((JTextField) this.dataField).setForeground(this.fontColor);
+            if (this.isRequired()) {
+                ((JTextField) this.dataField).setForeground(DataField.requiredFieldForegroundColor);
+            } else {
+                ((JTextField) this.dataField).setForeground(this.fontColor);
+            }
         } else {
-            ((JTextField) this.dataField).setForeground(Color.red);
+            Color foreground = ((JTextField) this.dataField).getForeground();
+            if (!Color.red.equals(foreground)){
+                if (fontColor instanceof UIResource){
+                    this.fontColor = foreground;
+                }
+                ((JTextField) this.dataField).setForeground(Color.red);
+            }
         }
     }
 
@@ -390,6 +410,36 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
     }
 
     /**
+     * Removes format from field.
+     * <p>
+     *
+     * @see IntegerDocument#unFormat()
+     */
+    protected void unFormat() {
+
+        boolean selectAll = this.isSelectedAll();
+        try {
+            Object oNewValue = this.getInnerValue();
+            this.setInnerListenerEnabled(false);
+            IntegerDocument document = (IntegerDocument) ((JTextField) this.dataField).getDocument();
+            document.remove(0, document.getLength());
+            document.insertString(0, oNewValue.toString(), null);
+            this.setInnerListenerEnabled(true);
+
+            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+            this.setInnerValue(oNewValue);
+        } catch (Exception ex) {
+            IntegerDataField.logger.trace(null, ex);
+        } finally {
+
+            if (selectAll) {
+                ((JTextField) this.dataField).selectAll();
+            }
+            this.setInnerListenerEnabled(true);
+        }
+    }
+
+    /**
      * Gets the numerical field value .
      * <p>
      * @return the numerical value
@@ -427,7 +477,13 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
 
         } else if (value instanceof String) {
 
-            ((JTextField) this.dataField).setText((String) value);
+            try {
+                IntegerDocument document = (IntegerDocument) ((JTextField) this.dataField).getDocument();
+                document.setValue(NumberFormat.getInstance().parse(value.toString()));
+            } catch (ParseException e) {
+                ((JTextField) this.dataField).setText((String) value);
+            }
+
             this.valueSave = this.getNumericalValue();
             this.setInnerValue(this.valueSave);
             this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
