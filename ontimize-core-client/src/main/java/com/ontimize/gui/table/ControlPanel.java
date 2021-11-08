@@ -14,6 +14,7 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 import java.util.TooManyListenersException;
 
@@ -169,7 +170,7 @@ public class ControlPanel extends JPanel implements DropTargetListener {
             return;
         }
         Component[] components = this.getComponents();
-        HashMap<String, Component> componentKeys = new HashMap<String, Component>();
+        LinkedHashMap<String, Component> componentKeys = new LinkedHashMap<String, Component>();
         for (Component c : components) {
             if (c instanceof TableComponent) {
                 Object key = ((TableComponent) c).getKey();

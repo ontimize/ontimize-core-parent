@@ -274,6 +274,10 @@ public class RealDocument extends PlainDocument implements Internationalization 
         return this.formatter;
     }
 
+    public char getDecimalSeparator() {
+        return this.symbology.getDecimalSeparator();
+    }
+
     @Override
     public void setComponentLocale(Locale loc) {
         Locale l = DateDataField.getSameCountryLocale(loc);
