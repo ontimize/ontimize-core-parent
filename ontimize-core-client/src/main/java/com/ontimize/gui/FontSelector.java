@@ -790,40 +790,37 @@ public class FontSelector implements Freeable {
         if (application == null) {
             return;
         }
-        boolean bApply = MessageDialog.showQuestionMessage(application.getFrame(), "apply_font_configuration",
-            application.getResourceBundle());
-        if (bApply) {
-            Font defaultAppFont = PlafPreferences.getDefaultAppFont();
-            if (defaultAppFont!=null){
-                Font newFont = defaultAppFont.deriveFont((float) size);
-                PlafPreferences.getInstance().setFontPreference(newFont);
-            }
 
-            for (int i = 0; i < FontSelector.uIKeys.length; i++) {
-                try {
-                    Font currentFont = (Font) UIManager.get(FontSelector.uIKeys[i]);
-                    FontUIResource f = new FontUIResource(currentFont.deriveFont((float) size));
-                    UIManager.put(FontSelector.uIKeys[i], f);
-                    UIManager.getDefaults().put(FontSelector.uIKeys[i], f);
-                } catch (Exception e) {
-                    FontSelector.logger.error(null, e);
-                }
-            }
-            if (SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.updateComponentTreeUI(application.getFrame());
-                application.getFrame().setFont(application.getFrame().getFont().deriveFont((float) 10));
-            } else {
-                SwingUtilities.invokeLater(new Runnable() {
+    Font defaultAppFont = PlafPreferences.getDefaultAppFont();
+        if (defaultAppFont!=null){
+            Font newFont = defaultAppFont.deriveFont((float) size);
+            PlafPreferences.getInstance().setFontPreference(newFont);
+        }
 
-                    @Override
-                    public void run() {
-                        SwingUtilities.updateComponentTreeUI(application.getFrame());
-                        if (application.getFrame().getFont() != null) {
-                            application.getFrame().setFont(application.getFrame().getFont().deriveFont((float) 10));
-                        }
+        for (int i = 0; i < FontSelector.uIKeys.length; i++) {
+            try {
+                Font currentFont = (Font) UIManager.get(FontSelector.uIKeys[i]);
+                FontUIResource f = new FontUIResource(currentFont.deriveFont((float) size));
+                UIManager.put(FontSelector.uIKeys[i], f);
+                UIManager.getDefaults().put(FontSelector.uIKeys[i], f);
+            } catch (Exception e) {
+                FontSelector.logger.error(null, e);
+            }
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.updateComponentTreeUI(application.getFrame());
+            application.getFrame().setFont(application.getFrame().getFont().deriveFont((float) 10));
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                @Override
+                public void run() {
+                    SwingUtilities.updateComponentTreeUI(application.getFrame());
+                    if (application.getFrame().getFont() != null) {
+                        application.getFrame().setFont(application.getFrame().getFont().deriveFont((float) 10));
                     }
-                });
-            }
+                }
+            });
         }
     }
 
