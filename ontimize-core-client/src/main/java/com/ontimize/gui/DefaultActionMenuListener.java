@@ -469,16 +469,18 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
      * Method used to reduce the complexity of {@link #actionPerformed(ActionEvent)}
      */
     protected void actionSmallFontCommand() {
-        FontSelector.setApplicationFontSize(this.application, 10);
-        ApplicationPreferences prefs = this.application.getPreferences();
-        String user = null;
-        if ((this.application.getReferenceLocator() != null)
-                && (this.application.getReferenceLocator() instanceof ClientReferenceLocator)) {
-            user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
-        }
-
-        if (prefs != null) {
-            prefs.setPreference(user, MainApplication.APP_FONTSIZE, "10");
+        if (MessageDialog.showQuestionMessage(application.getFrame(), "apply_font_configuration",
+                application.getResourceBundle())) {
+            FontSelector.setApplicationFontSize(this.application, 10);
+            ApplicationPreferences prefs = this.application.getPreferences();
+            String user = null;
+            if ((this.application.getReferenceLocator() != null)
+                    && (this.application.getReferenceLocator() instanceof ClientReferenceLocator)) {
+                user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
+            }
+            if (prefs != null) {
+                prefs.setPreference(user, MainApplication.APP_FONTSIZE, "10");
+            }
         }
     }
 
@@ -486,14 +488,17 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
      * Method used to reduce the complexity of {@link #actionPerformed(ActionEvent)}
      */
     protected void actionRegularFontCommand() {
-        FontSelector.setApplicationFontSize(this.application, 12);
-        ApplicationPreferences prefs = this.application.getPreferences();
-        String user = null;
-        if (this.application.getReferenceLocator() instanceof ClientReferenceLocator) {
-            user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
-        }
-        if (prefs != null) {
-            prefs.setPreference(user, MainApplication.APP_FONTSIZE, "12");
+        if (MessageDialog.showQuestionMessage(application.getFrame(), "apply_font_configuration",
+                application.getResourceBundle())) {
+            FontSelector.setApplicationFontSize(this.application, 12);
+            ApplicationPreferences prefs = this.application.getPreferences();
+            String user = null;
+            if (this.application.getReferenceLocator() instanceof ClientReferenceLocator) {
+                user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
+            }
+            if (prefs != null) {
+                prefs.setPreference(user, MainApplication.APP_FONTSIZE, "12");
+            }
         }
     }
 
@@ -501,14 +506,17 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
      * Method used to reduce the complexity of {@link #actionPerformed(ActionEvent)}
      */
     protected void actionLargeFontCommand() {
-        FontSelector.setApplicationFontSize(this.application, 16);
-        ApplicationPreferences prefs = this.application.getPreferences();
-        String user = null;
-        if (this.application.getReferenceLocator() instanceof ClientReferenceLocator) {
-            user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
-        }
-        if (prefs != null) {
-            prefs.setPreference(user, MainApplication.APP_FONTSIZE, "16");
+        if (MessageDialog.showQuestionMessage(application.getFrame(), "apply_font_configuration",
+                application.getResourceBundle())) {
+            FontSelector.setApplicationFontSize(this.application, 16);
+            ApplicationPreferences prefs = this.application.getPreferences();
+            String user = null;
+            if (this.application.getReferenceLocator() instanceof ClientReferenceLocator) {
+                user = ((ClientReferenceLocator) this.application.getReferenceLocator()).getUser();
+            }
+            if (prefs != null) {
+                prefs.setPreference(user, MainApplication.APP_FONTSIZE, "16");
+            }
         }
     }
 
