@@ -426,7 +426,7 @@ public class IntegerDataField extends TextFieldDataField implements OpenDialog, 
             document.insertString(0, oNewValue.toString(), null);
             this.setInnerListenerEnabled(true);
 
-            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.PROGRAMMATIC_CHANGE);
             this.setInnerValue(oNewValue);
         } catch (Exception ex) {
             IntegerDataField.logger.trace(null, ex);
