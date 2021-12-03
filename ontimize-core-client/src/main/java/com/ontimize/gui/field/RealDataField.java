@@ -103,7 +103,7 @@ public class RealDataField extends TextFieldDataField implements OpenDialog, Fre
             document.remove(0, document.getLength());
             document.insertString(0, oNewValue.toString().replace('.', document.getDecimalSeparator()), null);
             this.setInnerListenerEnabled(true);
-            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+            this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.PROGRAMMATIC_CHANGE);
             this.setInnerValue(oNewValue);
         } catch (Exception ex) {
             RealDataField.logger.trace(null, ex);
