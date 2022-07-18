@@ -41,6 +41,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
@@ -427,6 +428,11 @@ public abstract class DataField extends JPanel
      * Default value to retrieve or not the help text from preferences.
      */
     public static boolean defaultPreferenceTextNotRetrievedFromPreferences = false;
+
+    /**
+     * The instance of background color RGB(255,255,230)
+     */
+    public static Color BACKGROUNDCOLOR = Color.white;
 
     /**
      * The instance of focus background color RGB(255,255,230)
@@ -915,7 +921,7 @@ public abstract class DataField extends JPanel
     /**
      * The default background color. By default, white.
      */
-    protected Color backgroundColor = Color.white;
+    protected Color backgroundColor = DataField.BACKGROUNDCOLOR;
 
     /**
      * The default locale application.
