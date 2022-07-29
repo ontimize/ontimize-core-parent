@@ -8770,6 +8770,9 @@ public class Table extends JRootPane
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
             ((EJTable) this.table).getCellEditor().stopCellEditing();
         }
+        if (this.sumRowTable != null && ts.getRowCount() == 0) {
+            this.tablePanel.revalidate();
+        }
         ts.addRow(rowData);
         this.table.repaint();
     }
@@ -8786,6 +8789,9 @@ public class Table extends JRootPane
         TableSorter ts = (TableSorter) this.table.getModel();
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
             ((EJTable) this.table).getCellEditor().stopCellEditing();
+        }
+        if (this.sumRowTable != null && ts.getRowCount() == 0) {
+            this.tablePanel.revalidate();
         }
         ts.addRow(row, rowData);
         this.table.repaint();
