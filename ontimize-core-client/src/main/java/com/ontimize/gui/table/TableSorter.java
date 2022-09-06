@@ -3217,7 +3217,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
          * unnecessary heap allocation.
          */
 
-        if (type.getSuperclass() == java.lang.Number.class) {
+        if ((type.getSuperclass() == java.lang.Number.class || type == RowHeadCellRenderer.class)) {
             return this.compareNumberRowsByColumn(rowIndex1, o1, rowIndex2, o2, columnIndex);
         } else if ((type == java.util.Date.class) || (type == java.sql.Date.class)
                 || (type == java.sql.Timestamp.class)) {
