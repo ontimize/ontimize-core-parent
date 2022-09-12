@@ -708,6 +708,8 @@ public class Table extends JRootPane
 
     public static final String SHOWGRID = "showgrid";
 
+    public static final String FITROWHEIGHT = "fitrowheight";
+
     public static final String MINROWHEIGHT = "minrowheight";
 
     public static final String TABLEOPAQUE = "tableopaque";
@@ -3693,6 +3695,8 @@ public class Table extends JRootPane
                 (Table.defaultTableBackgroundColor != null ? Table.defaultTableBackgroundColor
                         : this.tableBackgroundColor));
 
+        this.configureFitRowHeight(parameters);
+
         this.configureMinRowHeight(parameters);
 
         this.showGridValue = ParseUtils.getBoolean((String) parameters.get(Table.SHOWGRID), Table.defaultShowGridValue);
@@ -3767,13 +3771,21 @@ public class Table extends JRootPane
         }
     }
 
+    protected void configureFitRowHeight(Hashtable parameters) {
+        try {
+            this.fitRowHeight = ParseUtils.getBoolean((String) parameters.get(Table.FITROWHEIGHT), this.fitRowHeight);
+        } catch (Exception e) {
+            Table.logger.error("Error in 'fitrowheight' parameter", e);
+        }
+    }
+
     protected void configureMinRowHeight(Hashtable parameters) {
         try {
             String value = (String) parameters.get(Table.MINROWHEIGHT);
             if (value != null) {
                 this.fitRowHeight = true;
+                this.minRowHeight = ParseUtils.getInteger(value, this.minRowHeight);
             }
-            this.minRowHeight = ParseUtils.getInteger((String) parameters.get(Table.MINROWHEIGHT), this.minRowHeight);
         } catch (Exception e) {
             Table.logger.error("Error in 'minrowheight' parameter", e);
         }
