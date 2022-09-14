@@ -291,16 +291,15 @@ public class CheckDataField extends DataField implements AdvancedDataComponent, 
 
             @Override
             public void updateUI() {
-                if (UIManager.getLookAndFeel() instanceof com.sun.java.swing.plaf.windows.WindowsLookAndFeel) {
-                    boolean op = this.isOpaque();
-                    super.updateUI();
-                    this.setUI(CheckBoxUIE.createUI(this));
-                    this.setOpaque(op);
-                } else {
-                    boolean op = this.isOpaque();
-                    super.updateUI();
-                    this.setOpaque(op);
+                boolean op = this.isOpaque();
+                super.updateUI();
+                try {
+                    if (Class.forName("com.sun.java.swing.plaf.windows.WindowsLookAndFeel").isInstance(UIManager.getLookAndFeel())) {
+                        this.setUI(CheckBoxUIE.createUI(this));
+                    }
+                } catch (ClassNotFoundException e) {
                 }
+                this.setOpaque(op);
             }
         };
     }
