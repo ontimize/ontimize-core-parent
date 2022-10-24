@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.ontimize</groupId>
 		<artifactId>ontimize-core-icons</artifactId>
-		<version>6.0.14</version>
+		<version>6.0.15</version>
 	</parent>
 	<artifactId>ontimize-core-icons-lgpl</artifactId>
 	<name>Ontimize Core Icons LGPL</name>
