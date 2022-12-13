@@ -791,8 +791,10 @@ public class FilterDialog extends EJDialog implements Internationalization, Acti
         this.fieldLessDate = new DateDataField(param);
         this.fieldGreaterDate = new DateDataField(param);
 
+        param.put("numbertype", "long");
         this.fieldLessInteger = new IntegerDataField(param);
         this.fieldGreaterInteger = new IntegerDataField(param);
+        param.remove("numbertype");
 
         Hashtable hIntegerParam = new Hashtable();
 
