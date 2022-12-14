@@ -16,5 +16,5 @@ jobs:
           java-version: '8'
       - name: Perform MVN actions
         run: |
-          java --version
+          java -version
           mvn -v
