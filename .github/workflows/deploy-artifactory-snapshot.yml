@@ -1,0 +1,20 @@
+name: Generate a SNAPSHOT in Artifactory
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  Generate-a-SNAPSHOT-in-Artifactory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
+      - name: Setup Java JDK and Maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Perform MVN actions
+        run: |
+          java --version
+          mvn -v
