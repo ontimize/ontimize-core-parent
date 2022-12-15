@@ -7,9 +7,6 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v3
       - name: Setup Java JDK and Maven
-        env:
-          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
-          ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
         uses: ontimize/setup-java-maven-gitAction@v3
         with:
           distribution: 'temurin'
@@ -22,3 +19,6 @@ jobs:
           java -version
           mvn -v
           mvn help:effective-settings
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
