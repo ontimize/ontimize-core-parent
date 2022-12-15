@@ -51,20 +51,21 @@
                 </plugin>
 
                 <!-- Imatia javaformat plugin -->
-                <plugin>
-                    <groupId>com.imatia.javaformat</groupId>
-                    <artifactId>imatia-javaformat-maven-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>imatia-javaformat</id>
-                            <phase>validate</phase>
-                            <inherited>true</inherited>
-                            <goals>
-                                <goal>validate</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+<!--                <plugin>-->
+<!--                    <groupId>com.imatia.javaformat</groupId>-->
+<!--                    <artifactId>imatia-javaformat-maven-plugin</artifactId>-->
+<!--                    <version>${imatia-javaformat-plugin}</version>-->
+<!--                    <executions>-->
+<!--                        <execution>-->
+<!--                            <id>imatia-javaformat</id>-->
+<!--                            <phase>validate</phase>-->
+<!--                            <inherited>true</inherited>-->
+<!--                            <goals>-->
+<!--                                <goal>validate</goal>-->
+<!--                            </goals>-->
+<!--                        </execution>-->
+<!--                    </executions>-->
+<!--                </plugin>-->
             </plugins>
 
         </pluginManagement>
