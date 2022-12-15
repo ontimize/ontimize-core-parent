@@ -1,0 +1,8 @@
+name: Generate a SNAPSHOT in Artifactory
+on: workflow_dispatch
+jobs:
+  Generate-a-SNAPSHOT-in-Artifactory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
