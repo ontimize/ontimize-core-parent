@@ -416,7 +416,7 @@
             <id>imatia-artifactory</id>
             <name>plugins-release</name>
             <url>
-                https://artifactory.imatia.com/artifactory/libs-snapshott
+                https://artifactory.imatia.com/artifactory/libs-snapshot
             </url>
             <snapshots>
                 <enabled>true</enabled>
