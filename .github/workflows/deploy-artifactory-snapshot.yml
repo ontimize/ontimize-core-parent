@@ -16,8 +16,6 @@ jobs:
           server-password: ARTIFACTORY_PASS
       - name: Perform MVN actions
         run: |
-          java -version
-          mvn -v
           mvn help:effective-settings
         env:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
