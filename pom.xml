@@ -412,16 +412,4 @@
             <url>https://artifactory.imatia.com/artifactory/libs-snapshot-local</url>
         </snapshotRepository>
     </distributionManagement>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>imatia-artifactory</id>
-            <name>plugins-snapshot</name>
-            <url>
-                https://artifactory.imatia.com/artifactory/plugins-snapshot
-            </url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
