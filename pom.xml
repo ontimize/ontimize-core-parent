@@ -60,7 +60,7 @@
         <snapshotRepository>
             <id>imatia-artifactory</id>
             <name>libs-snapshot-local</name>
-            <url>https://artifactory.imatia.com/artifactory/libs-snapshot-local</url>
+            <url>https://artifactory.imatia.com/artifactory/libs-snapshot</url>
         </snapshotRepository>
         <repository>
             <id>imatia-artifactory</id>
