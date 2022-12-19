@@ -438,7 +438,7 @@
 
     <profiles>
         <profile>
-            <id>generate_version</id>
+            <id>generate-version</id>
             <build>
                 <plugins>
                     <!-- Manifest -->
