@@ -69,6 +69,14 @@
         </repository>
     </distributionManagement>
 
+    <repositories>
+        <repository>
+            <id>imatia-artifactory</id>
+            <name>libs-release-local</name>
+            <url>https://artifactory.imatia.com/artifactory/libs-release</url>
+        </repository>
+    </repositories>
+
     <properties>
         <!--=====================================-->
         <!--        Dependencies version         -->
