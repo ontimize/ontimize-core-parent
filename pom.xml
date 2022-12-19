@@ -12,22 +12,107 @@
         <module>ontimize-core-client</module>
     </modules>
 
+    <organization>
+        <name>Imatia Innovation</name>
+        <url>http://imatia.com</url>
+    </organization>
+
+    <name>Ontimize Core Parent</name>
+    <description>Ontimize Core Parent contains all the elements that are not related to the server part of Ontimize.
+        Core.
+    </description>
+    <url>https://www.ontimize.com</url>
+
+    <developers>
+        <developer>
+            <name>Enrique Álvarez Pereira</name>
+            <email>enrique.alvarez@imatia.com</email>
+            <organization>Imatia Innovation</organization>
+            <organizationUrl>http://imatia.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Faustino Lage Rego</name>
+            <email>faustino.lage@imatia.com</email>
+            <organization>Imatia Innovation</organization>
+            <organizationUrl>http://imatia.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Pablo Martínez Kirsten</name>
+            <email>pablo.martinez@imatia.com</email>
+            <organization>Imatia Innovation</organization>
+            <organizationUrl>http://imatia.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Xoán Loureiro Santamaría</name>
+            <email>xoan.loureiro@imatia.com</email>
+            <organization>Imatia Innovation</organization>
+            <organizationUrl>http://imatia.com</organizationUrl>
+        </developer>
+    </developers>
+
     <scm>
-        <developerConnection>scm:git:https://github.com/ontimize/ontimize-core-parent</developerConnection>
+        <connection>scm:git:git://github.com/ontimize/ontimize-core-parent.git</connection>
+        <developerConnection>scm:git:ssh://github.com:ontimize/ontimize-core-parent.git</developerConnection>
+        <url>https://github.com/ontimize/ontimize-core-parent/tree/master</url>
     </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>imatia-artifactory</id>
+            <name>libs-snapshot-local</name>
+            <url>https://artifactory.imatia.com/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+        <repository>
+            <id>imatia-artifactory</id>
+            <name>libs-release-local</name>
+            <url>https://artifactory.imatia.com/artifactory/libs-release-local</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
-        <project.build.sourceEncoding>Cp1252</project.build.sourceEncoding>
-        <javadoc-plugin.version>3.1.0</javadoc-plugin.version>
+        <!--=====================================-->
+        <!--        Dependencies version         -->
+        <!--=====================================-->
         <slf4j-api.version>1.7.5</slf4j-api.version>
         <jfreechart.version>1.0.12</jfreechart.version>
         <logback-classic.version>1.0.13</logback-classic.version>
         <log4j-core.version>2.8.2</log4j-core.version>
         <commons-jexl.version>2.1.1</commons-jexl.version>
-        <DynamicJasper.version>5.0.0</DynamicJasper.version>
+        <dynamicjasper.version>5.0.0-IMT-1.0</dynamicjasper.version>
         <registry.version>3.1.3</registry.version>
         <sam.version>0.0.1</sam.version>
         <jai.version>1.1.2</jai.version>
         <tidy.version>8.0</tidy.version>
+        <javahelp.version>2.0.05</javahelp.version>
+        <jep.version>2.24</jep.version>
+        <mail.version>1.4.5</mail.version>
+        <mesp.version>1.0.2</mesp.version>
+        <core-renderer.version>R8</core-renderer.version>
+        <docx4j.version>3.2.2</docx4j.version>
+        <commons-lang.version>2.4</commons-lang.version>
+        <jooreports.version>2.0.0</jooreports.version>
+        <dynclass.version>0.0.1</dynclass.version>
+        <morena.version>6.4.0.12</morena.version>
+        <morena7.version>7.1.27</morena7.version>
+        <comm.version>2.0</comm.version>
+        <jnlp.version>1.2.2</jnlp.version>
+        <jmf.version>2.1.1e</jmf.version>
+        <poi.version>3.9</poi.version>
+        <systray4j.version>2.4.1</systray4j.version>
+        <quartz.version>1.5.2</quartz.version>
+        <junit.version>4.11</junit.version>
+        <!--=====================================-->
+        <!--        Plugins version              -->
+        <!--=====================================-->
+        <javadoc-plugin.version>3.1.0</javadoc-plugin.version>
+        <imatia-javaformat-plugin.version>2.0.0</imatia-javaformat-plugin.version>
+        <maven-invoker.version>2.2</maven-invoker.version>
+        <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+        <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
+        <!--=====================================-->
+        <!--        Properties                   -->
+        <!--=====================================-->
+        <project.build.sourceEncoding>Cp1252</project.build.sourceEncoding>
     </properties>
     <build>
         <pluginManagement>
@@ -49,27 +134,37 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
+                </plugin>
 
                 <!-- Imatia javaformat plugin -->
-<!--                <plugin>-->
-<!--                    <groupId>com.imatia.javaformat</groupId>-->
-<!--                    <artifactId>imatia-javaformat-maven-plugin</artifactId>-->
-<!--                    <version>${imatia-javaformat-plugin}</version>-->
-<!--                    <executions>-->
-<!--                        <execution>-->
-<!--                            <id>imatia-javaformat</id>-->
-<!--                            <phase>validate</phase>-->
-<!--                            <inherited>true</inherited>-->
-<!--                            <goals>-->
-<!--                                <goal>validate</goal>-->
-<!--                            </goals>-->
-<!--                        </execution>-->
-<!--                    </executions>-->
-<!--                </plugin>-->
+                <!--                <plugin>-->
+                <!--                    <groupId>com.imatia.javaformat</groupId>-->
+                <!--                    <artifactId>imatia-javaformat-maven-plugin</artifactId>-->
+                <!--                    <version>${imatia-javaformat-plugin}</version>-->
+                <!--                    <executions>-->
+                <!--                        <execution>-->
+                <!--                            <id>imatia-javaformat</id>-->
+                <!--                            <phase>validate</phase>-->
+                <!--                            <inherited>true</inherited>-->
+                <!--                            <goals>-->
+                <!--                                <goal>validate</goal>-->
+                <!--                            </goals>-->
+                <!--                        </execution>-->
+                <!--                    </executions>-->
+                <!--                </plugin>-->
+
             </plugins>
 
         </pluginManagement>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -91,7 +186,7 @@
                     <dependency>
                         <groupId>org.apache.maven.shared</groupId>
                         <artifactId>maven-invoker</artifactId>
-                        <version>2.2</version>
+                        <version>${maven-invoker.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -155,7 +250,7 @@
             <dependency>
                 <groupId>ar.com.fdvs</groupId>
                 <artifactId>DynamicJasper</artifactId>
-                <version>${DynamicJasper.version}</version>
+                <version>${dynamicjasper.version}</version>
                 <scope>compile</scope>
                 <optional>true</optional>
 
@@ -199,126 +294,126 @@
             <dependency>
                 <groupId>javax.help</groupId>
                 <artifactId>javahelp</artifactId>
-                <version>2.0.05</version>
+                <version>${javahelp.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.nfunk</groupId>
                 <artifactId>jep</artifactId>
-                <version>2.24</version>
+                <version>${jep.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>javax.mail</groupId>
                 <artifactId>mail</artifactId>
-                <version>1.4.5</version>
+                <version>${mail.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>mesp</groupId>
                 <artifactId>mesp</artifactId>
-                <version>1.0.2</version>
+                <version>${mesp.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.xhtmlrenderer</groupId>
                 <artifactId>core-renderer</artifactId>
-                <version>R8</version>
+                <version>${core-renderer.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.docx4j</groupId>
                 <artifactId>docx4j</artifactId>
-                <version>3.2.2</version>
+                <version>${docx4j.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
-                <version>2.4</version>
+                <version>${commons-lang.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>net.sf</groupId>
                 <artifactId>jooreports</artifactId>
-                <version>2.0.0</version>
+                <version>${jooreports.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>dynclass</groupId>
                 <artifactId>dynclass</artifactId>
-                <version>0.0.1</version>
+                <version>${dynclass.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>morena</groupId>
                 <artifactId>morena</artifactId>
-                <version>6.4.0.12</version>
+                <version>${morena.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>morena</groupId>
                 <artifactId>morena7</artifactId>
-                <version>7.1.27</version>
+                <version>${morena7.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>javax.comm</groupId>
                 <artifactId>comm</artifactId>
-                <version>2.0</version>
+                <version>${comm.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>javax.jnlp</groupId>
                 <artifactId>jnlp</artifactId>
-                <version>1.2.2</version>
+                <version>${jnlp.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>javax.media</groupId>
                 <artifactId>jmf</artifactId>
-                <version>2.1.1e</version>
+                <version>${jmf.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi</artifactId>
-                <version>3.9</version>
+                <version>${poi.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
-                <version>3.9</version>
+                <version>${poi.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>snoozesoft</groupId>
                 <artifactId>systray4j</artifactId>
-                <version>2.4.1</version>
+                <version>${systray4j.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>quartz</groupId>
                 <artifactId>quartz</artifactId>
-                <version>1.5.2</version>
+                <version>${quartz.version}</version>
                 <optional>true</optional>
             </dependency>
 
@@ -326,7 +421,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.11</version>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -342,7 +437,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.4</version>
                         <configuration>
                             <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
@@ -361,7 +455,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -399,17 +492,4 @@
             </build>
         </profile>
     </profiles>
-
-    <distributionManagement>
-        <repository>
-            <id>public-artifactory</id>
-            <name>public-artifactory-releases</name>
-            <url>https://public-artifactory.imatia.com/artifactory/ontimize-release-opensource</url>
-        </repository>
-        <snapshotRepository>
-            <id>imatia-artifactory</id>
-            <name>libs-snapshot-local</name>
-            <url>https://artifactory.imatia.com/artifactory/libs-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
 </project>

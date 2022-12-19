@@ -8,11 +8,64 @@
 		<version>6.0.16-SNAPSHOT</version>
 	</parent>
 	<packaging>pom</packaging>
-	 
-	<name>Ontimize Core Icons</name>
-	<description>Ontimize Core Icons</description>
+
 	<modules>
 		<module>ontimize-core-icons-lgpl</module>
 		<module>ontimize-core-icons-black-blue</module>
 	</modules>
+
+	<organization>
+		<name>Imatia Innovation</name>
+		<url>http://imatia.com</url>
+	</organization>
+
+	<name>Ontimize Core Icons</name>
+	<description>Ontimize Core Icons</description>
+	<url>https://www.ontimize.com</url>
+
+	<developers>
+		<developer>
+			<name>Enrique Álvarez Pereira</name>
+			<email>enrique.alvarez@imatia.com</email>
+			<organization>Imatia Innovation</organization>
+			<organizationUrl>http://imatia.com</organizationUrl>
+		</developer>
+		<developer>
+			<name>Faustino Lage Rego</name>
+			<email>faustino.lage@imatia.com</email>
+			<organization>Imatia Innovation</organization>
+			<organizationUrl>http://imatia.com</organizationUrl>
+		</developer>
+		<developer>
+			<name>Pablo Martínez Kirsten</name>
+			<email>pablo.martinez@imatia.com</email>
+			<organization>Imatia Innovation</organization>
+			<organizationUrl>http://imatia.com</organizationUrl>
+		</developer>
+		<developer>
+			<name>Xoán Loureiro Santamaría</name>
+			<email>xoan.loureiro@imatia.com</email>
+			<organization>Imatia Innovation</organization>
+			<organizationUrl>http://imatia.com</organizationUrl>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/ontimize/ontimize-core-parent.git</connection>
+		<developerConnection>scm:git:ssh://github.com:ontimize/ontimize-core-parent.git</developerConnection>
+		<url>https://github.com/ontimize/ontimize-core-parent/tree/master</url>
+	</scm>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>imatia-artifactory</id>
+			<name>libs-snapshot-local</name>
+			<url>https://artifactory.imatia.com/artifactory/libs-snapshot-local</url>
+		</snapshotRepository>
+		<repository>
+			<id>imatia-artifactory</id>
+			<name>libs-release-local</name>
+			<url>https://artifactory.imatia.com/artifactory/libs-release-local</url>
+		</repository>
+	</distributionManagement>
 </project>  
