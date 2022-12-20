@@ -64,8 +64,8 @@
         </snapshotRepository>
         <repository>
             <id>imatia-artifactory</id>
-            <name>libs-release</name>
-            <url>https://artifactory.imatia.com/artifactory/libs-release</url>
+            <name>libs-release-local</name>
+            <url>https://artifactory.imatia.com/artifactory/libs-release-local</url>
         </repository>
     </distributionManagement>
 
@@ -112,6 +112,8 @@
         <systray4j.version>2.4.1</systray4j.version>
         <quartz.version>1.5.2</quartz.version>
         <junit.version>4.11</junit.version>
+        <jcommon.version>1.0.15</jcommon.version>
+        <redmine-java-api.version>3.0.0</redmine-java-api.version>
         <!--=====================================-->
         <!--        Plugins version              -->
         <!--=====================================-->
@@ -428,12 +430,23 @@
                 <optional>true</optional>
             </dependency>
 
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jfree</groupId>
+                <artifactId>jcommon</artifactId>
+                <version>${jcommon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.taskadapter</groupId>
+                <artifactId>redmine-java-api</artifactId>
+                <version>${redmine-java-api.version}</version>
             </dependency>
 
         </dependencies>
