@@ -1,0 +1,14 @@
+name: Prepare a release by a pull request
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: 'Optional. Enter a new custom version instead of default existing one'
+        type: string
+        required: false
+jobs:
+  Prepare-a-release-by-a-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
