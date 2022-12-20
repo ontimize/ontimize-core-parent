@@ -16,7 +16,6 @@ jobs:
           server-password: ARTIFACTORY_PASS
       - name: Perform MVN actions
         run: |
-          mvn install
           mvn -U clean deploy -Pgenerate-version
         env:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
