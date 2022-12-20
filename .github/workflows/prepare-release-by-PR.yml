@@ -1,0 +1,4 @@
+name: Prepare a release by a pull request
+on: workflow_dispatch
+jobs:
+  Prepare-a-release-by-a-pull-request:
