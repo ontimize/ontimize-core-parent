@@ -61,11 +61,23 @@
             <id>imatia-artifactory</id>
             <name>libs-snapshot</name>
             <url>https://artifactory.imatia.com/artifactory/libs-snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </snapshotRepository>
         <repository>
             <id>imatia-artifactory</id>
             <name>libs-release</name>
             <url>https://artifactory.imatia.com/artifactory/libs-release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
     </distributionManagement>
 
@@ -74,6 +86,23 @@
             <id>imatia-artifactory</id>
             <name>libs-release</name>
             <url>https://artifactory.imatia.com/artifactory/libs-release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>imatia-artifactory</id>
+            <name>libs-snapshot</name>
+            <url>https://artifactory.imatia.com/artifactory/libs-snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </repository>
     </repositories>
 
