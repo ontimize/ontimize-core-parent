@@ -59,12 +59,12 @@
     <distributionManagement>
         <snapshotRepository>
             <id>imatia-artifactory</id>
-            <name>libs-snapshot-local</name>
+            <name>libs-snapshot</name>
             <url>https://artifactory.imatia.com/artifactory/libs-snapshot</url>
         </snapshotRepository>
         <repository>
             <id>imatia-artifactory</id>
-            <name>libs-release-local</name>
+            <name>libs-release</name>
             <url>https://artifactory.imatia.com/artifactory/libs-release</url>
         </repository>
     </distributionManagement>
@@ -72,7 +72,7 @@
     <repositories>
         <repository>
             <id>imatia-artifactory</id>
-            <name>libs-release-local</name>
+            <name>libs-release</name>
             <url>https://artifactory.imatia.com/artifactory/libs-release</url>
         </repository>
     </repositories>
