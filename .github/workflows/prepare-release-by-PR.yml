@@ -12,5 +12,9 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v3
-      - name: Print variable
-        run: echo Version is ${{ github.event.inputs.version }}
+      - name: Get framework version to release
+        run: |
+          echo Version:
+          var_version=mvn help:evaluate -q -Dexpression=project.version -DforceStdout
+          echo "$var_version"
+          echo '$var_version'
