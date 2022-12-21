@@ -36,11 +36,17 @@ jobs:
         run: |
           version=${{ steps.release.outputs.version }}
           git commit -m "New release → $version"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push new branch
         run: |
           version=${{ steps.release.outputs.version }}
           git push origin release/$version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create pull request
         run: |
           version=${{ steps.release.outputs.version }}
           gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
