@@ -15,6 +15,6 @@ jobs:
       - name: Get framework version to release
         run: |
           echo Version
-          var_version=mvn help:evaluate -q -Dexpression=project.version -DforceStdout
+          var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
           echo "$var_version"
           echo '$var_version'
