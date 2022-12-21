@@ -24,8 +24,10 @@ jobs:
           echo "version=$var_version" >> $GITHUB_OUTPUT
       - name: Prepare version to release
         run: |
-          version=${{ steps.version.outputs.version }}
-          version_rev=$(echo "${{ steps.version.outputs.version }}" | sed 's/-SNAPSHOT//' )
-          echo $version_rev
-          #git checkout -b release/$version
-          #mvn -B versions:use-releases
+          version=$(echo "${{ steps.version.outputs.version }}" | sed 's/-SNAPSHOT//' )
+          git checkout -b release/$version
+          mvn -B versions:use-releases
+          mvn -B versions:set -DremoveSnapshot versions:commit
+          mvn -B -N versions:update-child-modules versions:commit
+          git ls-files
+          git --no-pager diff
