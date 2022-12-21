@@ -29,3 +29,8 @@ jobs:
           mvn -B versions:use-releases
           mvn -B versions:set -DremoveSnapshot versions:commit
           mvn -B -N versions:update-child-modules versions:commit
+          git ls-files | grep -e 'pom.xml' | xargs git add || true
+      - name: Commit file changes
+        run: git commit -m "New release → $version"
+      - name: Push new branch
+        run: git push origin release/$version
