@@ -51,4 +51,4 @@ jobs:
       - name: Create pull request
         run: |
           version=${{ steps.release.outputs.version }}
-          gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action → Prepare a release bya a pull request"
+          gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action → Prepare a release by a pull request"
