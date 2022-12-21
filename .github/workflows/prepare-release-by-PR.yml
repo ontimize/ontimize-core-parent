@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Optional. Enter a new custom version instead of default existing one'
+        description: 'Optional. Enter a new custom version instead of default existing one. '
         type: string
         required: false
 jobs:
@@ -24,5 +24,7 @@ jobs:
           echo "version=$var_version" >> $GITHUB_OUTPUT
       - name: Prepare version to release
         run: |
-          # echo ${{ steps.version.outputs.version }}
+          version=${{ steps.version.outputs.version }}
+          version=${version%_*}
+          git checkout -b release/$version
           mvn -B versions:use-releases
