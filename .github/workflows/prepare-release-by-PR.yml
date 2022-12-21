@@ -14,5 +14,5 @@ jobs:
         uses: actions/checkout@v3
       - name: Get framework version to release
         run: |
-          if ${{ github.event.inputs.level != '' }}; then var_version=${{ github.event.inputs.level }} else var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
+          if ${{ github.event.inputs.level != '' }}; then var_version=${{ github.event.inputs.level }} else var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) fi
           echo "Version: $var_version"
