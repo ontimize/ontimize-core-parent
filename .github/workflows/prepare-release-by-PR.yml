@@ -16,7 +16,7 @@ jobs:
         run: |
           echo ${{ github.event.inputs.version }}
           var_version=""
-          if [[ ${{ github.event.inputs.version == '' }} ]]; then
+          if [[ ${{ github.event.inputs.version != '' }} ]]; then
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
           else 
             var_version=${{ github.event.inputs.version }} 
