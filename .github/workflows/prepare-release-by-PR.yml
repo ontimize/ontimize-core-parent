@@ -25,4 +25,4 @@ jobs:
       - name: Prepare version to release
         run: |
           # echo ${{ steps.version.outputs.version }}
-          mvn versions:use-releases
+          mvn -B versions:use-releases
