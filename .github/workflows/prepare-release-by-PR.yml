@@ -29,4 +29,3 @@ jobs:
           mvn -B versions:use-releases
           mvn -B versions:set -DremoveSnapshot versions:commit
           mvn -B -N versions:update-child-modules versions:commit
-          git --no-pager diff
