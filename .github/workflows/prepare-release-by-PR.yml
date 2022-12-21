@@ -1,11 +1,5 @@
 name: Prepare a release by a pull request
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Optional. Enter a new custom version instead of default existing one'
-        type: string
-        required: false
+on: workflow_dispatch
 jobs:
   Prepare-a-release-by-a-pull-request:
     runs-on: ubuntu-latest
@@ -18,12 +12,7 @@ jobs:
           echo ${{ github.event.inputs.version }}
           var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
           echo "Version release: $var_version"
-          if [[ ${{ github.event.inputs.version != '' }} ]]; then
-            var_version=${{ github.event.inputs.version }}
-          fi
-          echo "Version release: $var_version"
           echo "version=$var_version" >> $GITHUB_OUTPUT
-          echo $GITHUB_OUTPUT
       - name: Check passing value
         run: |
           echo ${{ steps.version.version }}
