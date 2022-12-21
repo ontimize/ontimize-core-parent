@@ -24,4 +24,4 @@ jobs:
           echo "VAR_VERSION=$var_version" >> $GITHUB_ENV
       - name: Check passing value
         run: |
-          echo ${{ env.var_version }}
+          echo ${{ env.VAR_VERSION }}
