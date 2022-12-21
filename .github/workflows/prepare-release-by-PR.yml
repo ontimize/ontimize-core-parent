@@ -48,3 +48,7 @@ jobs:
         run: |
           version=${{ steps.release.outputs.version }}
           git push origin release/$version
+      - name: Create pull request
+        run: |
+          version=${{ steps.release.outputs.version }}
+          gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action → Prepare a release bya a pull request"
