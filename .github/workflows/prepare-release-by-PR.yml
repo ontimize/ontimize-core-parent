@@ -22,3 +22,6 @@ jobs:
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
           fi
           echo "Version final: $var_version"
+      - name: Check passing value
+        run: |
+          echo ${{ env.var_version }}
