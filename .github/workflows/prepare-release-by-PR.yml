@@ -2,7 +2,7 @@ name: Prepare a release by a pull request
 on:
   workflow_dispatch:
     inputs:
-      level:
+      version:
         description: 'Optional. Enter a new custom version instead of default existing one'
         type: string
         required: false
@@ -12,3 +12,5 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v3
+      - name: Print variable
+        run: echo Version is ${{ github.event.inputs.version }}
