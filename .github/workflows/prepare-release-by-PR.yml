@@ -15,7 +15,7 @@ jobs:
       - name: Get framework version to release
         id: version
         run: |
-          if [[ ${{ github.event.inputs.version != '' }} ]]; then
+          if  ${{ github.event.inputs.version != '' }} ; then
             var_version=${{ github.event.inputs.version }}
           else
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
