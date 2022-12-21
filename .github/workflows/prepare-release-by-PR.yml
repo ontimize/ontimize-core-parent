@@ -22,8 +22,9 @@ jobs:
           else
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
           fi
+          echo "Version release: $var_version"
           echo "version=$var_version" >> $GITHUB_OUTPUT
-          echo "$GITHUB_OUTPUT"
+          echo $GITHUB_OUTPUT
       - name: Check passing value
         run: |
           echo ${{ steps.version.version }}
