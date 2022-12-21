@@ -21,7 +21,7 @@ jobs:
           else
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
           fi
-          echo "Version final: $var_version"
+          echo "VAR_VERSION=$var_version" >> $GITHUB_ENV
       - name: Check passing value
         run: |
           echo ${{ env.var_version }}
