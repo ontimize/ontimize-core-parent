@@ -7,12 +7,11 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v3
       - name: Get framework version to release
-        id: version
+        id:
         run: |
-          echo ${{ github.event.inputs.version }}
           var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
           echo "Version release: $var_version"
           echo "version=$var_version" >> $GITHUB_OUTPUT
       - name: Check passing value
         run: |
-          echo ${{ steps.version.version }}
+          echo ${{ steps.version.outputs.version }}
