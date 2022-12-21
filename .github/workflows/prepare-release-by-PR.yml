@@ -25,7 +25,7 @@ jobs:
       - name: Prepare version to release
         run: |
           version=${{ steps.version.outputs.version }}
-          version=${version%_*}
-          echo $version
+          version_rev=${version%_*}
+          echo $version_rev
           #git checkout -b release/$version
           #mvn -B versions:use-releases
