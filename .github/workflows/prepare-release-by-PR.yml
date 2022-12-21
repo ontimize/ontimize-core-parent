@@ -23,6 +23,7 @@ jobs:
           fi
           echo "version=$var_version" >> $GITHUB_OUTPUT
       - name: Prepare version to release
+        id: release
         run: |
           version=$(echo "${{ steps.version.outputs.version }}" | sed 's/-SNAPSHOT//' )
           git checkout -b release/$version
@@ -30,7 +31,16 @@ jobs:
           mvn -B versions:set -DremoveSnapshot versions:commit
           mvn -B -N versions:update-child-modules versions:commit
           git ls-files | grep -e 'pom.xml' | xargs git add || true
+          echo "version=$version" >> $GITHUB_OUTPUT
       - name: Commit file changes
-        run: git commit -m "New release → $version"
+        run: |
+          version=${{ steps.release.outputs.version }}
+          git commit -m "New release → $version"
       - name: Push new branch
-        run: git push origin release/$version
+        run: |
+          version=${{ steps.release.outputs.version }}
+          git push origin release/$version
+      - name: Create pull request
+        run: |
+          version=${{ steps.release.outputs.version }}
+          gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action"
