@@ -9,6 +9,10 @@ on:
 jobs:
   Prepare-a-release-by-a-pull-request:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CI_COMMIT_AUTHOR: ${{ secrets.CI_COMMIT_AUTHOR }}
+      CI_COMMIT_MAIL: ${{ secrets.CI_COMMIT_MAIL }}
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v3
@@ -32,21 +36,15 @@ jobs:
           mvn -B -N versions:update-child-modules versions:commit
           git ls-files | grep -e 'pom.xml' | xargs git add || true
           echo "version=$version" >> $GITHUB_OUTPUT
+      - name: Set author identity
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ secrets.CI_COMMIT_MAIL }}"
       - name: Commit file changes
         run: |
           version=${{ steps.release.outputs.version }}
           git commit -m "New release → $version"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push new branch
         run: |
           version=${{ steps.release.outputs.version }}
           git push origin release/$version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create pull request
-        run: |
-          version=${{ steps.release.outputs.version }}
-          gh pr create -B master -H release/$version --title "Merge release/$version into master" --body "Created by a GitHub Action"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
