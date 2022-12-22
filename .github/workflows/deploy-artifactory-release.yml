@@ -41,7 +41,7 @@ jobs:
           git checkout develop
       - name: Merge "main" in "develop"
         run: |
-          git merge maintest --allow-unrelated-histories
+          git merge --allow-unrelated-histories -X theirs maintest
       - name: Update "develop" version with new minor version
         run: |
           mvn build-helper:parse-version versions:set -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT versions:commit
