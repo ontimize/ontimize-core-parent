@@ -325,56 +325,55 @@ public class TabPanel extends JTabbedPane
     }
 
     /**
-	 * Hides the tab according to the title.
-	 * <p>
-	 * @param title the title
-	 */
-	public void hideTabs(String title) {
-		for (int i = 0; i < this.getTabCount(); i++) {
-			if (((this.getComponentAt(i) instanceof Tab)
-					&& title.equals(((Tab) this.getComponentAt(i)).getConstraints(null)))
-					|| title.equals(((Tab) this.getComponentAt(i)).getAttribute())) {
-				this.removeTabAt(i);
-			}
-		}
-	}
-	
-	
-	/**
-	 * Shows the tab according to the title.
-	 * <p>
-	 * @param title the title
-	 */
-	public void showTab(String title) {
-		// Checks that this tab is not added yet
-		for (int i = 0; i < this.getTabCount(); i++) {
-			if (((this.getComponentAt(i) instanceof Tab)
-					&& (((Tab) this.getComponentAt(i)).getConstraints(null).equals(title)))
-					|| title.equals(((Tab) this.getComponentAt(i)).getAttribute())) {
-				return;
-			}
-		}
+     * Hides the tab according to the title.
+     * <p>
+     * @param title the title
+     */
+    public void hideTabs(String title) {
+        for (int i = 0; i < this.getTabCount(); i++) {
+            if (this.getComponentAt(i) instanceof Tab) {
+                if (title.equals(((Tab) this.getComponentAt(i)).getConstraints(null))) {
+                    this.removeTabAt(i);
+                }
+            }
+        }
+    }
 
-		int notVisibles = 0;
-		for (int i = 0; i < this.tabs.size(); i++) {
-			if (this.tabs.get(i) instanceof Tab) {
-				Tab tab = (Tab) this.tabs.get(i);
-				Object attr = tab.getAttribute();
-				String innerTitle = tab.getConstraints(null).toString();
-				if ((attr != null) && (attr.equals(title) || innerTitle.equals(title))) {
-					this.insertTab(
-							ApplicationManager.getTranslation(tab.getConstraints(null).toString(), this.resources),
-							tab.getIcon(), tab,
-							ApplicationManager.getTranslation(tab.getTip(), this.resources),
-							Math.min(i - notVisibles, this.getTabCount()));
-					return;
-				}
-				if (this.indexOfComponent(tab) < 0) {
-					notVisibles++;
-				}
-			}
-		}
-	}
+    /**
+     * Shows the tab according to the title.
+     * <p>
+     * @param title the title
+     */
+    public void showTab(String title) {
+        // Checks that this tab is not added yet
+        for (int i = 0; i < this.getTabCount(); i++) {
+            if (this.getComponentAt(i) instanceof Tab) {
+                if (((Tab) this.getComponentAt(i)).getConstraints(null).equals(title)) {
+                    return;
+                }
+            }
+        }
+
+        int notVisibles = 0;
+        for (int i = 0; i < this.tabs.size(); i++) {
+            if (this.tabs.get(i) instanceof Tab) {
+                Tab tab = (Tab) this.tabs.get(i);
+                Object attr = tab.getAttribute();
+                String innerTitle = tab.getConstraints(null).toString();
+                if ((attr != null) && (attr.equals(title) || innerTitle.equals(title))) {
+                    this.insertTab(
+                            ApplicationManager.getTranslation(tab.getConstraints(null).toString(), this.resources),
+                            tab.getIcon(), tab,
+                            ApplicationManager.getTranslation(tab.getTip(), this.resources),
+                            Math.min(i - notVisibles, this.getTabCount()));
+                    return;
+                }
+                if (this.indexOfComponent(tab) < 0) {
+                    notVisibles++;
+                }
+            }
+        }
+    }
 
     @Override
     public void add(Component c, Object constraints) {

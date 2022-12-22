@@ -3779,7 +3779,6 @@ public class ReferenceExtDataField extends TextFieldDataField implements OpenDia
 		}
 		this.setInnerValue(this.getValue());
 		this.fireValueChanged(this.getInnerValue(), oPreviousValue, ValueEvent.USER_CHANGE);
-		this.codeValue = null;
 		this.setInnerListenerEnabled(true);
 	}
 

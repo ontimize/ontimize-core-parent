@@ -50,33 +50,31 @@ public abstract class WindowsUtils {
             }
         }
 
-        if (System.getProperty("os.name").indexOf("Windows") != -1) {
-	        // If the JVM does not allow to open files directly then use a vbs
-	        // script (Only in Windows OS)
-	        URL url = WindowsUtils.class.getResource("scripts/openfile.vbs");
-	        if (url == null) {
-	            WindowsUtils.logger.debug("WindowsUtils: ");
-	        }
-	        String script = url.toString();
-	        if (script.startsWith("file:")) {
-	            script = script.substring(6);
-	        } else if ((url != null) && (url.toString().indexOf("jar:") >= 0)) {
-	            File fScript = ScriptUtilities
-	                .createTemporalFileForScript("com/ontimize/windows/office/scripts/openfile.vbs");
-	            script = fScript.getAbsolutePath();
-	        } else {
-	            throw new Exception("Invalid script URL: " + url);
-	        }
+        // If the JVM does not allow to open files directly then use a vbs
+        // script (Only in Windows OS)
+        URL url = WindowsUtils.class.getResource("scripts/openfile.vbs");
+        if (url == null) {
+            WindowsUtils.logger.debug("WindowsUtils: ");
+        }
+        String script = url.toString();
+        if (script.startsWith("file:")) {
+            script = script.substring(6);
+        } else if ((url != null) && (url.toString().indexOf("jar:") >= 0)) {
+            File fScript = ScriptUtilities
+                .createTemporalFileForScript("com/ontimize/windows/office/scripts/openfile.vbs");
+            script = fScript.getAbsolutePath();
+        } else {
+            throw new Exception("Invalid script URL: " + url);
+        }
 
-	        String fileName = f.getAbsolutePath();
-	        if (fileName.indexOf(' ') >= 0) {
-	            fileName = "\"" + fileName + "\"";
-	        }
-	        ExecutionResult res = ScriptUtilities.executeScript(FileUtils.decode(script), fileName,
-	                ScriptUtilities.WSCRIPT);
-	        if (res.getResult() != 0) {
-	            throw new Exception("Error: " + res.getOuput());
-	        }
+        String fileName = f.getAbsolutePath();
+        if (fileName.indexOf(' ') >= 0) {
+            fileName = "\"" + fileName + "\"";
+        }
+        ExecutionResult res = ScriptUtilities.executeScript(FileUtils.decode(script), fileName,
+                ScriptUtilities.WSCRIPT);
+        if (res.getResult() != 0) {
+            throw new Exception("Error: " + res.getOuput());
         }
     }
 
