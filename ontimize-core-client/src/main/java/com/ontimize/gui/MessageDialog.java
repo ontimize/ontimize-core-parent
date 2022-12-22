@@ -1290,10 +1290,10 @@ public class MessageDialog extends JOptionPane implements Internationalization {
             ApplicationManager.printCurrentThreadMethods(10);
         }
         final MessageDialog messageDialog = new MessageDialog(parent, message, details, type, newType);
+        messageDialog.setResourceBundle(resourceBundle);
         if (args != null) {
             messageDialog.setArgs(args, false);
         }
-        messageDialog.setResourceBundle(resourceBundle);
         if (title != null) {
             messageDialog.setTitle(title);
         }
