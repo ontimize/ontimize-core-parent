@@ -2,7 +2,7 @@ name: Generate a RELEASE in Artifactory
 on:
   push:
     branches:
-      - maintest
+      - main
 jobs:
   Generate-a-RELEASE-in-Artifactory:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
           server-password: ARTIFACTORY_PASS
       - name: Perform MVN deploy action
         run: |
-          # mvn -U -Dmaven.test.failure.ignore=true -DskipTests=true clean deploy -Pgenerate-version
+          mvn -U -Dmaven.test.failure.ignore=true -DskipTests=true clean deploy -Pgenerate-version
       - name: Set author identity
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
