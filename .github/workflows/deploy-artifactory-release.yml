@@ -37,6 +37,7 @@ jobs:
           git push origin $version
       - name: Change to "develop" branch
         run: |
+          git fetch origin develop
           git checkout develop
       - name: Merge "main" in "develop"
         run: |
