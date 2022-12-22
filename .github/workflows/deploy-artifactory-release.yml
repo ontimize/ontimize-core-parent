@@ -44,7 +44,7 @@ jobs:
           git merge --allow-unrelated-histories -X theirs maintest
       - name: Update "develop" version with new minor version
         run: |
-          mvn build-helper:parse-version versions:set -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT versions:commit
+          mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.nextMinorVersion}.0-SNAPSHOT versions:commit
           version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
           git add .
           git commit -m "New develop version → $version"
