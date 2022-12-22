@@ -26,6 +26,10 @@ jobs:
             var_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout) 
           fi
           echo "version=$var_version" >> $GITHUB_OUTPUT
+      - name: Set author identity
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ secrets.CI_COMMIT_MAIL }}"
       - name: Prepare version to release
         run: |
           version=$(echo "${{ steps.version.outputs.version }}" | sed 's/-SNAPSHOT//' )
@@ -37,10 +41,6 @@ jobs:
           mvn -B versions:set -DremoveSnapshot versions:commit
           mvn -B -N versions:update-child-modules versions:commit
           git ls-files | grep -e 'pom.xml' | xargs git add || true
-      - name: Set author identity
-        run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "${{ secrets.CI_COMMIT_MAIL }}"
       - name: Commit file changes
         run: |
           version=${{ steps.version.outputs.version }}
