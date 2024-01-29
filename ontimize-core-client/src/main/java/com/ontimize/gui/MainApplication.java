@@ -4168,7 +4168,7 @@ public class MainApplication extends JFrame implements Application {
     protected void removeFromTray() {
         if (this.toolBarIcon != null) {
             com.ontimize.windows.systray.SystrayUtils.hide(this.toolBarIcon);
-        } else if (this.trayIcon == null) {
+        } else if (this.trayIcon != null) {
             try {
                 this.removeIconFromSystemTray();
             } catch (Exception ex) {
