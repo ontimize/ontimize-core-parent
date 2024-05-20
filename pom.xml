@@ -2,14 +2,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.ontimize</groupId>
-    <artifactId>ontimize-core-parent</artifactId>
-    <version>6.3.0-SNAPSHOT</version>
+    <groupId>com.ontimize.labs</groupId>
+    <artifactId>ontimize-core</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>ontimize-core-icon</module>
+        <module>ontimize-core-icons</module>
         <module>ontimize-core-common</module>
         <module>ontimize-core-client</module>
+		<module>ontimize-jee-desktopclient</module>
     </modules>
 
     <organization>
@@ -22,33 +23,6 @@
         Core.
     </description>
     <url>https://www.ontimize.com</url>
-
-    <developers>
-        <developer>
-            <name>Enrique Álvarez Pereira</name>
-            <email>enrique.alvarez@imatia.com</email>
-            <organization>Imatia Innovation</organization>
-            <organizationUrl>http://imatia.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Faustino Lage Rego</name>
-            <email>faustino.lage@imatia.com</email>
-            <organization>Imatia Innovation</organization>
-            <organizationUrl>http://imatia.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Pablo Martínez Kirsten</name>
-            <email>pablo.martinez@imatia.com</email>
-            <organization>Imatia Innovation</organization>
-            <organizationUrl>http://imatia.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Xoán Loureiro Santamaría</name>
-            <email>xoan.loureiro@imatia.com</email>
-            <organization>Imatia Innovation</organization>
-            <organizationUrl>http://imatia.com</organizationUrl>
-        </developer>
-    </developers>
 
     <scm>
         <connection>scm:git:git://github.com/ontimize/ontimize-core-parent.git</connection>
@@ -81,6 +55,12 @@
     </repositories>
 
     <properties>
+    	<jdk.version>1.8</jdk.version>
+    	<!-- =========================================================== -->
+		<!-- Encoding -->
+		<!-- =========================================================== -->
+		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+<!-- 		<project.build.sourceEncoding>Cp1252</project.build.sourceEncoding> -->
         <!--=====================================-->
         <!--        Dependencies version         -->
         <!--=====================================-->
@@ -115,6 +95,11 @@
         <jcommon.version>1.0.15</jcommon.version>
         <redmine-java-api.version>3.0.0</redmine-java-api.version>
         <servlet-api.version>2.5</servlet-api.version>
+        <jaxb.api.version>2.3.0</jaxb.api.version>
+        <ontimize-jee.version>5.10.0</ontimize-jee.version>
+		<jasperreports.version>6.20.1</jasperreports.version>
+		<jasperreports.fonts.version>6.20.1</jasperreports.fonts.version>
+		<apache-poi.version>3.15</apache-poi.version>
         <!--=====================================-->
         <!--        Plugins version              -->
         <!--=====================================-->
@@ -188,9 +173,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <encoding>Cp1252</encoding>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -209,17 +194,23 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.ontimize</groupId>
+                <groupId>com.ontimize.labs</groupId>
                 <artifactId>ontimize-core-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.ontimize</groupId>
+                <groupId>com.ontimize.labs</groupId>
                 <artifactId>ontimize-core-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
+            
+            <dependency>
+				<groupId>com.ontimize.jee</groupId>
+				<artifactId>ontimize-jee-common</artifactId>
+				<version>${ontimize-jee.version}</version>
+			</dependency>
+            
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -258,7 +249,6 @@
                 <artifactId>commons-jexl</artifactId>
                 <version>${commons-jexl.version}</version>
                 <optional>true</optional>
-
             </dependency>
 
             <dependency>
@@ -267,7 +257,6 @@
                 <version>${dynamicjasper.version}</version>
                 <scope>compile</scope>
                 <optional>true</optional>
-
             </dependency>
 
             <dependency>
@@ -409,7 +398,7 @@
                 <version>${poi.version}</version>
                 <optional>true</optional>
             </dependency>
-
+            
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
@@ -455,7 +444,23 @@
                 <artifactId>servlet-api</artifactId>
                 <version>${servlet-api.version}</version>
             </dependency>
-
+            
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi-ooxml</artifactId>
+				<version>${apache-poi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi-ooxml-schemas</artifactId>
+				<version>${apache-poi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi-scratchpad</artifactId>
+				<version>${apache-poi.version}</version>
+			</dependency>
+		
         </dependencies>
     </dependencyManagement>
 
