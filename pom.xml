@@ -100,6 +100,7 @@
 		<jasperreports.version>6.20.1</jasperreports.version>
 		<jasperreports.fonts.version>6.20.1</jasperreports.fonts.version>
 		<apache-poi.version>3.15</apache-poi.version>
+        <apache-httpclient.version>4.5.14</apache-httpclient.version>
         <!--=====================================-->
         <!--        Plugins version              -->
         <!--=====================================-->
@@ -459,6 +460,12 @@
 				<groupId>org.apache.poi</groupId>
 				<artifactId>poi-scratchpad</artifactId>
 				<version>${apache-poi.version}</version>
+			</dependency>
+			
+			<dependency>
+			    <groupId>org.apache.httpcomponents</groupId>
+			    <artifactId>httpclient</artifactId>
+			    <version>${apache-httpclient.version}</version>
 			</dependency>
 		
         </dependencies>
