@@ -18,8 +18,9 @@ package com.ontimize.report;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Vector;
+import java.util.List;
 
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
@@ -30,8 +31,9 @@ import javax.swing.table.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.db.EntityResultUtils.EntityResultTableModel;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 
 public class TableSorter extends TableMap {
 
@@ -43,9 +45,9 @@ public class TableSorter extends TableMap {
         return this.indexes;
     }
 
-    protected Vector sortingColumns = new Vector();
+    protected List<Object> sortingColumns = new ArrayList<>();
 
-    protected Vector ascendings = new Vector();
+    protected List<Object> ascendings = new ArrayList<>();
 
     int compares;
 
@@ -64,7 +66,7 @@ public class TableSorter extends TableMap {
     }
 
     public EntityResult getOrderedEntityResult(TableModel model) {
-        EntityResult res = new EntityResult();
+        EntityResult res = new EntityResultMapImpl();
         for (int i = 0; i < this.indexes.length; i++) {
             if (model == null) {
                 break;
@@ -75,7 +77,7 @@ public class TableSorter extends TableMap {
     }
 
     public EntityResult getEntityResult(TableModel model) {
-        EntityResult res = new EntityResult();
+        EntityResult res = new EntityResultMapImpl();
         for (int i = 0; i < this.indexes.length; i++) {
             res.addRecord(((EntityResultTableModel) model).getEntityResult().getRecordValues(this.indexes[i]));
         }
@@ -83,7 +85,7 @@ public class TableSorter extends TableMap {
     }
 
     public int compareRowsByColumn(int row1, int row2, int column) {
-        Class type = this.model.getColumnClass(column);
+        Class<?> type = this.model.getColumnClass(column);
         TableModel data = this.model;
 
         // Check for nulls
@@ -182,8 +184,8 @@ public class TableSorter extends TableMap {
     public int compare(int row1, int row2) {
         this.compares++;
         for (int level = 0; level < this.sortingColumns.size(); level++) {
-            Integer column = (Integer) this.sortingColumns.elementAt(level);
-            boolean ascending = ((Boolean) this.ascendings.elementAt(level)).booleanValue();
+            Integer column = (Integer) this.sortingColumns.get(level);
+            boolean ascending = ((Boolean) this.ascendings.get(level)).booleanValue();
             int result = this.compareRowsByColumn(row1, row2, column.intValue());
             if (result != 0) {
                 return ascending ? result : -result;
@@ -322,7 +324,7 @@ public class TableSorter extends TableMap {
             }
         } else {
             int iIndex = this.sortingColumns.indexOf(col);
-            this.ascendings.setElementAt(new Boolean(ascending), iIndex);
+            this.ascendings.set(iIndex, new Boolean(ascending));
         }
         this.sort(this);
         this.fireTableChanged(new TableModelEvent(TableSorter.this));

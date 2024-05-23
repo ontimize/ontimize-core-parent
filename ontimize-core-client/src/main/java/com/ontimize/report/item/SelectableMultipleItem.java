@@ -1,17 +1,17 @@
 package com.ontimize.report.item;
 
+import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 public class SelectableMultipleItem {
 
-    Vector itemList = null;
+	List<Object> itemList = null;
 
-    public SelectableMultipleItem(Vector list, ResourceBundle res) {
+    public SelectableMultipleItem(List<Object> list, ResourceBundle res) {
         this.itemList = list;
     }
 
-    public Vector getItemList() {
+    public List<Object> getItemList() {
         return this.itemList;
     }
 

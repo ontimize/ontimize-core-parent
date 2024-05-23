@@ -1,11 +1,12 @@
 package com.ontimize.report.engine.dynamicjasper;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -37,7 +38,7 @@ public class EntityDataSource implements JRRewindableDataSource {
 
     protected String[] keys = null;
 
-    protected Hashtable keysValues = null;
+    protected Map<Object, Object> keysValues = null;
 
     protected EntityResult result = null;
 
@@ -60,10 +61,10 @@ public class EntityDataSource implements JRRewindableDataSource {
             return null;
         }
         Object obj = this.result.get(name);
-        if ((obj == null) || !(obj instanceof Vector)) {
+        if ((obj == null) || !(obj instanceof List)) {
             return null;
         }
-        Vector v = (Vector) obj;
+        List<?> v = (List<?>) obj;
         return (this.index >= 0) && (this.index < this.size) ? v.get(this.index) : null;
     }
 
@@ -101,8 +102,8 @@ public class EntityDataSource implements JRRewindableDataSource {
      * <li>If keys attribute is not null, only given keys are choosed.
      * @param kv Keys values
      */
-    public void setKeysValues(Map kv) {
-        this.keysValues = new Hashtable();
+    public void setKeysValues(Map<?,?> kv) {
+        this.keysValues = new HashMap<>();
         if (kv == null) {
             return;
         }
@@ -134,11 +135,11 @@ public class EntityDataSource implements JRRewindableDataSource {
     }
 
     protected EntityResult doQuery() throws JRException {
-        Hashtable keysCopy = this.keysValues;
+        Map<?,?> keysCopy = this.keysValues;
         if (keysCopy == null) {
-            keysCopy = new Hashtable();
+            keysCopy = new HashMap<>();
         }
-        Vector attr = new Vector();
+        List<Object> attr = new ArrayList<>();
 
         EntityResult er = null;
         try {

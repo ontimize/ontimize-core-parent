@@ -6,13 +6,13 @@ import java.awt.event.ActionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.MessageDialog;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
 import com.ontimize.report.DefaultReportDialog;
-import com.ontimize.util.share.IShareRemoteReference;
 
 public class SharedDeleteTargetItemListener implements ActionListener {
 
@@ -33,12 +33,12 @@ public class SharedDeleteTargetItemListener implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         try {
             this.defaultReportDialog.getConfMenu().setVisible(false);
             if (MessageDialog.showQuestionMessage(this.defaultReportDialog.getContainer(),
                     ApplicationManager.getTranslation(this.deleteKey))) {
-                int shareId = Integer.parseInt(e.getActionCommand());
+                int shareId = Integer.parseInt(event.getActionCommand());
                 int sessionID = this.locator.getSessionId();
                 IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) this.locator)
                     .getRemoteReference(IShareRemoteReference.REMOTE_NAME,

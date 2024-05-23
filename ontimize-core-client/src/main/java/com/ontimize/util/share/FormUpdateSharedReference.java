@@ -7,10 +7,11 @@ import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
@@ -23,8 +24,10 @@ import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.MemoDataField;
 import com.ontimize.gui.field.TextDataField;
 import com.ontimize.gui.i18n.Internationalization;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
+import com.ontimize.jee.common.util.share.SharedElement;
 
 public class FormUpdateSharedReference extends EJDialog implements Internationalization {
 
@@ -153,7 +156,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
      * @return Return the TextDataField that has the content
      */
     protected TextDataField createAndConfigureContentShare() {
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, "contentShare");
         h.put(DataField.REQUIRED, "yes");
         h.put(DataField.LABELPOSITION, "top");
@@ -171,7 +174,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
      * @return The text field which has the shared element name
      */
     protected TextDataField createAndConfigureName() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, "name");
         h.put(DataField.REQUIRED, "yes");
         h.put(DataField.LABELPOSITION, "top");
@@ -189,7 +192,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
      * @return The cancel button
      */
     protected Button createAndConfigureButtonCancel() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "cancelButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.cancel"));
         Button cancelButton = new Button(h);
@@ -214,7 +217,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
      * @return The accept button
      */
     protected Button createAndConfigureButtonAccept() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "acceptButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.accept"));
         Button acceptButton = new Button(h);
@@ -247,7 +250,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
      * @return The default message component
      */
     protected MemoDataField createAndConfigureMessage() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, IShareRemoteReference.SHARE_MESSAGE_STRING);
         h.put(DataField.REQUIRED, "no");
         h.put(DataField.EXPAND, "yes");
@@ -275,7 +278,7 @@ public class FormUpdateSharedReference extends EJDialog implements International
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         // TODO Auto-generated method stub
         return null;
     }

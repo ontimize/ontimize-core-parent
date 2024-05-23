@@ -1,10 +1,11 @@
 package com.ontimize.report.engine.dynamicjasper;
 
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.table.TableModel;
@@ -12,9 +13,9 @@ import javax.swing.table.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.report.TableSorter;
-import com.ontimize.util.remote.BytesBlock;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -65,18 +66,18 @@ public class EntityResultDataSource implements JRDataSource, JRRewindableDataSou
     @Override
     public Object getFieldValue(JRField field) throws JRException {
         Object obj = this.result.get(field.getName());
-        if ((obj == null) || !(obj instanceof Vector)) {
+        if ((obj == null) || !(obj instanceof List)) {
             return null;
         }
 
-        Vector v = (Vector) obj;
+        List<Object> v = (List<Object>) obj;
 
-        Class fieldClass = field.getValueClass();
+        Class<?> fieldClass = field.getValueClass();
         Object value = (this.index >= 0) && (this.index < this.size) ? v.get(this.index) : null;
 
         if (java.awt.Image.class.equals(fieldClass) && (value instanceof BytesBlock)) {
             Image im = new ImageIcon(((BytesBlock) value).getBytes()).getImage();
-            v.setElementAt(im, this.index);
+            v.set(this.index, im);
             value = im;
         }
         return value;
@@ -106,8 +107,8 @@ public class EntityResultDataSource implements JRDataSource, JRRewindableDataSou
     }
 
     public static JRField[] getFields(EntityResult result) {
-        Enumeration keys = result.keys();
-        Vector tmp = new Vector();
+        Enumeration<?> keys = result.keys();
+        List<Object> tmp = new ArrayList<>();
 
         try {
             while (keys.hasMoreElements()) {
@@ -118,10 +119,10 @@ public class EntityResultDataSource implements JRDataSource, JRRewindableDataSou
 
                 String name = (String) o;
                 int type = result.getColumnSQLType(name);
-                Class classClass = TypeMappingsUtils.getClass(type);
+                Class<?> classClass = TypeMappingsUtils.getClass(type);
                 String className = TypeMappingsUtils.getClassName(type);
 
-                Hashtable m = new Hashtable();
+                Map<Object, Object> m = new HashMap<>();
                 m.put(CustomField.NAME_KEY, name);
                 m.put(CustomField.VALUE_CLASS_NAME_KEY, className);
                 m.put(CustomField.VALUE_CLASS_KEY, classClass);

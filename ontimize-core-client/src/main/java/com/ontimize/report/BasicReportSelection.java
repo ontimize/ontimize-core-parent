@@ -13,8 +13,9 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -44,10 +45,10 @@ import org.slf4j.LoggerFactory;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.report.store.ReportProperties;
-import com.ontimize.report.store.ReportStore;
-import com.ontimize.report.store.ReportStoreDefinition;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.report.store.ReportProperties;
+import com.ontimize.jee.common.report.store.ReportStore;
+import com.ontimize.jee.common.report.store.ReportStoreDefinition;
 
 public class BasicReportSelection extends EJDialog {
 
@@ -77,7 +78,7 @@ public class BasicReportSelection extends EJDialog {
 
     protected ReportStoreDefinition rsd = null;
 
-    protected com.ontimize.report.store.ReportStore[] rs = null;
+    protected ReportStore[] rs = null;
 
     protected static BasicReportSelection selection = null;
 
@@ -94,13 +95,13 @@ public class BasicReportSelection extends EJDialog {
                     ApplicationManager
                         .getTranslation("ReportDesigner.Store", BasicReportSelection.this.bundle) };
 
-            Vector nameReport = null;
+            List<Object> nameReport = null;
 
-            Vector descriptionStore = null;
+            List<Object> descriptionStore = null;
 
             public ModelListReport() {
-                this.nameReport = new Vector();
-                this.descriptionStore = new Vector();
+                this.nameReport = new ArrayList<>();
+                this.descriptionStore = new ArrayList<>();
             }
 
             @Override
@@ -332,14 +333,14 @@ public class BasicReportSelection extends EJDialog {
         this.labelStore = new JLabel(ApplicationManager.getTranslation(ReportUtils.REPORT_STORE, this.bundle));
 
         if ((this.rs != null) && (this.rs.length > 0)) {
-            java.util.Vector v = new java.util.Vector();
+        	List<Object> v = new ArrayList<>();
             for (int i = 0; i < this.rs.length; i++) {
                 try {
                     v.add(this.rs[i].getDescription(this.locator.getSessionId()));
                 } catch (Exception ex) {
                     BasicReportSelection.logger.error(ex.getMessage(), ex);
                 }
-                DefaultComboBoxModel model = new DefaultComboBoxModel(v);
+                DefaultComboBoxModel model = new DefaultComboBoxModel(v.toArray());
                 this.comboReportStore = new JComboBox(model);
             }
         } else {
@@ -469,7 +470,7 @@ public class BasicReportSelection extends EJDialog {
     protected void setReportStore(ReportStore[] rs) {
         this.rs = rs;
         if (rs != null) {
-            java.util.Vector v = new java.util.Vector();
+        	List<Object> v = new ArrayList<>();
             for (int i = 0; i < rs.length; i++) {
                 try {
                     v.add(rs[i].getDescription(this.locator.getSessionId()));
@@ -477,10 +478,10 @@ public class BasicReportSelection extends EJDialog {
                     BasicReportSelection.logger.error(ex.getMessage(), ex);
                 }
             }
-            DefaultComboBoxModel model = new DefaultComboBoxModel(v);
+            DefaultComboBoxModel model = new DefaultComboBoxModel(v.toArray());
             this.comboReportStore.setModel(model);
         } else {
-            this.comboReportStore.setModel(new DefaultComboBoxModel(new Vector()));
+            this.comboReportStore.setModel(new DefaultComboBoxModel(new Object[] {}));
         }
         this.listReport.updateStores();
     }

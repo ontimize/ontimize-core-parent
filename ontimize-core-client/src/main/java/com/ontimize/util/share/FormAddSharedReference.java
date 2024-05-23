@@ -8,10 +8,12 @@ import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -20,7 +22,6 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.MessageDialog;
 import com.ontimize.gui.button.Button;
@@ -30,8 +31,11 @@ import com.ontimize.gui.field.ListDataField;
 import com.ontimize.gui.field.MemoDataField;
 import com.ontimize.gui.field.TextDataField;
 import com.ontimize.gui.i18n.Internationalization;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
+import com.ontimize.jee.common.util.share.SharedElement;
 
 /**
  * This form allows to convert any content into a shared element, allowing to add receiver users,
@@ -256,7 +260,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @return Add receiver button
      */
     protected Button createAndConfigureButtonAddUserTarget() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "addUserTarget");
         h.put(Button.TEXT, "+");
         Button addUserTarget = new Button(h);
@@ -269,7 +273,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @return Cancel button
      */
     protected Button createAndConfigureButtonCancel() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "cancelButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.cancel"));
         Button cancelButton = new Button(h);
@@ -290,7 +294,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @return
      */
     protected Button createAndConfigureButtonAccept() {
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "acceptButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.accept"));
         Button acceptButton = new Button(h);
@@ -300,8 +304,8 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
             public void actionPerformed(ActionEvent e) {
                 if (FormAddSharedReference.this.checkFormShareData()) {
                     // ADD SHARE DATA
-                    Vector<String> v = new Vector<String>();
-                    for (Object oActual : (Vector) FormAddSharedReference.this.listDataField.getValue()) {
+                    List<String> v = new ArrayList<String>();
+                    for (Object oActual : (List<?>) FormAddSharedReference.this.listDataField.getValue()) {
                         v.add(oActual.toString());
                     }
 
@@ -346,7 +350,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @return The message component
      */
     protected MemoDataField createAndConfigureMessage() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, IShareRemoteReference.SHARE_MESSAGE_STRING);
         h.put(DataField.REQUIRED, "no");
         h.put(DataField.EXPAND, "yes");
@@ -367,7 +371,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @throws Exception
      */
     protected ListDataField createAndConfigureTargetUser() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, IShareRemoteReference.SHARE_USER_TARGET_STRING);
         h.put(DataField.TEXT_STR, ApplicationManager.getTranslation(IShareRemoteReference.SHARE_USER_TARGET_STRING));
         h.put(DataField.LABELPOSITION, "top");
@@ -383,7 +387,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
      * @return Name element
      */
     protected TextDataField createAndConfigureName() {
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, "name");
         h.put(DataField.REQUIRED, "yes");
         h.put(DataField.LABELPOSITION, "top");
@@ -422,7 +426,7 @@ public class FormAddSharedReference extends EJDialog implements Internationaliza
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         // TODO Auto-generated method stub
         return null;
     }

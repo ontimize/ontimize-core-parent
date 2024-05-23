@@ -4,11 +4,12 @@ import java.awt.Component;
 import java.awt.print.PageFormat;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.table.TableModel;
 
+import com.ontimize.jee.common.report.store.BasicReportStoreDefinition;
 import com.ontimize.report.engine.dynamicjasper.DynamicJasperEngine;
 import com.ontimize.report.utils.PreviewDialog;
 import com.ontimize.report.utils.ReportProcessor;
@@ -98,13 +99,13 @@ public interface ReportEngine {
      * @param pageTitle the title of page
      * @return The reportStoreDefinition
      */
-    public com.ontimize.report.store.BasicReportStoreDefinition generaReportStoreDefinition(String pageTitle);
+    public BasicReportStoreDefinition generaReportStoreDefinition(String pageTitle);
 
     /**
      * Returns the list of templates for reports.
      * @return The <code>List</code> of templates
      */
-    public List getDefaultTemplates();
+    public List<Object> getDefaultTemplates();
 
     /**
      * Convenience method. TO-DO
@@ -119,7 +120,7 @@ public interface ReportEngine {
 
     public String getXMLTemplate() throws IOException;
 
-    public Hashtable getColumnWidth();
+    public Map<Object, Object> getColumnWidth();
 
     /**
      * Implementation of this method for each engine must check libraries in classpath and return

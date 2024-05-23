@@ -12,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.ApplicationManager;
-import com.ontimize.report.ReportResource;
+import com.ontimize.jee.common.report.ReportResource;
+import com.ontimize.jee.common.report.store.ReportProperties;
+import com.ontimize.jee.common.report.store.ReportStore;
+import com.ontimize.jee.common.report.store.ReportStoreDefinition;
 
 public class LocalRemoteReportStore implements ReportStore {
 
@@ -50,8 +53,8 @@ public class LocalRemoteReportStore implements ReportStore {
         try {
             this.description = this.rs
                 .getDescription(ApplicationManager.getApplication().getReferenceLocator().getSessionId());
-        } catch (Exception e) {
-            LocalRemoteReportStore.logger.error(e.getMessage(), e);
+        } catch (Exception exc) {
+            LocalRemoteReportStore.logger.error(exc.getMessage(), exc);
         }
     }
 

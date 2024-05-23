@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.MessageDialog;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
 import com.ontimize.report.DefaultReportDialog;
-import com.ontimize.util.share.IShareRemoteReference;
 import com.ontimize.util.swing.Toast;
 
 public class SharedMessageItemListener implements ActionListener {

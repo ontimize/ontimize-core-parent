@@ -5,16 +5,16 @@ import java.util.List;
 
 public class OrderColumns {
 
-    ArrayList columnNameList = new ArrayList();
+    List<String> columnNameList = new ArrayList<>();
 
-    ArrayList orderColumn = new ArrayList();
+    List<String> orderColumn = new ArrayList<>();
 
     public void add(String column, String order) {
         this.columnNameList.add(column);
         this.orderColumn.add(order);
     }
 
-    public List getColumnNameList() {
+    public List<String> getColumnNameList() {
         return this.columnNameList;
     }
 

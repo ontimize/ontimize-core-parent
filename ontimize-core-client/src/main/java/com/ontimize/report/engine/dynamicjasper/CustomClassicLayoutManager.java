@@ -2,10 +2,10 @@ package com.ontimize.report.engine.dynamicjasper;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,13 +65,13 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomClassicLayoutManager.class);
 
-    protected Hashtable hColsPositions = new Hashtable();
+    protected Map<Object, Object> hColsPositions = new HashMap<>();
 
     protected ReportEngine reportEngine;
 
     protected boolean isShowedRowNumber;
 
-    public CustomClassicLayoutManager(Hashtable hColsPositions, ReportEngine reportEngine, boolean isShowedRowNumber) {
+    public CustomClassicLayoutManager(Map<Object, Object> hColsPositions, ReportEngine reportEngine, boolean isShowedRowNumber) {
         super();
         this.hColsPositions = hColsPositions;
         this.reportEngine = reportEngine;
@@ -520,7 +520,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                 headerBand.addElement(this.createPaddingTextField(columnNameTf));
                 headerBand.addElement(currentValue);
             } else {
-                Vector vMultiGroupColumns = this.getOtherColumnsForMultigroup(column.getName());
+                List<Object> vMultiGroupColumns = this.getOtherColumnsForMultigroup(column.getName());
                 int yPosition = columnNameTf.getHeight();
                 yOffset = 0;
                 for (int i = vMultiGroupColumns.size() - 1; i >= 0; i--) {
@@ -605,13 +605,13 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
     }
 
-    protected Vector getOtherColumnsForMultigroup(String column) {
-        Vector vOtherColNames = new Vector();
-        ArrayList vAllAbstractColumns = new ArrayList();
+    protected List<Object> getOtherColumnsForMultigroup(String column) {
+        List<Object> vOtherColNames = new ArrayList<>();
+        List<Object> vAllAbstractColumns = new ArrayList<>();
         vOtherColNames.addAll(((DynamicJasperEngine) this.reportEngine).getMultiGroupColumnsForColumn(column));
         vAllAbstractColumns.addAll(this.getReport().getColumns());
         vAllAbstractColumns.addAll(((DynamicJasperEngine) this.reportEngine).getMultiGroupColumns());
-        Vector vMultiGroupColumns = new Vector();
+        List<Object> vMultiGroupColumns = new ArrayList<>();
         for (int i = 0; i < vOtherColNames.size(); i++) {
             for (int j = 0; j < vAllAbstractColumns.size(); j++) {
                 if (((AbstractColumn) vAllAbstractColumns.get(j)).getName().equals(vOtherColNames.get(i))) {
@@ -629,7 +629,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
      */
     @Override
     protected void layoutGroups() {
-        for (Iterator iter = this.getReport().getColumnsGroups().iterator(); iter.hasNext();) {
+        for (Iterator<?> iter = this.getReport().getColumnsGroups().iterator(); iter.hasNext();) {
             DJGroup columnsGroup = (DJGroup) iter.next();
             JRDesignGroup jgroup = this.getJRGroupFromDJGroup(columnsGroup);
 
