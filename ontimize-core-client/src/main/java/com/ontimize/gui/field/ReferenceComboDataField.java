@@ -975,9 +975,10 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 
 		protected void fillCache(EntityResult res) {
-			for (Entry<Object, Object> entry : ReferenceComboDataField.this.dataCache.entrySet()) {
-				Object oCacheKey = entry.getKey();
-				List<Object> vCacheValues = (List<Object>) entry.getValue();
+			Enumeration<?> enumKeys = ReferenceComboDataField.this.dataCache.keys();
+			while(enumKeys.hasMoreElements()) {
+				Object oCacheKey = enumKeys.nextElement();
+				List<Object> vCacheValues = (List<Object>) ReferenceComboDataField.this.dataCache.get(oCacheKey);
 				List<?> vResValues = (List<?>) res.get(oCacheKey);
 				if ((vResValues != null) && !vResValues.isEmpty()) {
 					vCacheValues.add(vCacheValues.size(), vResValues.get(0));
@@ -1001,21 +1002,21 @@ public class ReferenceComboDataField extends ComboDataField
 			if (value instanceof Map) {
 				if (!((Map<?, ?>) value).isEmpty()) {
 					// Value contains data: code and requested columns.
-					ReferenceComboDataField.this.dataCache = (Map<Object, Object>) value;
+					ReferenceComboDataField.this.dataCache = new EntityResultMapImpl(new HashMap<>((Map<?, ?>) value));
 					List<?> vCodes = (List<?>) ((Map<?, ?>) value).get(ReferenceComboDataField.this.code);
 					// Select the index 0
 					if ((vCodes == null) || vCodes.isEmpty() || (vCodes.get(0) == null)) {
 						// Nothing to do, no data found.
-						sTtext = this.getCodeDescription(value, (Hashtable) value);
+						sTtext = this.getCodeDescription(value, ReferenceComboDataField.this.dataCache);
 					} else {
-						sTtext = this.getCodeDescription(value, (Hashtable) value);
+						sTtext = this.getCodeDescription(value, ReferenceComboDataField.this.dataCache);
 					}
 				} else {
 					sTtext = " ";
 				}
 			} else {
 				ReferenceComboDataField.this.dataCache = ReferenceComboDataField.this.queryByCod(value);
-				Vector vCodes = (Vector) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
+				List<?> vCodes = (List<?>) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
 				// Select the index 0
 				if ((vCodes == null) || vCodes.isEmpty() || (vCodes.get(0) == null)) {
 					// Nothing to do, no data found.
@@ -2039,11 +2040,11 @@ public class ReferenceComboDataField extends ComboDataField
 				// If value is not a Hashtable then this must be the code and
 				// then
 				// performs a query.
-				if (value instanceof Hashtable) {
-					if (!((Hashtable) value).isEmpty()) {
+				if (value instanceof Map) {
+					if (!((Map<?,?>) value).isEmpty()) {
 						// Value contains the data: code and requested columns.
-						this.dataCache = (Hashtable) value;
-						Vector vCodes = (Vector) ((Hashtable) value).get(this.code);
+						this.dataCache = new EntityResultMapImpl(new HashMap<>((Map<?,?>)value));
+						List<?> vCodes = (List<?>) ((Map<?,?>) value).get(this.code);
 						((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector(vCodes);
 
 						// Select the index 0
@@ -2221,7 +2222,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * @param vCodes
 	 * @param codV
 	 */
-	protected void checkVCodesOnSetValue(Vector vCodes, Object codV) {
+	protected void checkVCodesOnSetValue(List<?> vCodes, Object codV) {
 		if ((vCodes == null) || vCodes.isEmpty() || (codV == null)) {
 			((JComboBox) this.dataField).setSelectedIndex(0);
 		} else {
@@ -2253,9 +2254,10 @@ public class ReferenceComboDataField extends ComboDataField
 	 * @param res
 	 */
 	protected void putCacheOnSetValue(EntityResult res) {
-		for (Entry<Object, Object> entry : this.dataCache.entrySet()) {
-			Object oCacheKey = entry.getKey();
-			List<Object> vCacheValues = (List<Object>) entry.getValue();
+		Enumeration<?> enumKeys = this.dataCache.keys();
+		while(enumKeys.hasMoreElements()) {
+			Object oCacheKey = enumKeys.nextElement();
+			List<Object> vCacheValues = (List<Object>) this.dataCache.get(oCacheKey);
 			List<?> resValues = (List<?>) res.get(oCacheKey);
 			if ((resValues != null) && !resValues.isEmpty()) {
 				vCacheValues.add(vCacheValues.size(), resValues.get(0));
@@ -2948,7 +2950,7 @@ public class ReferenceComboDataField extends ComboDataField
 			this.lastCacheTime = 0;
 			Object oValue = this.getValue();
 			this.dataCacheInitialized = false;
-			this.dataCache = new Hashtable();
+			this.dataCache = new EntityResultMapImpl();
 			if ((this.cacheManager != null) && this.useCacheManager) {
 				this.cacheManager.invalidateCache(this.entityName, this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences()));
 			}
@@ -3309,7 +3311,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 *
 	 * @return the data cache
 	 */
-	public Map<Object, Object> getDataCache() {
+	public EntityResult getDataCache() {
 		return this.dataCache;
 	}
 

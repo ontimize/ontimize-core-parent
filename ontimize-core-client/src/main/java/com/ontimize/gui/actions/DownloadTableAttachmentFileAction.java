@@ -1,6 +1,7 @@
 package com.ontimize.gui.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.ontimize.gui.Form;
@@ -19,10 +20,10 @@ public class DownloadTableAttachmentFileAction extends DownloadAttachmentFileAct
 	}
 
 	@Override
-	protected String getProposedFileName(ActionEvent evente) {
+	protected String getProposedFileName(ActionEvent event) {
 		final Form f = this.getForm(event);
 		if ((this.fileFieldName != null) && (this.table != null) && (this.table.getSelectedRowsNumber() > 0)) {
-			EntityResult erSelected = new EntityResultMapImpl(this.table.getSelectedRowData());
+			EntityResult erSelected = new EntityResultMapImpl(new HashMap<>(this.table.getSelectedRowData()));
 			Map<?, ?> recordValues = erSelected.getRecordValues(0);
 			return recordValues.get(this.fileFieldName).toString().trim();
 		} else {
@@ -36,7 +37,7 @@ public class DownloadTableAttachmentFileAction extends DownloadAttachmentFileAct
 		Map<Object, Object> keys = super.getAttachmentValuesKeys(f);
 		if ((this.table != null) && (this.table.getSelectedRowsNumber() > 0)) {
 
-			EntityResult erSelected = new EntityResultMapImpl(this.table.getSelectedRowData());
+			EntityResult erSelected = new EntityResultMapImpl(new HashMap<>(this.table.getSelectedRowData()));
 			for (int i = 0; i < erSelected.calculateRecordNumber(); i++) {
 				Map<?, ?> currentDoc = erSelected.getRecordValues(i);
 

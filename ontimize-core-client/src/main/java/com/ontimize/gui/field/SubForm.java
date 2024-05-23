@@ -1,11 +1,13 @@
 package com.ontimize.gui.field;
 
 import java.awt.Frame;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +22,8 @@ import com.ontimize.gui.IFormComponentManager;
 import com.ontimize.gui.OpenDialog;
 import com.ontimize.gui.ReferenceComponent;
 import com.ontimize.gui.manager.IFormManager;
-import com.ontimize.gui.table.TableAttribute;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.gui.table.TableAttribute;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 /**
  * This class allows to put a form into another form like a typical component. This subform is
@@ -47,11 +49,11 @@ public class SubForm extends IdentifiedAbstractFormComponent
 
     protected FormBuilder formBuilder = null;
 
-    protected Vector parentKeys = new Vector();
+    protected List<Object> parentKeys = new ArrayList<>();
 
     protected IFormManager formManager = null;
 
-    public SubForm(Hashtable params) throws Exception {
+    public SubForm(Map<Object, Object> params) throws Exception {
         super();
         this.init(params);
     }
@@ -85,7 +87,7 @@ public class SubForm extends IdentifiedAbstractFormComponent
     /**
      * Initializes parameters.
      * <p>
-     * @param params the <code>Hashtable</code> with parameters. Adds the next parameters:
+     * @param params the <code>Map</code> with parameters. Adds the next parameters:
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS * FRAME=BOX>
      *        <tr>
@@ -106,7 +108,7 @@ public class SubForm extends IdentifiedAbstractFormComponent
      *        </TABLE>
      */
     @Override
-    public void init(Hashtable params) {
+    public void init(Map<Object, Object> params) {
         String formName = (String) params.get("form");
         if (formName == null) {
             throw new IllegalArgumentException(this.getClass().toString() + " : form parameter needs to be specified");
@@ -150,8 +152,8 @@ public class SubForm extends IdentifiedAbstractFormComponent
         this.form.getInteractionManager().setCheckModifiedDataChangeEvent(false);
         this.form.getInteractionManager().setDataChangedEventProcessing(false);
 
-        if (value instanceof Hashtable) {
-            this.form.updateDataFields((Hashtable) value);
+        if (value instanceof Map) {
+            this.form.updateDataFields((Map<?,?>) value);
             this.setUpdateMode();
         } else {
             this.deleteData();
@@ -163,7 +165,7 @@ public class SubForm extends IdentifiedAbstractFormComponent
 
     @Override
     public void deleteData() {
-        this.form.updateDataFields(null);
+        this.form.updateDataFields(new HashMap<>());
         this.setQueryInsertMode();
         if ((this.parentKeys != null) && (this.parentKeys.size() > 0)) {
             for (int i = 0, j = this.parentKeys.size(); i < j; i++) {

@@ -85,7 +85,7 @@ public class AttachmentButtonListener implements ActionListener {
 
 			final Map<Object, Object> kv = new HashMap<>();
 			if (selectedFile != null) {
-				List<Object> v = this.form.getKeys();
+				List<String> v = this.form.getKeys();
 				Collections.sort(v);
 				for (Object element : v) {
 					Object o = this.form.getDataFieldValue((String) element);

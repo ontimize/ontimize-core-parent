@@ -33,35 +33,33 @@ import com.ontimize.util.ParseUtils;
 import com.ontimize.util.multilanguage.FormMultilanguageTable;
 
 /**
- * This class is the implementation for a text field.
- * <p>
+ * This class is the implementation for a text field. <p>
  *
  * @author Imatia Innovation
  */
 public class TextDataField extends TextFieldDataField implements InteractionManagerModeListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(TextDataField.class);
+	private static final Logger					logger					= LoggerFactory.getLogger(TextDataField.class);
 
 	/**
 	 * The parameter name for trimming trailing white spaces in field. By default, false.
 	 */
-	public static final String TRIM = "trim";
+	public static final String					TRIM					= "trim";
 
 	/**
 	 * The default value for uppercase condition. By default, false.
 	 */
-	public static boolean UPPERCASE_DEFAULT_VALUE = false;
+	public static boolean						UPPERCASE_DEFAULT_VALUE	= false;
 
 	/**
 	 * A reference to uppercase condition. By default, false.
 	 */
-	protected boolean uppercase = false;
+	protected boolean							uppercase				= false;
 
 	/**
-	 * The name of the parameter that indicates whether multi-language mode is activated for the
-	 * selected field
+	 * The name of the parameter that indicates whether multi-language mode is activated for the selected field
 	 */
-	private static final String MULTILANGUAGE_STR = "multilanguage";
+	private static final String					MULTILANGUAGE_STR		= "multilanguage";
 
 	/**
 	 * Condition about whether field value must contain leading and trailing whitespace omitted or not.
@@ -69,22 +67,22 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 	 * @since 5.2068EN
 	 */
 	// 5.2067EN-0.1
-	protected boolean trim = true;
+	protected boolean							trim					= true;
 
 	/**
 	 * The button that shows the translation table
 	 */
-	protected JButton multilanguageButton = null;
+	protected JButton							multilanguageButton		= null;
 
 	/**
 	 * Indicates whether the field is configured as multi-language or not
 	 */
-	protected boolean multilanguage = false;
+	protected boolean							multilanguage			= false;
 
 	/**
 	 * Variable where the local reference is stored.
 	 */
-	protected transient EntityReferenceLocator locator = null;
+	protected transient EntityReferenceLocator	locator					= null;
 
 	public TextDataField(Map<Object, Object> parameters) {
 		super();
@@ -124,8 +122,7 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 			try {
 				iMaxLength = Integer.parseInt(oMaxlength.toString());
 			} catch (Exception e) {
-				TextDataField.logger
-				.error(this.getClass().toString() + " : Error in parameter 'maxlength'." + e.getMessage(), e);
+				TextDataField.logger.error(this.getClass().toString() + " : Error in parameter 'maxlength'." + e.getMessage(), e);
 			}
 		}
 		if (iMaxLength != 0) {
@@ -191,8 +188,7 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 		this.multilanguageButton = new FieldButton();
 		this.multilanguageButton.setMargin(new Insets(0, 0, 0, 0));
 		this.multilanguageButton.setIcon(ImageManager.getIcon(ImageManager.BUNDLE));
-		this.multilanguageButton.setToolTipText(ApplicationManager.getTranslation("textdatafield.multilanguage",
-				ApplicationManager.getApplicationBundle()));
+		this.multilanguageButton.setToolTipText(ApplicationManager.getTranslation("textdatafield.multilanguage", ApplicationManager.getApplicationBundle()));
 		this.multilanguageButton.setFocusable(false);
 
 		this.multilanguageButton.addMouseListener(new MouseAdapter() {
@@ -206,33 +202,28 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 		});
 
 		super.add(this.multilanguageButton,
-				new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-						GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-
+				new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
 		if (this.labelPosition != SwingConstants.TOP) {
-			super.add(this.multilanguageButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0,
-					GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			super.add(this.multilanguageButton,
+					new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 		} else {
-			super.add(this.multilanguageButton, new GridBagConstraints(2, 2, 1, 1, 0, 0,
-					GridBagConstraints.FIRST_LINE_END, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			super.add(this.multilanguageButton, new GridBagConstraints(2, 2, 1, 1, 0, 0, GridBagConstraints.FIRST_LINE_END, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 		}
 
 	}
 
 	/**
-	 * Creates and displays the translation dialog that is activated by clicking on the corresponding
-	 * button
+	 * Creates and displays the translation dialog that is activated by clicking on the corresponding button
 	 */
 	protected void createAndShowDialogTranslation() {
 
-		Map<Object, Object> formKeys = new HashMap<>();
-		for (Object o : this.getParentForm().getKeys()) {
+		Map<String, Object> formKeys = new HashMap<>();
+		for (String o : this.getParentForm().getKeys()) {
 			formKeys.put(o, this.getParentForm().getDataFieldValue((String) o));
 		}
 
-		Dialog owner = new FormMultilanguageTable(SwingUtilities.getWindowAncestor(this.getMultilanguageButton()), true,
-				this.locator, this.getParentForm().getEntityName(),
+		Dialog owner = new FormMultilanguageTable(SwingUtilities.getWindowAncestor(this.getMultilanguageButton()), true, this.locator, this.getParentForm().getEntityName(),
 				(String) this.getAttribute(), formKeys, false);
 		if (((FormMultilanguageTable) owner).isCreated()) {
 			ApplicationManager.center(owner);
@@ -244,6 +235,7 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 
 	/**
 	 * Checks if the field is multi-language or not
+	 * 
 	 * @return <code>true</code> if the field is multi-language, <code>false</code> otherwise.
 	 */
 	public boolean isMultilanguage() {
@@ -252,8 +244,9 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 
 	/**
 	 * Sets if the field is multi-language or not
-	 * @param multilanguage <code>true</code> to set the field as multi-language, <code>false</code>
-	 *        otherwise
+	 * 
+	 * @param multilanguage
+	 *            <code>true</code> to set the field as multi-language, <code>false</code> otherwise
 	 */
 	public void setMultilanguage(boolean multilanguage) {
 		this.multilanguage = multilanguage;
@@ -261,6 +254,7 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 
 	/**
 	 * Returns the button showing the multi-language translation dialog
+	 * 
 	 * @return The multi-language button
 	 */
 	public JButton getMultilanguageButton() {
@@ -269,7 +263,9 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 
 	/**
 	 * Sets the button that displays the multi-language translation dialog
-	 * @param multilanguageButton the multi-language button
+	 * 
+	 * @param multilanguageButton
+	 *            the multi-language button
 	 */
 	public void setMultilanguageButton(JButton multilanguageButton) {
 		this.multilanguageButton = multilanguageButton;
@@ -281,8 +277,8 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 	}
 
 	/**
-	 * Gets the maximum length for field.
-	 * <p>
+	 * Gets the maximum length for field. <p>
+	 * 
 	 * @return the max length
 	 */
 	public int getMaxLength() {
@@ -295,9 +291,10 @@ public class TextDataField extends TextFieldDataField implements InteractionMana
 	}
 
 	/**
-	 * Sets the max length.
-	 * <p>
-	 * @param l the length to set
+	 * Sets the max length. <p>
+	 * 
+	 * @param l
+	 *            the length to set
 	 */
 	public void setMaxLength(int l) {
 		Document doc = ((JTextField) this.dataField).getDocument();

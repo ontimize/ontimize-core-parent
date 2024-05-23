@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -306,7 +307,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 		// Now executes the query
 		try {
 			Entity ent = this.locator.getEntityReference(this.entity);
-			Hashtable kv = new Hashtable();
+			Map<Object, Object> kv = new HashMap<>();
 			for (Object element : this.queryAttributes) {
 				Object v = this.parentForm.getDataFieldValue(element.toString());
 				if (v != null) {
@@ -325,8 +326,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 				ConnectionManager.checkEntityResult(res, this.locator);
 				// Now look in the form the values of the keys. If these values
 				// exist then select the row
-				Hashtable hKeys = new Hashtable();
-				Vector vKeys = this.table.getKeys();
+				Map<Object, Object> hKeys = new HashMap<>();
+				List<Object> vKeys = this.table.getKeys();
 				boolean all = true;
 				for (Object vKey : vKeys) {
 					Object v = this.parentForm.getDataFieldValue(vKey.toString());
@@ -421,7 +422,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 							QueryButton.this.someFieldChangeByUser = false;
 							// Set the value for the selected index
 							Map<Object, Object> hKeysValues = new HashMap<>();
-							Vector vTableKeys = QueryButton.this.table.getKeys();
+							List<Object> vTableKeys = QueryButton.this.table.getKeys();
 							for (Object element : QueryButton.this.formAttributes) {
 								if (vTableKeys.contains(element)
 										&& (QueryButton.this.parentForm.getDataFieldValueFromFormCache(
@@ -467,8 +468,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 						try {
 							QueryButton.this.someFieldChangeByUser = false;
 							// Set the value for the current selection
-							Hashtable hKVs = new Hashtable();
-							Vector vTableKeys = QueryButton.this.table.getKeys();
+							Map<Object, Object> hKVs = new HashMap<>();
+							List<Object> vTableKeys = QueryButton.this.table.getKeys();
 							for (Object element : QueryButton.this.formAttributes) {
 								if (vTableKeys.contains(element)
 										&& (QueryButton.this.parentForm.getDataFieldValueFromFormCache(
@@ -523,11 +524,11 @@ public class QueryButton extends Button implements ReferenceComponent {
 					QueryButton.this.parentForm.deleteDataField(element.toString());
 				}
 				// Now query in function of the table
-				Hashtable hKv = QueryButton.this.table.getRowData(iSelectedRow);
-				Enumeration enumKeys = hKv.keys();
+				Map<Object, Object> hKv = QueryButton.this.table.getRowData(iSelectedRow);
+				Iterator<?> enumKeys = hKv.keySet().iterator();
 				// Set the values
-				while (enumKeys.hasMoreElements()) {
-					Object oKey = enumKeys.nextElement();
+				while (enumKeys.hasNext()) {
+					Object oKey = enumKeys.next();
 					if (QueryButton.this.formAttributes.contains(oKey)) {
 						QueryButton.this.parentForm.setDataFieldValue(oKey, hKv.get(oKey));
 					}

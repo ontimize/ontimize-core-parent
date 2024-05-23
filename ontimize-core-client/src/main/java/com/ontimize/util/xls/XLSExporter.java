@@ -3,10 +3,11 @@ package com.ontimize.util.xls;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Workbook;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
 
 public interface XLSExporter {
 
@@ -22,7 +23,7 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, boolean writeHeader,
             boolean openFile) throws Exception;
 
     /**
@@ -39,7 +40,7 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception;
 
     /**
@@ -59,8 +60,8 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
-            List columnHeaderStyles, Workbook wb, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, List<?> columnStyles,
+            List<?> columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception;
 
     /**
@@ -79,8 +80,8 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
-            List columnHeaderStyles, Workbook wb, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, List<?> columnStyles,
+            List<?> columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean openFile) throws Exception;
 
     // Next 4 methods added in 5.2062EN in order to format currency columns
@@ -99,10 +100,10 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?, ?> hColumnRenderers, List columnSort,
             boolean writeHeader, boolean openFile) throws Exception;
 
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List columnSort,
             boolean writeHeader, boolean xlsx, boolean openFile)
             throws Exception;
 
@@ -125,8 +126,8 @@ public interface XLSExporter {
      * @throws Exception
      *
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+            List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean xlsx, boolean openFile) throws Exception;
 
     /**
@@ -146,8 +147,8 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+            List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean openFile) throws Exception;
 
 }

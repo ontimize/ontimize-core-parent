@@ -5449,13 +5449,13 @@ public class Table extends JRootPane
      * @see #getAllPrimaryKeys
      */
     @Deprecated
-    public Vector getPrimaryKeys() {
+    public List<Object> getPrimaryKeys() {
         this.checkRefreshThread();
-        Hashtable hAllKeys = this.getAllPrimaryKeys();
+        Map<Object, Object> hAllKeys = this.getAllPrimaryKeys();
         if (hAllKeys.containsKey(this.keyField)) {
-            return (Vector) hAllKeys.get(this.keyField);
+            return (List<Object>) hAllKeys.get(this.keyField);
         } else {
-            return new Vector(0);
+            return new ArrayList<>(0);
         }
     }
 
@@ -5465,11 +5465,11 @@ public class Table extends JRootPane
      * the table corresponding to those columns.
      * @return the table primary keys values
      */
-    public Hashtable getAllPrimaryKeys() {
+    public Map<Object, Object> getAllPrimaryKeys() {
         this.checkRefreshThread();
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         // Search the column name in the table header
-        Vector vKeys = this.getKeys();
+        List<Object> vKeys = this.getKeys();
         for (int i = 0; i < vKeys.size(); i++) {
             TableColumn tc = this.table.getColumn(vKeys.get(i));
             if (tc != null) {
@@ -5483,7 +5483,7 @@ public class Table extends JRootPane
                 if (this.isInsertingEnabled()) {
                     rowCount = rowCount - 1;
                 }
-                Vector vKeyValues = new Vector();
+                List<Object> vKeyValues = new ArrayList<>();
                 for (int j = 0; j < rowCount; j++) {
                     vKeyValues.add(vKeyValues.size(), ((TableSorter) tableModel).getValueAt(j, columnModelIndex));
                 }
@@ -5847,10 +5847,10 @@ public class Table extends JRootPane
      * @return a Hastable with the key values. The value will be null if the rowIndex is bigger than the
      *         total amount of records in the grid.
      */
-    public Hashtable getRowKeys(int rowIndex) {
+    public Map<Object, Object> getRowKeys(int rowIndex) {
         this.checkRefreshThread();
-        Hashtable rowKeys = new Hashtable();
-        Vector vKeys = this.getKeys();
+        Map<Object, Object> rowKeys = new HashMap<>();
+        List<Object> vKeys = this.getKeys();
         TableSorter tableSorter = this.getTableSorter();
         int rowCount = tableSorter.getRowCount();
         // if (tableSorter.isSum()) {
@@ -5991,10 +5991,10 @@ public class Table extends JRootPane
      * @param keysValues the values for the keys that defines the queried row.
      * @return the view row index of the coincidence, -1 otherwise
      */
-    public int getRowForKeys(Hashtable keysValues) {
+    public int getRowForKeys(Map<?,?> keysValues) {
         this.checkRefreshThread();
         // Get the first key
-        Vector v = this.getKeys();
+        List<Object> v = this.getKeys();
         if (v.isEmpty()) {
             return -1;
         }
@@ -8605,7 +8605,7 @@ public class Table extends JRootPane
      *        Hashtable containing information for a row
      * @see TableSorter#addRows(Vector)
      */
-    public void addRows(Vector rowsData) {
+    public void addRows(List<Object> rowsData) {
         this.checkRefreshThread();
         TableSorter ts = (TableSorter) this.table.getModel();
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
@@ -12624,24 +12624,24 @@ public class Table extends JRootPane
 	 * 
 	 * @return the information contained by the selected rows, and null when there is no selection
 	 */
-	public Hashtable getSelectedRowData() {
+	public Map<Object, Object> getSelectedRowData() {
 		if (this.table.getSelectedRowCount() == 0) {
 			return null;
 		}
 		// Return a new hastable with the data
 		int[] selectedRows = this.table.getSelectedRows();
-		Vector attributes = this.getAttributeList();
-		Hashtable hData = new Hashtable();
+		List<Object> attributes = this.getAttributeList();
+		Map<Object, Object> hData = new HashMap<>();
 		for (int i = 0; i < selectedRows.length; i++) {
 			int row = selectedRows[i];
-			Hashtable hRowData = this.getRowData(row);
+			Map<Object, Object> hRowData = this.getRowData(row);
 			if (hRowData == null) {
 				continue;
 			}
 			for (int j = 0; j < attributes.size(); j++) {
 				Object oKey = attributes.get(j);
 				Object oValue = hRowData.get(oKey);
-				Vector v = (Vector) hData.get(oKey);
+				List<Object> v = (List<Object>) hData.get(oKey);
 				if (v == null) {
 					Vector vAux = new Vector();
 					vAux.add(0, oValue);
@@ -13404,7 +13404,7 @@ public class Table extends JRootPane
 	 * @param autoSizeColumns
 	 *            if true, the column size will be adjusted to its new contents
 	 */
-	public void setVisibleColumns(List<Object> visibleColumns, boolean autoSizeColumns) {
+	public void setVisibleColumns(List<?> visibleColumns, boolean autoSizeColumns) {
 		if (visibleColumns == null) {
 			throw new IllegalArgumentException("visiblecols can not be NULL");
 		}

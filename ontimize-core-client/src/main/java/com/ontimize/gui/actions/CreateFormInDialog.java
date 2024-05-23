@@ -158,7 +158,7 @@ public class CreateFormInDialog extends AbstractButtonAction {
 		}
 		Map<Object, Object> hKeysValues = new HashMap<>();
 		Map<Object, Object> kv = new HashMap<>();
-		List<Object> vKeys = this.form.getKeys();
+		List<String> vKeys = this.form.getKeys();
 		if (vKeys.isEmpty()) {
 			throw new Exception("'keys' parameter is mandatory in the form to open");
 		} else {

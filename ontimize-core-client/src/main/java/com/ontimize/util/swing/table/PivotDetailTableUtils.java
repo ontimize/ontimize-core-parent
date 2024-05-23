@@ -14,13 +14,12 @@ import java.awt.event.ActionListener;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -35,7 +34,6 @@ import javax.swing.table.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.db.EntityResultUtils;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.button.Button;
@@ -43,6 +41,8 @@ import com.ontimize.gui.container.Column;
 import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.field.Label;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 
 public class PivotDetailTableUtils extends JPanel {
 
@@ -60,17 +60,17 @@ public class PivotDetailTableUtils extends JPanel {
 
         protected PivotDetailPanel centerPanel;
 
-        public PivotDetailDialog(Frame owner, TableModel model, Hashtable parameters, ResourceBundle res) {
+        public PivotDetailDialog(Frame owner, TableModel model, Map<Object, Object> parameters, ResourceBundle res) {
             super(owner, PivotDetailTableUtils.translate(PivotDetailDialog.PIVOT_DETAIL_DIALOG_TITLE, res, null), true);
             this.init(model, parameters, res);
         }
 
-        public PivotDetailDialog(Dialog owner, TableModel model, Hashtable parameters, ResourceBundle res) {
+        public PivotDetailDialog(Dialog owner, TableModel model, Map<Object, Object> parameters, ResourceBundle res) {
             super(owner, PivotDetailTableUtils.translate(PivotDetailDialog.PIVOT_DETAIL_DIALOG_TITLE, res, null), true);
             this.init(model, parameters, res);
         }
 
-        protected void init(TableModel model, Hashtable parameters, ResourceBundle res) {
+        protected void init(TableModel model, Map<Object, Object> parameters, ResourceBundle res) {
             this.centerPanel = new PivotDetailPanel(model, parameters, res);
             JScrollPane scroll = new JScrollPane(this.centerPanel);
             this.getContentPane().setLayout(new BorderLayout());
@@ -78,7 +78,7 @@ public class PivotDetailTableUtils extends JPanel {
             this.pack();
         }
 
-        public void setModel(TableModel model, Hashtable information) {
+        public void setModel(TableModel model, Map<Object, Object> information) {
             this.centerPanel.setModel(model, information);
         }
 
@@ -91,7 +91,7 @@ public class PivotDetailTableUtils extends JPanel {
 
         }
 
-        public void updateVisibleColumns(List visibleCols) {
+        public void updateVisibleColumns(List<String> visibleCols) {
             this.centerPanel.updateVisibleColumns(visibleCols);
         }
 
@@ -113,9 +113,9 @@ public class PivotDetailTableUtils extends JPanel {
 
         protected Label column;
 
-        protected Vector cols;
+        protected List<String> cols;
 
-        protected Vector visibleCols;
+        protected List<String> visibleCols;
 
         static class AuxPanel extends JPanel {
 
@@ -135,21 +135,20 @@ public class PivotDetailTableUtils extends JPanel {
 
         }
 
-        public PivotDetailPanel(TableModel model, Hashtable parameters, ResourceBundle res) {
+        public PivotDetailPanel(TableModel model, Map<Object, Object> parameters, ResourceBundle res) {
             this.model = model;
             this.resources = res;
             this.init(parameters);
         }
 
-        public void setModel(TableModel model, Hashtable information) {
+        public void setModel(TableModel model, Map<Object, Object> information) {
             this.model = model;
             this.updateTitle(information);
             this.updateTable();
         }
 
         public void setRenderersForColumns(Map<?, ?> renderersForColumnsMap) {
-            for (Entry actualEntry : renderersForColumnsMap.entrySet()) {
-                String columnName = (String) actualEntry.getKey();
+            for (Entry<?,?> actualEntry : renderersForColumnsMap.entrySet()) {
                 TableCellRenderer originalColumnRender = ((TableCellRenderer) actualEntry.getValue());
                 try {
                     this.table.setRendererForColumn(actualEntry.getKey().toString(),
@@ -165,7 +164,7 @@ public class PivotDetailTableUtils extends JPanel {
         public void setWidthAndPositionColumns(String colPositionAndWith) {
             if (colPositionAndWith != null) {
                 StringTokenizer st = new StringTokenizer(colPositionAndWith, ";");
-                List<String> colPositionVisible = new Vector<String>();
+                List<String> colPositionVisible = new ArrayList<>();
                 while (st.hasMoreTokens()) {
                     String t = st.nextToken();
                     int iIg = t.indexOf('=');
@@ -199,11 +198,11 @@ public class PivotDetailTableUtils extends JPanel {
 
                 }
 
-                this.table.setVisibleColumns((Vector) colPositionVisible, true);
+                this.table.setVisibleColumns((List<?>) colPositionVisible, true);
             }
         }
 
-        public void updateVisibleColumns(List visibleCols) {
+        public void updateVisibleColumns(List<String> visibleCols) {
             if ((visibleCols == null) || visibleCols.isEmpty()) {
                 this.visibleCols = null;
                 return;
@@ -218,7 +217,7 @@ public class PivotDetailTableUtils extends JPanel {
             return this.model;
         }
 
-        protected void init(Hashtable parameters) {
+        protected void init(Map<Object, Object> parameters) {
             this.setLayout(new BorderLayout());
 
             this.add(this.configureInformationTitle(), BorderLayout.NORTH);
@@ -260,7 +259,7 @@ public class PivotDetailTableUtils extends JPanel {
             JPanel pTitle = new JPanel();
             pTitle.setLayout(new GridBagLayout());
 
-            Hashtable param = new Hashtable();
+            Map<Object, Object> param = new HashMap<>();
             param.put("title", PivotDetailTableUtils.translate(PivotDetailTableUtils.PIVOTDETAILTABLE_INFORMATION_TITLE,
                     this.resources, null));
             param.put("expand", "yes");
@@ -274,7 +273,7 @@ public class PivotDetailTableUtils extends JPanel {
             this.rows = new Label(param);
             this.rows.setResourceBundle(this.resources);
 
-            param = new Hashtable();
+            param = new HashMap<>();
             param.put("attr", "column");
             param.put("text", "");
             param.put("align", "left");
@@ -297,7 +296,7 @@ public class PivotDetailTableUtils extends JPanel {
             JPanel pClose = new JPanel();
             pClose.setLayout(new GridBagLayout());
 
-            Hashtable param = new Hashtable();
+            Map<Object, Object> param = new HashMap<>();
             param.put("key", "close");
             param.put("text", PivotDetailTableUtils.translate("close", this.resources, null));
             Button closeB = new Button(param);
@@ -324,10 +323,10 @@ public class PivotDetailTableUtils extends JPanel {
         }
 
         protected EntityResult createEntityResult(TableModel tableModel) {
-            EntityResult eR = new EntityResult();
+            EntityResult eR = new EntityResultMapImpl();
 
             if (tableModel != null) {
-                List names = new Vector();
+                List<Object> names = new ArrayList<>();
                 if (this.visibleCols != null) {
                     names.addAll(this.visibleCols);
                 } else {
@@ -338,7 +337,7 @@ public class PivotDetailTableUtils extends JPanel {
                 eR = EntityResultUtils.createEmptyEntityResult(names);
 
                 for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    Hashtable record = new Hashtable();
+                	Map<Object, Object> record = new HashMap<>();
                     for (int j = 0; j < names.size(); j++) {
                         String currentColName = (String) names.get(j);
                         int colIndex = PivotDetailPanel.columnIndex(tableModel, currentColName);
@@ -364,7 +363,7 @@ public class PivotDetailTableUtils extends JPanel {
             return -1;
         }
 
-        protected void updateTitle(Hashtable information) {
+        protected void updateTitle(Map<Object, Object> information) {
             if (information != null) {
                 Object oRowList = information.get("rows");
                 if (oRowList instanceof ArrayList) {
@@ -378,7 +377,7 @@ public class PivotDetailTableUtils extends JPanel {
                 Object oColumnList = information.get("column");
                 if (oColumnList instanceof ArrayList) {
                     String text = this.getTranslation(PivotDetailTableUtils.PIVOTDETAILTABLE_GROUPINGCOLUMNS_TITLE,
-                            (ArrayList) oColumnList);
+                            (ArrayList<?>) oColumnList);
                     this.column.setText(text);
                 } else {
                     this.column.setText(null);
@@ -386,7 +385,7 @@ public class PivotDetailTableUtils extends JPanel {
             }
         }
 
-        protected String getTranslation(String title, ArrayList listValues) {
+        protected String getTranslation(String title, ArrayList<?> listValues) {
             StringBuilder sb = new StringBuilder();
             if (title != null) {
                 sb.append(PivotDetailTableUtils.translate(title, this.resources, null));
@@ -419,7 +418,7 @@ public class PivotDetailTableUtils extends JPanel {
 
     }
 
-    public static EJDialog createPivotDetailDialog(Window w, TableModel model, Hashtable parameters,
+    public static EJDialog createPivotDetailDialog(Window w, TableModel model, Map<Object, Object> parameters,
             ResourceBundle res) {
         PivotDetailDialog pdd = null;
         if (w instanceof Dialog) {
