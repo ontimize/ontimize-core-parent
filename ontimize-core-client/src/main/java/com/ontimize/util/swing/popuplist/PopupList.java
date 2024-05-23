@@ -19,9 +19,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.Form;
+import com.ontimize.jee.common.dto.EntityResult;
 
 public abstract class PopupList extends JList {
 

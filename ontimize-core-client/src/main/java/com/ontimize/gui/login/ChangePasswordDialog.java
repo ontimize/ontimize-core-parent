@@ -13,6 +13,7 @@ import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -25,11 +26,11 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.Application;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.field.PasswordDataField;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.xml.DefaultXMLParametersManager;
 
 public class ChangePasswordDialog extends AbstractChangePasswordDialog {
@@ -90,7 +91,7 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
 
     }
 
-    public ChangePasswordDialog(Application mainApplication, Hashtable parameters, EntityReferenceLocator locator,
+    public ChangePasswordDialog(Application mainApplication, Map<Object, Object> parameters, EntityReferenceLocator locator,
             String user, String password) {
         super(mainApplication, parameters, locator, user, password);
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -116,7 +117,7 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
         return backgroundDimension;
     }
 
-    protected void layoutComponents(Hashtable parameters) {
+    protected void layoutComponents(Map<Object, Object> parameters) {
         ImageIcon icon = this.createImage(parameters);
         if (icon != null) {
             this.background = new BackgroundPanel(icon);
@@ -224,8 +225,8 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
     }
 
     @Override
-    protected PasswordDataField createCurrentPassword(Hashtable parameters) {
-        Hashtable h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
+    protected PasswordDataField createCurrentPassword(Map<Object, Object> parameters) {
+    	Map<Object, Object> h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
         h.putAll(DefaultXMLParametersManager
             .getParameters(AbstractChangePasswordDialog.CHANGE_PASSWORD_DIALOG_CURRENT_PASSWORD));
         h.putAll(DefaultXMLParametersManager.getParameters(IChangePasswordDialog.SECURITY_PASSWORD_PARAMETERS));
@@ -263,8 +264,8 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
     }
 
     @Override
-    protected PasswordDataField createPassword(Hashtable parameters) {
-        Hashtable h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
+    protected PasswordDataField createPassword(Map<Object, Object> parameters) {
+    	Map<Object, Object> h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
         h.putAll(DefaultXMLParametersManager
             .getParameters(AbstractChangePasswordDialog.CHANGE_PASSWORD_DIALOG_NEW_PASSWORD));
         h.putAll(DefaultXMLParametersManager.getParameters(IChangePasswordDialog.SECURITY_PASSWORD_PARAMETERS));
@@ -295,8 +296,8 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
     }
 
     @Override
-    protected PasswordDataField createRepeatPassword(Hashtable parameters) {
-        Hashtable h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
+    protected PasswordDataField createRepeatPassword(Map<Object, Object> parameters) {
+    	Map<Object, Object> h = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
         h.putAll(DefaultXMLParametersManager
             .getParameters(AbstractChangePasswordDialog.CHANGE_PASSWORD_DIALOG_REPEAT_NEW_PASSWORD));
         h.putAll(DefaultXMLParametersManager.getParameters(IChangePasswordDialog.SECURITY_PASSWORD_PARAMETERS));
@@ -327,7 +328,7 @@ public class ChangePasswordDialog extends AbstractChangePasswordDialog {
     }
 
     @Override
-    protected JLabel createSecurityLabel(Hashtable parameters) {
+    protected JLabel createSecurityLabel(Map<Object, Object> parameters) {
         JLabel securityLabel = super.createSecurityLabel(parameters);
         securityLabel.setForeground(Color.BLUE.darker());
         securityLabel.setPreferredSize(new Dimension(200, 14));

@@ -1,7 +1,7 @@
 package com.ontimize.gui;
 
 import java.util.EventObject;
-import java.util.Hashtable;
+import java.util.Map;
 
 public class DataNavigationEvent extends EventObject {
 
@@ -11,7 +11,7 @@ public class DataNavigationEvent extends EventObject {
 
     protected Form form = null;
 
-    protected Hashtable data = null;
+    protected Map<Object, Object> data = null;
 
     protected int type = 0;
 
@@ -19,7 +19,7 @@ public class DataNavigationEvent extends EventObject {
 
     protected int oldIndex = -1;
 
-    public DataNavigationEvent(Form source, Hashtable data, int type, int index, int oldIndex) {
+    public DataNavigationEvent(Form source, Map<Object, Object> data, int type, int index, int oldIndex) {
         super(source);
         this.form = source;
         this.data = data;
@@ -36,7 +36,7 @@ public class DataNavigationEvent extends EventObject {
         return this.form;
     }
 
-    public Hashtable getData() {
+    public Map<Object, Object> getData() {
         return this.data;
     }
 

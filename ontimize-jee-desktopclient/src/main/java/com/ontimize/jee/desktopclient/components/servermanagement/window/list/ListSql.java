@@ -9,11 +9,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.event.MouseListener;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -57,7 +56,7 @@ public class ListSql extends JScrollPane implements DataComponent, AccessForm, V
      * @param params the params
      * @throws Exception the exception
      */
-    public ListSql(Hashtable params) throws Exception {
+    public ListSql(Map<Object, Object> params) throws Exception {
         super();
         this.list = new JList(new DefaultListModel());
         this.setViewportView(this.list);
@@ -217,17 +216,17 @@ public class ListSql extends JScrollPane implements DataComponent, AccessForm, V
     /*
      * (non-Javadoc)
      *
-     * @see com.ontimize.gui.field.FormComponent#init(java.util.Hashtable)
+     * @see com.ontimize.gui.field.FormComponent#init(java.util.Map)
      */
     @Override
-    public void init(Hashtable hashtable) throws Exception {
-        this.attr = (String) hashtable.get("attr");
+    public void init(Map<Object, Object> parameters) throws Exception {
+        this.attr = (String) parameters.get("attr");
         if (this.attr == null) {
             this.attr = "list";
         }
 
-        if (hashtable.containsKey("renderer")) {
-            ListCellRenderer cellRenderer = ReflectionTools.newInstance((String) hashtable.get("renderer"),
+        if (parameters.containsKey("renderer")) {
+            ListCellRenderer cellRenderer = ReflectionTools.newInstance((String) parameters.get("renderer"),
                     ListCellRenderer.class, this);
             this.list.setCellRenderer(cellRenderer);
         } else {
@@ -248,7 +247,7 @@ public class ListSql extends JScrollPane implements DataComponent, AccessForm, V
             });
         }
 
-        Object selection = hashtable.get("selection");
+        Object selection = parameters.get("selection");
         if (selection != null) {
             if ("no".equals(selection)) {
                 this.list.setSelectionModel(new DefaultListSelectionModel() {
@@ -268,15 +267,15 @@ public class ListSql extends JScrollPane implements DataComponent, AccessForm, V
         this.list.setLayoutOrientation(JList.VERTICAL);
         this.list.setVisibleRowCount(-1);
 
-        if ("no".equals(hashtable.get("opaque"))) {
+        if ("no".equals(parameters.get("opaque"))) {
             this.getViewport().setOpaque(false);
             this.list.setOpaque(false);
             ((DefaultListCellRenderer) this.list.getCellRenderer()).setOpaque(false);
         }
-        if ("no".equals(hashtable.get("scrollh"))) {
+        if ("no".equals(parameters.get("scrollh"))) {
             this.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         }
-        if ("no".equals(hashtable.get("scrollv"))) {
+        if ("no".equals(parameters.get("scrollv"))) {
             this.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         }
     }
@@ -287,7 +286,7 @@ public class ListSql extends JScrollPane implements DataComponent, AccessForm, V
      * @see com.ontimize.gui.i18n.Internationalization#getTextsToTranslate()
      */
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         return null;
     }
 

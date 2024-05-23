@@ -1,9 +1,11 @@
 package com.ontimize.gui.container;
 
 import java.awt.Component;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,11 +16,11 @@ public class BackgroundImageGroup extends JImageContainer implements DataCompone
 
     private static final Logger logger = LoggerFactory.getLogger(BackgroundImageGroup.class);
 
-    protected Hashtable dataComponent = new Hashtable();
+    protected Map<Object, DataComponent> dataComponent = new HashMap<>();
 
     protected Object attribute = null;
 
-    public BackgroundImageGroup(Hashtable parameters) {
+    public BackgroundImageGroup(Map<Object, Object> parameters) {
         // Parent constructor execute the initialization
         super(parameters);
         Object attr = parameters.get("attr");
@@ -33,7 +35,7 @@ public class BackgroundImageGroup extends JImageContainer implements DataCompone
     @Override
     public void add(Component comp, Object constraints) {
         if (comp instanceof DataComponent) {
-            this.dataComponent.put(((DataComponent) comp).getAttribute(), comp);
+            this.dataComponent.put(((DataComponent) comp).getAttribute(), (DataComponent)comp);
         }
         super.add(comp, constraints);
     }
@@ -44,51 +46,33 @@ public class BackgroundImageGroup extends JImageContainer implements DataCompone
     }
 
     @Override
-    public Hashtable getGroupValue() {
-        Hashtable hValue = new Hashtable();
-        Enumeration c = this.dataComponent.keys();
-        while (c.hasMoreElements()) {
-            Object oKey = c.nextElement();
-            Object pDataComponent = this.dataComponent.get(oKey);
-            hValue.put(oKey, ((DataComponent) pDataComponent).getValue());
-        }
+    public Map<Object, Object> getGroupValue() {
+    	Map<Object, Object> hValue = new HashMap<>();
+    	for(Entry<Object, DataComponent> entry:this.dataComponent.entrySet()) {
+            hValue.put(entry.getKey(), entry.getValue().getValue());
+    	}
         return hValue;
     }
 
     @Override
     public void setAllModificable(boolean modif) {
-        Enumeration c = this.dataComponent.keys();
-        while (c.hasMoreElements()) {
-            Object oKey = c.nextElement();
-            Object oDataComponent = this.dataComponent.get(oKey);
-            if (oDataComponent instanceof DataComponent) {
-                ((DataComponent) oDataComponent).setModifiable(modif);
-            }
-        }
+    	for(Entry<Object, DataComponent> entry:this.dataComponent.entrySet()) {
+    		entry.getValue().setModifiable(modif);
+    	}
     }
 
     @Override
     public void setAllEnabled(boolean en) {
-        Enumeration c = this.dataComponent.keys();
-        while (c.hasMoreElements()) {
-            Object oKey = c.nextElement();
-            Object oDataComponent = this.dataComponent.get(oKey);
-            if (oDataComponent instanceof DataComponent) {
-                ((DataComponent) oDataComponent).setEnabled(en);
-            }
-        }
+    	for(Entry<Object, DataComponent> entry:this.dataComponent.entrySet()) {
+    		entry.getValue().setEnabled(en);
+    	}
     }
 
     @Override
-    public void setGroupValue(Hashtable value) {
-        Enumeration c = this.dataComponent.keys();
-        while (c.hasMoreElements()) {
-            Object oKey = c.nextElement();
-            Object oDataComponent = this.dataComponent.get(oKey);
-            if (oDataComponent instanceof DataComponent) {
-                ((DataComponent) oDataComponent).setValue(value.get(((DataComponent) oDataComponent).getAttribute()));
-            }
-        }
+    public void setGroupValue(Map<?, ?> value) {
+    	for(Entry<Object, DataComponent> entry:this.dataComponent.entrySet()) {
+    		entry.getValue().setValue(value.get(entry.getValue().getAttribute()));
+    	}
     }
 
     @Override
@@ -106,12 +90,11 @@ public class BackgroundImageGroup extends JImageContainer implements DataCompone
     }
 
     @Override
-    public Vector getAttributes() {
-        Vector v = new Vector();
-        Enumeration enumKeys = this.dataComponent.keys();
-        while (enumKeys.hasMoreElements()) {
-            v.add(enumKeys.nextElement());
-        }
+    public List<Object> getAttributes() {
+    	List<Object> v = new ArrayList<>();
+    	for(Entry<Object, DataComponent> entry:this.dataComponent.entrySet()) {
+    		v.add(entry.getKey());
+    	}
         return v;
     }
 

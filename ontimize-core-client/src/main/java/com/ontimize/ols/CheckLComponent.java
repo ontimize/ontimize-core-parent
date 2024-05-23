@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.ApplicationManager;
+import com.ontimize.jee.common.ols.ILCheck;
 
 public class CheckLComponent {
 
@@ -17,7 +18,7 @@ public class CheckLComponent {
         } catch (Exception e) {
             CheckLComponent.logger.trace(null, e);
             try {
-                Class c = Class.forName("com.ontimize.ols.LCheck");
+                Class<?> c = Class.forName("com.ontimize.ols.LCheck");
                 CheckLComponent.obj = c.newInstance();
             } catch (Exception ex) {
                 CheckLComponent.logger.trace(null, ex);

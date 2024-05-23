@@ -2,6 +2,7 @@ package com.ontimize.jee.desktopclient.components.treetabbedformmanager.levelman
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -20,6 +21,7 @@ import com.ontimize.gui.MessageDialog;
 import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.table.Table;
 import com.ontimize.gui.table.TableSorter;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.desktopclient.components.treetabbedformmanager.ITreeTabbedFormManager;
 import com.ontimize.util.FormatPattern;
 import com.ontimize.util.ParseUtils;
@@ -46,7 +48,7 @@ public class DefaultLevel extends Table implements Level {
 
     private Map<String, List<?>> lastSelectedRowData = new Hashtable<>();
 
-    public DefaultLevel(Hashtable params) throws Exception {
+    public DefaultLevel(Map<Object, Object> params) throws Exception {
         super(params);
         this.setParentForm(this.levelManager.getParentForm());
         this.getJTable().getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -90,7 +92,7 @@ public class DefaultLevel extends Table implements Level {
     @Override
     public String getDisplayText() {
         if ((this.displayTextFormatPattern != null) && (this.getSelectedRowsNumber() == 1)) {
-            Hashtable<Object, Object> tableKeys = new Hashtable<>();
+        	HashMap<Object, Object> tableKeys = new HashMap<>();
             Map<String, List<?>> selectedRowData = this.lastSelectedRowData;
             for (Entry<String, List<?>> entry : selectedRowData.entrySet()) {
                 if ((entry.getValue() != null) && (entry.getValue().size() == 1)) {
@@ -101,17 +103,17 @@ public class DefaultLevel extends Table implements Level {
                     }
                 }
             }
-            return this.displayTextFormatPattern.parse(0, tableKeys);
+            return this.displayTextFormatPattern.parse(0, new EntityResultMapImpl(tableKeys));
         }
         return ApplicationManager.getTranslation(this.getEntityName(), this.getResourceBundle());
     }
 
     @Override
-    public Hashtable getParentKeyValues(boolean applyEquivalences) {
+    public Map<Object, Object> getParentKeyValues(boolean applyEquivalences) {
         Level level = this.levelManager.getLevel(this.previousLevelId);
 
         Map<String, List<?>> parentSelectedRowData = level != null ? level.getSelectedData() : null;
-        Hashtable kv = new Hashtable();
+        Map<Object, Object> kv = new HashMap<>();
         if ((this.parentkeys != null) && (parentSelectedRowData != null)) {
             for (int i = 0; i < this.parentkeys.size(); i++) {
                 List<?> v = parentSelectedRowData.get(this.parentkeys.get(i).toString());
@@ -142,7 +144,7 @@ public class DefaultLevel extends Table implements Level {
     }
 
     @Override
-    public void init(Hashtable parameters) throws Exception {
+    public void init(Map<Object, Object> parameters) throws Exception {
         parameters.put(Table.MINROWHEIGHT, "45");
         parameters.put(Table.FONT_SIZE, "35");
         parameters.put(Table.CONTROLS_VISIBLE, "no");
@@ -213,7 +215,7 @@ public class DefaultLevel extends Table implements Level {
     }
 
     @Override
-    public Vector getParentKeys() {
+    public List<Object> getParentKeys() {
         return super.getParentKeys(true);
     }
 
@@ -283,22 +285,22 @@ public class DefaultLevel extends Table implements Level {
     private void updateLastSelected(int selectedRow) {
         // Return a new hastable with the data
         int[] selectedRows = { selectedRow };
-        Vector attributes = this.getAttributeList();
-        Hashtable hData = new Hashtable();
+        List<Object> attributes = this.getAttributeList();
+        Map<String, List<?>> hData = new HashMap<>();
         for (int i = 0; i < selectedRows.length; i++) {
             int row = selectedRows[i];
-            Hashtable hRowData = this.getRowData(row);
+            Map<Object, Object> hRowData = this.getRowData(row);
             if (hRowData == null) {
                 continue;
             }
             for (int j = 0; j < attributes.size(); j++) {
                 Object oKey = attributes.get(j);
                 Object oValue = hRowData.get(oKey);
-                Vector v = (Vector) hData.get(oKey);
+                List<Object> v = (List<Object>) hData.get(oKey);
                 if (v == null) {
-                    Vector vAux = new Vector();
+                    List<Object> vAux = new ArrayList<>();
                     vAux.add(0, oValue);
-                    hData.put(oKey, vAux);
+                    hData.put((String) oKey, vAux);
                 } else {
                     v.add(i, oValue);
                 }

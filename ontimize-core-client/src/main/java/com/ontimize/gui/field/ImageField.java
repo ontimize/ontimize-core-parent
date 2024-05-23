@@ -5,10 +5,11 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -30,204 +31,154 @@ import com.ontimize.util.swing.icon.StretchIcon;
  */
 public class ImageField extends JPanel implements FormComponent, Freeable {
 
-    private static final Logger logger = LoggerFactory.getLogger(ImageField.class);
+	private static final Logger logger = LoggerFactory.getLogger(ImageField.class);
 
-    protected ImageIcon image = null;
+	protected ImageIcon image = null;
 
-    protected JLabel labelCenter;
+	protected JLabel labelCenter;
 
-    protected String attribute = null;
+	protected String attribute = null;
 
-    protected boolean opaque;
+	protected boolean opaque;
 
-    protected boolean expand;
+	protected boolean expand;
 
-    protected String dim;
+	protected String dim;
 
-    protected Insets insets;
+	protected Insets insets;
 
-    /**
-     * The class constructor. Calls to JPanel <code>constructor</code> and inits parameters.
-     * <p>
-     * @param parameters the hashtable with parameters
-     */
-    public ImageField(Hashtable parameters) {
-        super();
-        this.setLayout(new BorderLayout());
-        this.init(parameters);
-    }
+	/**
+	 * The class constructor. Calls to JPanel <code>constructor</code> and inits parameters. <p>
+	 *
+	 * @param parameters
+	 *            the map with parameters
+	 */
+	public ImageField(Map<Object, Object> parameters) {
+		super();
+		this.setLayout(new BorderLayout());
+		this.init(parameters);
+	}
 
-    /**
-     * Gets the attribute parameter.
-     * @return the <code>attribute</code> variable
-     */
-    public Object getAttribute() {
-        return this.attribute;
-    }
+	/**
+	 * Gets the attribute parameter.
+	 * @return the <code>attribute</code> variable
+	 */
+	public Object getAttribute() {
+		return this.attribute;
+	}
 
-    @Override
-    public Object getConstraints(LayoutManager layout) {
-        GridBagConstraints constraints = new GridBagConstraints(GridBagConstraints.RELATIVE,
-                GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.CENTER,
-                GridBagConstraints.BOTH, this.insets, 0, 0);
-        if (!this.expand) {
-            constraints.weighty = 0.0;
-        }
+	@Override
+	public Object getConstraints(LayoutManager layout) {
+		GridBagConstraints constraints = new GridBagConstraints(GridBagConstraints.RELATIVE,
+				GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.CENTER,
+				GridBagConstraints.BOTH, this.insets, 0, 0);
+		if (!this.expand) {
+			constraints.weighty = 0.0;
+		}
 
-        if ("NO".equalsIgnoreCase(this.dim)) {
-            constraints.weightx = 0.0;
-            constraints.fill = GridBagConstraints.VERTICAL;
-        } else if ("YES".equalsIgnoreCase(this.dim)) {
-            constraints.fill = GridBagConstraints.VERTICAL;
-        }
+		if ("NO".equalsIgnoreCase(this.dim)) {
+			constraints.weightx = 0.0;
+			constraints.fill = GridBagConstraints.VERTICAL;
+		} else if ("YES".equalsIgnoreCase(this.dim)) {
+			constraints.fill = GridBagConstraints.VERTICAL;
+		}
 
-        return constraints;
-    }
+		return constraints;
+	}
 
-    /**
-     * Initializes parameters.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
-     *        <p>
-     *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
-     *        <tr>
-     *        <td><b>attribute</td>
-     *        <td><b>values</td>
-     *        <td><b>default</td>
-     *        <td><b>required</td>
-     *        <td><b>meaning</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>src</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>yes</td>
-     *        <td>The image location.</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>opaque</td>
-     *        <td>yes/no</td>
-     *        <td>yes</td>
-     *        <td>no</td>
-     *        <td>Field opacity condition</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>width</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Sets image width</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>height</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Sets image height</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>expand</td>
-     *        <td>yes/no</td>
-     *        <td>yes</td>
-     *        <td>no</td>
-     *        <td>Sets vertical redimension</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>dim</td>
-     *        <td>yes/no</td>
-     *        <td>yes</td>
-     *        <td>no</td>
-     *        <td>Sets horizontal redimension</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>insets</td>
-     *        <td></td>
-     *        <td>0;0;0;0</td>
-     *        <td>no</td>
-     *        <td>Sets insets</td>
-     *        </tr>
-     *
-     *        </table>
-     */
-    @Override
-    public void init(Hashtable parameters) {
-        Object src = parameters.get("src");
-        int width = -1;
-        int height = -1;
+	/**
+	 * Initializes parameters. <p>
+	 *
+	 * @param parameters
+	 *            the <code>Map</code> with parameters <p> <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX> <tr> <td><b>attribute</td> <td><b>values</td>
+	 *            <td><b>default</td> <td><b>required</td> <td><b>meaning</td> </tr>
+	 *
+	 *            <tr> <td>src</td> <td></td> <td></td> <td>yes</td> <td>The image location.</td> </tr>
+	 *
+	 *            <tr> <td>opaque</td> <td>yes/no</td> <td>yes</td> <td>no</td> <td>Field opacity condition</td> </tr>
+	 *
+	 *            <tr> <td>width</td> <td></td> <td></td> <td>no</td> <td>Sets image width</td> </tr>
+	 *
+	 *            <tr> <td>height</td> <td></td> <td></td> <td>no</td> <td>Sets image height</td> </tr>
+	 *
+	 *            <tr> <td>expand</td> <td>yes/no</td> <td>yes</td> <td>no</td> <td>Sets vertical redimension</td> </tr>
+	 *
+	 *            <tr> <td>dim</td> <td>yes/no</td> <td>yes</td> <td>no</td> <td>Sets horizontal redimension</td> </tr>
+	 *
+	 *            <tr> <td>insets</td> <td></td> <td>0;0;0;0</td> <td>no</td> <td>Sets insets</td> </tr>
+	 *
+	 *            </table>
+	 */
+	@Override
+	public void init(Map<Object, Object> parameters) {
+		Object src = parameters.get("src");
+		int width = -1;
+		int height = -1;
 
-        if (src != null) {
-            ImageIcon icon = new StretchIcon(ImageManager.getIconURL(src.toString()));
-            if (icon != null) {
-                this.image = icon;
-                this.labelCenter = new JLabel(this.image);
-                this.add(this.labelCenter, BorderLayout.CENTER);
-                width = this.image.getImage().getWidth(null);
-                height = this.image.getImage().getHeight(null);
-            } else {
-                ImageField.logger.error("File not found: {}", src.toString());
-            }
-        } else {
-            ImageField.logger.debug("Parameter 'src' not found in component ImageField");
-        }
-        this.opaque = ParseUtils.getBoolean((String) parameters.get(DataField.OPAQUE), true);
-        this.setOpaque(this.opaque);
+		if (src != null) {
+			ImageIcon icon = new StretchIcon(ImageManager.getIconURL(src.toString()));
+			if (icon != null) {
+				this.image = icon;
+				this.labelCenter = new JLabel(this.image);
+				this.add(this.labelCenter, BorderLayout.CENTER);
+				width = this.image.getImage().getWidth(null);
+				height = this.image.getImage().getHeight(null);
+			} else {
+				ImageField.logger.error("File not found: {}", src.toString());
+			}
+		} else {
+			ImageField.logger.debug("Parameter 'src' not found in component ImageField");
+		}
+		this.opaque = ParseUtils.getBoolean((String) parameters.get(DataField.OPAQUE), true);
+		this.setOpaque(this.opaque);
 
-        width = ParseUtils.getInteger((String) parameters.get(DataField.WIDTH), width);
-        height = ParseUtils.getInteger((String) parameters.get(DataField.HEIGHT), height);
-        if (this.labelCenter != null) {
-            Dimension currentDimension = this.labelCenter.getPreferredSize();
-            Dimension extD = this.getPreferredSize();
-            if (width >= 0) {
-                currentDimension.width = width;
-            }
+		width = ParseUtils.getInteger((String) parameters.get(DataField.WIDTH), width);
+		height = ParseUtils.getInteger((String) parameters.get(DataField.HEIGHT), height);
+		if (this.labelCenter != null) {
+			Dimension currentDimension = this.labelCenter.getPreferredSize();
+			if (width >= 0) {
+				currentDimension.width = width;
+			}
 
-            if (height >= 0) {
-                currentDimension.height = height;
-            }
-            this.setPreferredSize(currentDimension);
-        }
+			if (height >= 0) {
+				currentDimension.height = height;
+			}
+			this.setPreferredSize(currentDimension);
+		}
 
-        this.expand = ParseUtils.getBoolean((String) parameters.get(DataField.EXPAND), false);
-        this.dim = ParseUtils.getString((String) parameters.get(DataField.DIM), "no");
-        this.attribute = ParseUtils.getString((String) parameters.get(DataField.ATTR), null);
-        this.insets = ParseUtils.getMargin((String) parameters.get(DataField.INSETS), new Insets(0, 0, 0, 0));
-    }
+		this.expand = ParseUtils.getBoolean((String) parameters.get(DataField.EXPAND), false);
+		this.dim = ParseUtils.getString((String) parameters.get(DataField.DIM), "no");
+		this.attribute = ParseUtils.getString((String) parameters.get(DataField.ATTR), null);
+		this.insets = ParseUtils.getMargin((String) parameters.get(DataField.INSETS), new Insets(0, 0, 0, 0));
+	}
 
     /**
-     * Adds the attribute parameter to the vector to translate.
-     * <p>
-     * @return the vector with attribute parameter.
-     */
-    @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
-        return v;
-    }
+	 * Adds the attribute parameter to the list to translate. <p>
+	 *
+	 * @return the list with attribute parameter.
+	 */
+	@Override
+	public List<String> getTextsToTranslate() {
+		return new ArrayList<>();
+	}
 
-    @Override
-    public void setResourceBundle(ResourceBundle resources) {
-    }
+	@Override
+	public void setResourceBundle(ResourceBundle resources) {
+	}
 
-    /**
-     * Sets the component locale. Empty method.
-     * <p>
-     * @param locale the locale to set
-     */
-    @Override
-    public void setComponentLocale(Locale locale) {
-    }
+	/**
+	 * Sets the component locale. Empty method.
+	 * <p>
+	 * @param locale the locale to set
+	 */
+	@Override
+	public void setComponentLocale(Locale locale) {
+	}
 
-    @Override
-    public void free() {
-        // TODO Auto-generated method stub
+	@Override
+	public void free() {
+		// TODO Auto-generated method stub
 
-    }
+	}
 
 }

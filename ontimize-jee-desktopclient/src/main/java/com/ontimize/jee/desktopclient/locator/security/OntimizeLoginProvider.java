@@ -3,7 +3,6 @@ package com.ontimize.jee.desktopclient.locator.security;
 import java.net.ConnectException;
 import java.net.URI;
 
-import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -11,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 
+import com.ontimize.icon.JarUtil.Header;
 import com.ontimize.jee.common.exceptions.InvalidCredentialsException;
 import com.ontimize.jee.common.hessian.OntimizeHessianHttpClientSessionProcessorFactory;
 import com.ontimize.jee.common.hessian.OntimizeHessianProxyFactoryBean;

@@ -12,9 +12,9 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.field.DataComponent;
+import com.ontimize.jee.common.db.NullValue;
 
 public class SumCurrencyCellRenderer extends com.ontimize.gui.table.CurrencyCellRenderer {
 

@@ -35,49 +35,47 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
-import com.ontimize.gui.ClientWatch;
-import com.ontimize.gui.ConnectionOptimizer;
 import com.ontimize.gui.MessageDialog;
-import com.ontimize.gui.SearchValue;
 import com.ontimize.gui.field.ReferenceComboDataField;
-import com.ontimize.gui.preferences.RemoteApplicationPreferenceReferencer;
-import com.ontimize.gui.preferences.RemoteApplicationPreferences;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.exceptions.InvalidCredentialsException;
+import com.ontimize.jee.common.gui.ClientWatch;
+import com.ontimize.jee.common.gui.ConnectionOptimizer;
+import com.ontimize.jee.common.gui.SearchValue;
+import com.ontimize.jee.common.gui.preferences.RemoteApplicationPreferenceReferencer;
+import com.ontimize.jee.common.gui.preferences.RemoteApplicationPreferences;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.ErrorAccessControl;
+import com.ontimize.jee.common.locator.InitialContext;
+import com.ontimize.jee.common.locator.SecureEntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.security.ClientPermissionManager;
 import com.ontimize.jee.common.security.ILoginProvider;
 import com.ontimize.jee.common.services.formprovider.IFormProviderService;
 import com.ontimize.jee.common.services.user.IUserInformationService;
 import com.ontimize.jee.common.services.user.UserInformation;
 import com.ontimize.jee.common.tools.ReflectionTools;
+import com.ontimize.jee.common.util.operation.RemoteOperationManager;
+import com.ontimize.jee.common.util.remote.BytesBlock;
+import com.ontimize.jee.common.xml.XMLClientProvider;
 import com.ontimize.jee.desktopclient.hessian.HessianSessionLocatorInvocationDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.ClientPermissionInvocationDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.ClientReferenceLocatorDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.ConnectionOptimizerInvocationDelegate;
-import com.ontimize.jee.desktopclient.locator.handlers.LicenseLocatorInvocationDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.RemoteApplicationPreferenceReferencerDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.UtilInvocationDelegate;
 import com.ontimize.jee.desktopclient.locator.handlers.XMLClientProviderInvocationDelegate;
 import com.ontimize.jee.desktopclient.locator.security.OntimizeLoginProvider;
 import com.ontimize.jee.desktopclient.spring.BeansFactory;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.ErrorAccessControl;
-import com.ontimize.locator.InitialContext;
-import com.ontimize.locator.SecureEntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
 import com.ontimize.ols.LOk;
-import com.ontimize.ols.RemoteLOk;
-import com.ontimize.security.ClientPermissionManager;
-import com.ontimize.util.operation.RemoteOperationManager;
-import com.ontimize.util.remote.BytesBlock;
-import com.ontimize.xml.XMLClientProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Clase abstracta que define el comportamiento que deben tener los ClientPermissionLocator contra
@@ -351,7 +349,7 @@ public class OJeeClientPermissionLocator implements SecureEntityReferenceLocator
     }
 
     @Override
-    public Hashtable getFormManagerParameters(String formManagerId, int userid) throws Exception {
+    public Map getFormManagerParameters(String formManagerId, int userid) throws Exception {
         return this.xmlClientProviderInvocationDelegate.getFormManagerParameters(formManagerId, userid);
     }
 
@@ -481,7 +479,7 @@ public class OJeeClientPermissionLocator implements SecureEntityReferenceLocator
     }
 
     @Override
-    public InitialContext retrieveInitialContext(int sessionId, Hashtable params) throws Exception {
+    public InitialContext retrieveInitialContext(int sessionId, Map params) throws Exception {
         return this.utilInvocationDelegate.retrieveInitialContext(sessionId, params);
     }
 
@@ -516,7 +514,7 @@ public class OJeeClientPermissionLocator implements SecureEntityReferenceLocator
     }
 
     @Override
-    public EntityResult changePassword(String password, int sessionId, Hashtable av, Hashtable kv) throws Exception {
+    public EntityResult changePassword(String password, int sessionId, Map av, Map kv) throws Exception {
         return this.utilInvocationDelegate.changePassword(password, sessionId, av, kv);
     }
 
@@ -541,12 +539,12 @@ public class OJeeClientPermissionLocator implements SecureEntityReferenceLocator
     }
 
     @Override
-    public EntityResult getClientPermissions(Hashtable userKeys, int sessionId) throws Exception {
+    public EntityResult getClientPermissions(Map userKeys, int sessionId) throws Exception {
         return this.clientPermissionInvocationDelegate.getClientPermissions(userKeys, sessionId);
     }
 
     @Override
-    public void installClientPermissions(Hashtable userKeys, int sessionId) throws Exception {
+    public void installClientPermissions(Map userKeys, int sessionId) throws Exception {
         this.clientPermissionInvocationDelegate.installClientPermissions(userKeys, sessionId);
     }
 

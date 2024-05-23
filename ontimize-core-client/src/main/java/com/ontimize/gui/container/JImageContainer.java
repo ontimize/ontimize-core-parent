@@ -9,7 +9,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.JComponent;
@@ -34,9 +36,9 @@ public class JImageContainer extends JImage {
 
     protected class PointLayout implements LayoutManager2 {
 
-        Vector components = new Vector();
+        List<Object> components = new ArrayList<>();
 
-        Vector constraints = new Vector();
+        List<Object> constraints = new ArrayList<>();
 
         Insets insets = new Insets(0, 0, 0, 0);
 
@@ -70,7 +72,7 @@ public class JImageContainer extends JImage {
 
             this.insets = cont.getInsets();
             // Get the components constraints again
-            this.constraints = new Vector(this.components.size());
+            this.constraints = new ArrayList<>(this.components.size());
             for (int i = 0; i < this.components.size(); i++) {
                 Object comp = this.components.get(i);
                 if (comp instanceof FormComponent) {
@@ -116,12 +118,12 @@ public class JImageContainer extends JImage {
                         ;
 
                         @Override
-                        public void mouseDragged(MouseEvent e) {
+                        public void mouseDragged(MouseEvent event) {
                             // The source of this event is the Thread.
                             // We want to set the component position in order to
                             // the parent position
                             Rectangle r = c.getBounds();
-                            c.setBounds(e.getX() + (int) r.getX(), e.getY() + (int) r.getY(),
+                            c.setBounds(event.getX() + (int) r.getX(), event.getY() + (int) r.getY(),
                                     c.getPreferredSize().width, c.getPreferredSize().height);
                             Component p = c.getParent();
                             if (p instanceof JComponent) {
@@ -169,7 +171,7 @@ public class JImageContainer extends JImage {
 
     }
 
-    public JImageContainer(Hashtable parameters) {
+    public JImageContainer(Map<Object, Object> parameters) {
         super(parameters);
         this.setLayout(new PointLayout());
         this.addMouseMotionListener(new MouseMotionAdapter() {

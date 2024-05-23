@@ -14,10 +14,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -142,7 +142,7 @@ class ColumnCalculatorWindow extends EJDialog {
         this.bCancel = new JButton("application.cancel");
         this.bResult = new JButton("Result");
 
-        this.columnList = new JList(this.table.getRealColumns());// The original
+        this.columnList = new JList(this.table.getRealColumns().toArray());// The original
                                                                  // visible
                                                                  // columns
         this.columnList.setFocusable(false);
@@ -162,12 +162,9 @@ class ColumnCalculatorWindow extends EJDialog {
         });
 
         DefaultListModel dlM = new DefaultListModel();
-        Hashtable h = ((TableSorter) this.table.getJTable().getModel()).getCalculatedColumns();
-        Enumeration enuK = h.keys();
-
-        while (enuK.hasMoreElements()) {
-            Object k = enuK.nextElement();
-            ColumnCalculatorWindow.Expression exp = new Expression(k.toString(), h.get(k).toString());
+        Map<Object, Object> h = ((TableSorter) this.table.getJTable().getModel()).getCalculatedColumns();
+        for(Entry<Object, Object> entry:h.entrySet()) {
+        	ColumnCalculatorWindow.Expression exp = new Expression(entry.getKey().toString(), entry.getValue().toString());
             dlM.addElement(exp);
         }
 
@@ -177,7 +174,7 @@ class ColumnCalculatorWindow extends EJDialog {
         this.calculedColList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override
-            public void valueChanged(ListSelectionEvent e) {
+            public void valueChanged(ListSelectionEvent event) {
                 int index = ColumnCalculatorWindow.this.calculedColList.getSelectedIndex();
                 if (index >= 0) {
                     Object value = ColumnCalculatorWindow.this.calculedColList.getModel().getElementAt(index);
@@ -203,11 +200,11 @@ class ColumnCalculatorWindow extends EJDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 MathExpressionParser parser = MathExpressionParserFactory.getInstance();
-                ArrayList source = new ArrayList();
-                Vector realCols = ColumnCalculatorWindow.this.table.getRealColumns();
+                List<Object> source = new ArrayList<>();
+                List<Object> realCols = ColumnCalculatorWindow.this.table.getRealColumns();
                 String expression = ColumnCalculatorWindow.this.textArea.getText();
                 if ((expression != null) && (expression.length() > 0)) {
-                    for (Iterator i = realCols.iterator(); i.hasNext();) {
+                    for (Iterator<?> i = realCols.iterator(); i.hasNext();) {
                         String col = i.next().toString();
                         if (expression.indexOf(col) >= 0) {
                             parser.addVariable(col, 0.0);

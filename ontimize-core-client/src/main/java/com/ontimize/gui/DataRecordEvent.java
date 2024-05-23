@@ -1,9 +1,9 @@
 package com.ontimize.gui;
 
 import java.util.EventObject;
-import java.util.Hashtable;
+import java.util.Map;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
 
 public class DataRecordEvent extends EventObject {
 
@@ -17,11 +17,11 @@ public class DataRecordEvent extends EventObject {
 
     protected EntityResult rs = null;
 
-    protected Hashtable keysValues = null;
+    protected Map<Object, Object> keysValues = null;
 
-    protected Hashtable attributesValues = null;
+    protected Map<Object, Object> attributesValues = null;
 
-    public DataRecordEvent(Object source, int type, Hashtable kv, Hashtable av, EntityResult rs) {
+    public DataRecordEvent(Object source, int type, Map<Object, Object> kv, Map<Object, Object> av, EntityResult rs) {
         super(source);
         this.type = type;
         this.keysValues = kv;
@@ -29,11 +29,11 @@ public class DataRecordEvent extends EventObject {
         this.rs = rs;
     }
 
-    public Hashtable getKeysValues() {
+    public Map<Object, Object> getKeysValues() {
         return this.keysValues;
     }
 
-    public Hashtable getAttributesValues() {
+    public Map<Object, Object> getAttributesValues() {
         return this.attributesValues;
     }
 

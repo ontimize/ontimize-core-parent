@@ -3,7 +3,7 @@ package com.ontimize.printing;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JTextArea;
 
@@ -20,7 +20,7 @@ public class TextArea extends RectangleElement {
         return this.textArea;
     }
 
-    public TextArea(Hashtable parameters) {
+    public TextArea(Map<Object, Object> parameters) {
         super(parameters);
 
         this.textArea.setOpaque(false);
@@ -43,8 +43,8 @@ public class TextArea extends RectangleElement {
             } else if (this.bold) {
                 this.textArea.setFont(this.textArea.getFont().deriveFont(Font.BOLD));
             }
-        } catch (Exception e) {
-            TextArea.logger.error(e.getMessage(), e);
+        } catch (Exception exc) {
+            TextArea.logger.error(exc.getMessage(), exc);
         }
 
         Object c = parameters.get("text");
@@ -100,8 +100,8 @@ public class TextArea extends RectangleElement {
                         .stringWidth(this.textArea.getText());
                 }
             }
-        } catch (Exception e) {
-            TextArea.logger.error(e.getMessage(), e);
+        } catch (Exception exc) {
+            TextArea.logger.error(exc.getMessage(), exc);
         }
 
         if ((this.width != -1) && (this.high != -1)) {

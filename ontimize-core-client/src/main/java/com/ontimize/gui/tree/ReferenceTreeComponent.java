@@ -1,10 +1,10 @@
 package com.ontimize.gui.tree;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import com.ontimize.gui.Form;
 import com.ontimize.gui.field.ReferenceComboDataField;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 public class ReferenceTreeComponent {
 
@@ -27,7 +27,7 @@ public class ReferenceTreeComponent {
         return this.comboReferenceDataField.getCodeDescription(code);
     }
 
-    public ReferenceTreeComponent(Hashtable parameters) {
+    public ReferenceTreeComponent(Map<Object, Object> parameters) {
         parameters.remove("cachetime");
         this.comboReferenceDataField = new ReferenceComboDataField(parameters);
         this.comboReferenceDataField.setUseCacheManager(false);

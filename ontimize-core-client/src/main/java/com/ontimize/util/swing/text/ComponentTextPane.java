@@ -64,9 +64,9 @@ public class ComponentTextPane extends JTextPane {
         this.insertComponent(label);
     }
 
-    protected List currentLabelComponents = new ArrayList();
+    protected List<Object> currentLabelComponents = new ArrayList<>();
 
-    public List getLabelComponents() {
+    public List<Object> getLabelComponents() {
         return this.currentLabelComponents;
     }
 
@@ -120,7 +120,7 @@ public class ComponentTextPane extends JTextPane {
     public String getExpression() {
         // Update the positions of the label components
         View rootView = this.getUI().getRootView(this);
-        List lcurrentLabelComponents = new ArrayList();
+        List<Object> lcurrentLabelComponents = new ArrayList<>();
         this.configureLabelPositions(lcurrentLabelComponents, rootView);
 
         // Create the text using the original text and the label texts
@@ -143,7 +143,7 @@ public class ComponentTextPane extends JTextPane {
         return text;
     }
 
-    protected void configureLabelPositions(List components, View view) {
+    protected void configureLabelPositions(List<Object> components, View view) {
         if (view != null) {
             if (view instanceof ComponentLabelView) {
                 Component labelComponent = ((ComponentLabelView) view).getComponent();

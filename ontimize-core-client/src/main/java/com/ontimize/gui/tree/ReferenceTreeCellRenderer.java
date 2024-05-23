@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.Form;
 import com.ontimize.gui.field.ReferenceComboDataField;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 public class ReferenceTreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -35,7 +35,7 @@ public class ReferenceTreeCellRenderer extends DefaultTreeCellRenderer {
         this.comboReferenceDataField.setParentForm(f);
     }
 
-    public ReferenceTreeCellRenderer(Hashtable parameters) {
+    public ReferenceTreeCellRenderer(Map<Object, Object> parameters) {
         parameters.remove("cachetime");
         this.comboReferenceDataField = new ReferenceComboDataField(parameters);
         this.comboReferenceDataField.setUseCacheManager(false);

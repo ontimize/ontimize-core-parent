@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.i18n.Internationalization;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
 import com.ontimize.util.incidences.FormCreateIncidences;
 
 /**

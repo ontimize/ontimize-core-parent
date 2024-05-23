@@ -4,7 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -40,7 +41,7 @@ public class RowHeadCellRenderer extends JLabel implements TableCellRenderer {
     protected ImageIcon bgImage;
 
     public RowHeadCellRenderer(JTable table) {
-        this(table, new Hashtable());
+        this(table, new HashMap<>());
     }
 
     @Override
@@ -48,7 +49,7 @@ public class RowHeadCellRenderer extends JLabel implements TableCellRenderer {
         super.setOpaque(isOpaque);
     }
 
-    public RowHeadCellRenderer(JTable table, Hashtable parameters) {
+    public RowHeadCellRenderer(JTable table, Map<Object, Object> parameters) {
         JTableHeader header = table.getTableHeader();
 
         this.setOpaque(true);

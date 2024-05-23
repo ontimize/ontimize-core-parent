@@ -15,9 +15,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -95,7 +96,7 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
 
     protected Table table = null;
 
-    protected Vector initVisibleCols = null;
+    protected List<Object> initVisibleCols = null;
 
     public VisibleColsSetupDialog(Dialog d, Table t) {
         super(d, VisibleColsSetupDialog.INFO_KEY, true);
@@ -280,16 +281,16 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
 
     protected void applyChanges() {
         // all columns visible and not visible ones
-        Vector vOriginalPosition = this.table.getRealColumns();
+        List<Object> vOriginalPosition = this.table.getRealColumns();
 
         // Visible columns
-        Vector oOriginalVisible = this.table.getCurrentColumns();
+        List<Object> oOriginalVisible = this.table.getCurrentColumns();
 
         // Columns not visible than are visible now
-        Vector vHideColumns = new Vector();
+        List<Object> vHideColumns = new ArrayList<>();
 
         // New visible columns
-        Vector vFinalVisible = new Vector();
+        List<Object> vFinalVisible = new ArrayList<>();
 
         for (int i = 0; i < this.colsList.getModel().getSize(); i++) {
             if (this.colsList.getModel().getElementAt(i) instanceof SelectableItemRenderer.SelectableItem) {
@@ -310,11 +311,11 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
                     if (originalIndex < this.table.getBlockedColumnIndex()) {
                         this.table.getBlockedTable()
                             .moveColumn(this.table.getColumnIndex(col),
-                                    this.table.getColumnIndex((String) vOriginalPosition.elementAt(i)));
+                                    this.table.getColumnIndex((String) vOriginalPosition.get(i)));
                     } else {
                         this.table.getJTable()
                             .moveColumn(this.table.getColumnIndex(col),
-                                    this.table.getColumnIndex((String) vOriginalPosition.elementAt(i)));
+                                    this.table.getColumnIndex((String) vOriginalPosition.get(i)));
                     }
 
                     vOriginalPosition = this.table.getRealColumns();
@@ -350,17 +351,17 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+        List<String> v = new ArrayList<>();
         v.add("table.choose_visible_columns");
         return v;
     }
 
     public void setColumn() {
-        Vector v = new Vector();
+        List<Object> v = new ArrayList<>();
 
-        Vector act = this.table.getRealColumns();
-        Vector visible = this.table.getVisibleColumns();
+        List<Object> act = this.table.getRealColumns();
+        List<String> visible = this.table.getVisibleColumns();
         for (int i = act.size() - 1; i >= 0; i--) {
             if (!this.table.checkColumnTablePermission(act.get(i), "visible")) {
                 act.remove(i);
@@ -540,7 +541,7 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Vector v = VisibleColsSetupDialog.this.table.getOriginallyVisibleColumns();
+                List<String> v = VisibleColsSetupDialog.this.table.getOriginallyVisibleColumns();
                 ListModel model = VisibleColsSetupDialog.this.colsList.getModel();
                 for (int i = 0; i < model.getSize(); i++) {
                     Object o = model.getElementAt(i);

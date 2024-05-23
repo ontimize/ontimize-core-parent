@@ -3,10 +3,9 @@ package com.ontimize.jee.desktopclient.locator.handlers;
 import java.awt.Component;
 import java.util.List;
 
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.InitialContext;
 import com.ontimize.jee.common.tools.proxy.AbstractInvocationDelegate;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.InitialContext;
-import org.apache.commons.collections.map.HashedMap;
 
 public class ClientReferenceLocatorDelegate extends AbstractInvocationDelegate implements ClientReferenceLocator {
 

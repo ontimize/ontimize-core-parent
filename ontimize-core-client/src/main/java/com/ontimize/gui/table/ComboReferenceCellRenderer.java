@@ -6,7 +6,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Insets;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -23,6 +24,7 @@ import com.ontimize.gui.field.DataComponent;
 import com.ontimize.gui.field.ReferenceComboDataField;
 import com.ontimize.gui.table.CellRenderer.CellRendererColorManager;
 import com.ontimize.gui.table.CellRenderer.CellRendererFontManager;
+import com.ontimize.jee.common.dto.EntityResult;
 
 /**
  * Renderer used to show information of other entities in tables.
@@ -41,17 +43,17 @@ public class ComboReferenceCellRenderer extends ReferenceComboDataField implemen
 
     public static Border focusBorder;
 
-    protected Hashtable parameters = new Hashtable();
+    protected Map<Object, Object> parameters = new HashMap<>();
 
     protected CellRendererColorManager cellRendererColorManager;
 
     protected CellRendererFontManager cellRendererFontManager;
 
-    public ComboReferenceCellRenderer(Hashtable parameters) {
+    public ComboReferenceCellRenderer(Map<Object, Object> parameters) {
         super(parameters);
         this.useCacheManager = true;
         this.initCacheOnSetValue = true;
-        this.parameters = (Hashtable) parameters.clone();
+        this.parameters = new HashMap<>(parameters);
         this.showErrorMessages = false;
     }
 
@@ -92,8 +94,8 @@ public class ComboReferenceCellRenderer extends ReferenceComboDataField implemen
                     }
                 }
             }
-        } catch (Exception e) {
-            ComboReferenceCellRenderer.logger.error(null, e);
+        } catch (Exception exc) {
+            ComboReferenceCellRenderer.logger.error(null, exc);
         }
     }
 
@@ -255,7 +257,7 @@ public class ComboReferenceCellRenderer extends ReferenceComboDataField implemen
         c.setCacheManager(this.cacheManager);
         if (this.dataCache != null) {
             c.dataCacheInitialized = this.dataCacheInitialized;
-            c.dataCache = (Hashtable) this.dataCache.clone();
+            c.dataCache = (EntityResult) this.dataCache.clone();
         }
         return c;
     }
@@ -276,7 +278,7 @@ public class ComboReferenceCellRenderer extends ReferenceComboDataField implemen
 
     public static ComboReferenceCellRenderer newInstance(String entity, String attr, String cod, String cols,
             String visibleCols, String parentkeys, String separator) {
-        Hashtable param = new Hashtable();
+    	Map<Object, Object> param = new HashMap<>();
         param.put("entity", entity);
         if (attr != null) {
             param.put("attr", attr);

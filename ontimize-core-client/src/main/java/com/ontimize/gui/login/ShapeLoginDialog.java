@@ -2,7 +2,7 @@ package com.ontimize.gui.login;
 
 import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.border.EmptyBorder;
 
@@ -10,8 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.Application;
-import com.ontimize.gui.login.LoginDialog;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.util.AWTUtilities;
 
 public class ShapeLoginDialog extends LoginDialog {
@@ -22,7 +21,7 @@ public class ShapeLoginDialog extends LoginDialog {
 
     public static boolean shape = true;
 
-    public ShapeLoginDialog(Application mainApplication, Hashtable parameters, EntityReferenceLocator locator) {
+    public ShapeLoginDialog(Application mainApplication, Map<Object, Object> parameters, EntityReferenceLocator locator) {
         super(mainApplication, parameters, locator);
         try {
             if (ShapeLoginDialog.shape) {
@@ -34,8 +33,8 @@ public class ShapeLoginDialog extends LoginDialog {
                 this.getRootPane().setBackground(new Color(0, 0, 0, 1));
                 this.getRootPane().setBorder(new EmptyBorder(0, 0, 0, 0));
             }
-        } catch (Exception e) {
-            ShapeLoginDialog.logger.error(null, e);
+        } catch (Exception exc) {
+            ShapeLoginDialog.logger.error(null, exc);
         }
     }
 

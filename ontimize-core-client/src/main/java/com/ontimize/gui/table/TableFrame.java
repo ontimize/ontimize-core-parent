@@ -26,8 +26,8 @@ import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.Form;
 import com.ontimize.gui.preferences.ApplicationPreferences;
 import com.ontimize.gui.preferences.BasicApplicationPreferences;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 public class TableFrame extends JFrame {
 
@@ -42,12 +42,12 @@ public class TableFrame extends JFrame {
         class EAction extends AbstractAction {
 
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent event) {
                 if (ApplicationManager.DEBUG) {
-                    TableFrame.logger.debug("Event: " + e);
+                    TableFrame.logger.debug("Event: " + event);
                 }
-                if (SwingUtilities.getWindowAncestor((Component) e.getSource()) instanceof TableFrame) {
-                    TableFrame f = (TableFrame) SwingUtilities.getWindowAncestor((Component) e.getSource());
+                if (SwingUtilities.getWindowAncestor((Component) event.getSource()) instanceof TableFrame) {
+                    TableFrame f = (TableFrame) SwingUtilities.getWindowAncestor((Component) event.getSource());
                     if (f.form.getInteractionManager() != null) {
                         if (!f.form.getInteractionManager().getModifiedFieldAttributes().isEmpty()
                                 && f.form.getInteractionManager().getCheckModifiedDataChangeEvent()) {
@@ -57,8 +57,8 @@ public class TableFrame extends JFrame {
                             }
                         }
                     }
-                    ((TableFrame) SwingUtilities.getWindowAncestor((Component) e.getSource()))
-                        .processWindowEvent(new WindowEvent(SwingUtilities.getWindowAncestor((Component) e.getSource()),
+                    ((TableFrame) SwingUtilities.getWindowAncestor((Component) event.getSource()))
+                        .processWindowEvent(new WindowEvent(SwingUtilities.getWindowAncestor((Component) event.getSource()),
                                 WindowEvent.WINDOW_CLOSING));
                 }
             }
@@ -81,9 +81,9 @@ public class TableFrame extends JFrame {
     }
 
     @Override
-    protected void processWindowEvent(WindowEvent e) {
+    protected void processWindowEvent(WindowEvent event) {
 
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+        if (event.getID() == WindowEvent.WINDOW_CLOSING) {
             if (this.form.getInteractionManager() != null) {
                 if (!this.form.getInteractionManager().getModifiedFieldAttributes().isEmpty()
                         && this.form.getInteractionManager().getCheckModifiedDataChangeEvent()) {
@@ -112,7 +112,7 @@ public class TableFrame extends JFrame {
                 }
             }
         }
-        super.processWindowEvent(e);
+        super.processWindowEvent(event);
 
     }
 
@@ -208,8 +208,8 @@ public class TableFrame extends JFrame {
                 inMap.put(TableFrame.keyStrokes[i], TableFrame.keys[i]);
                 actMap.put(TableFrame.keys[i], TableFrame.actions[i]);
             }
-        } catch (Exception e) {
-            TableFrame.logger.error("Error registering keybindings", e);
+        } catch (Exception exc) {
+            TableFrame.logger.error("Error registering keybindings", exc);
         }
     }
 

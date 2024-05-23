@@ -2,13 +2,12 @@ package com.ontimize.gui.field;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -37,15 +36,12 @@ import com.ontimize.gui.field.spinner.CustomSpinnerDateModel.SpinnerDateDocument
 import com.ontimize.gui.field.spinner.CustomSpinnerListModel;
 import com.ontimize.gui.field.spinner.CustomSpinnerNumberModel;
 import com.ontimize.gui.i18n.Internationalization;
-import com.ontimize.util.ParseTools;
+import com.ontimize.jee.common.util.ParseTools;
 import com.ontimize.util.ParseUtils;
 
 /**
- * Field similar to <code>JSpinner</code> that allows to modify value (increasing/decreasing) with
- * two selectors. <br>
- * <br>
- * XML parameters for configuration of this field can be found here: <br>
- * {@link #init(Hashtable)} <br>
+ * Field similar to <code>JSpinner</code> that allows to modify value (increasing/decreasing) with two selectors. <br> <br> XML parameters for configuration of this field can be
+ * found here: <br> {@link #init(Map)} <br>
  *
  * @author Imatia Innovation SL
  * @since 5.2059EN
@@ -53,656 +49,607 @@ import com.ontimize.util.ParseUtils;
 
 public class SpinnerDataField extends DataField {
 
-    private static final Logger logger = LoggerFactory.getLogger(SpinnerDataField.class);
+	private static final Logger logger = LoggerFactory.getLogger(SpinnerDataField.class);
 
-    public static String TYPE = "type";
+	public static String TYPE = "type";
 
-    public static String TYPE_NUMBER = "number";
+	public static String TYPE_NUMBER = "number";
 
-    public static String TYPE_TEXT = "text";
+	public static String TYPE_TEXT = "text";
 
-    public static String TYPE_DATE = "date";
+	public static String TYPE_DATE = "date";
 
-    public static String VALUES = "values";
+	public static String VALUES = "values";
 
-    public static String MIN = "min";
+	public static String MIN = "min";
 
-    public static String MAX = "max";
+	public static String MAX = "max";
 
-    public static String STEP = "step";
+	public static String STEP = "step";
 
-    public static String INITIAL = "initial";
+	public static String INITIAL = "initial";
 
-    public static String NUMBER = "number";
+	public static String NUMBER = "number";
 
-    public static String NUMBERCLASS = "numberclass";
+	public static String NUMBERCLASS = "numberclass";
 
-    public static String CALENDAR = "calendar";
+	public static String CALENDAR = "calendar";
 
-    public static String FORMAT = "format";
+	public static String FORMAT = "format";
 
-    protected String type = SpinnerDataField.TYPE_TEXT;
+	protected String type = SpinnerDataField.TYPE_TEXT;
 
-    protected int numberclass = ParseTools.INTEGER_;
+	protected int numberclass = ParseTools.INTEGER_;
 
-    protected String format = null;
+	protected String format = null;
 
-    protected Object values = null;
+	protected Object values = null;
 
-    protected static class EJSpinner extends JSpinner implements Internationalization {
+	protected static class EJSpinner extends JSpinner implements Internationalization {
 
-        public EJSpinner() {
-            super();
-            ToolTipManager.sharedInstance().registerComponent(this);
-        }
+		public EJSpinner() {
+			super();
+			ToolTipManager.sharedInstance().registerComponent(this);
+		}
 
-        @Override
-        public Vector getTextsToTranslate() {
-            return null;
-        }
+		@Override
+		public List<String> getTextsToTranslate() {
+			return null;
+		}
 
-        @Override
-        public void setComponentLocale(Locale l) {
+		@Override
+		public void setComponentLocale(Locale l) {
 
-            DefaultEditor editor = (DefaultEditor) this.getEditor();
-            if (editor instanceof Internationalization) {
-                ((Internationalization) editor).setComponentLocale(l);
-            }
-        }
+			DefaultEditor editor = (DefaultEditor) this.getEditor();
+			if (editor instanceof Internationalization) {
+				((Internationalization) editor).setComponentLocale(l);
+			}
+		}
 
-        @Override
-        public void setResourceBundle(ResourceBundle resourceBundle) {
+		@Override
+		public void setResourceBundle(ResourceBundle resourceBundle) {
 
-        }
+		}
 
-    }
+	}
 
-    protected class InnerDocumentListener implements DocumentListener {
+	protected class InnerDocumentListener implements DocumentListener {
 
-        /**
-         * The inner listener enabled condition. By default, true.
-         */
-        protected boolean innerListenerEnabled = true;
+		/**
+		 * The inner listener enabled condition. By default, true.
+		 */
+		protected boolean innerListenerEnabled = true;
 
-        Object innerValue = null;
+		Object innerValue = null;
 
-        /**
-         * Sets enabled the inner listener.
-         * <p>
-         * @param enabled the condition
-         */
-        public void setInnerListenerEnabled(boolean enabled) {
-            this.innerListenerEnabled = enabled;
-        }
+		/**
+		 * Sets enabled the inner listener.
+		 * <p>
+		 * @param enabled the condition
+		 */
+		public void setInnerListenerEnabled(boolean enabled) {
+			this.innerListenerEnabled = enabled;
+		}
 
-        /**
-         * Gets the value of field.
-         * <p>
-         * @return the value
-         */
-        protected Object getValueField() {
-            return SpinnerDataField.this.getValue();
-        }
+		/**
+		 * Gets the value of field.
+		 * <p>
+		 * @return the value
+		 */
+		protected Object getValueField() {
+			return SpinnerDataField.this.getValue();
+		}
 
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-            if (this.innerListenerEnabled) {
-                Object oNewValue = this.getValueField();
-                if (this.isEqualInnerValue(oNewValue)) {
-                    return;
-                }
-                SpinnerDataField.this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
-                this.setInnerValue(oNewValue);
-            }
-        }
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			if (this.innerListenerEnabled) {
+				Object oNewValue = this.getValueField();
+				if (this.isEqualInnerValue(oNewValue)) {
+					return;
+				}
+				SpinnerDataField.this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+				this.setInnerValue(oNewValue);
+			}
+		}
 
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            if (this.innerListenerEnabled) {
-                Object oNewValue = this.getValueField();
-                if (this.isEqualInnerValue(oNewValue)) {
-                    return;
-                }
-                SpinnerDataField.this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
-                this.setInnerValue(oNewValue);
-            }
-        }
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			if (this.innerListenerEnabled) {
+				Object oNewValue = this.getValueField();
+				if (this.isEqualInnerValue(oNewValue)) {
+					return;
+				}
+				SpinnerDataField.this.fireValueChanged(oNewValue, this.getInnerValue(), ValueEvent.USER_CHANGE);
+				this.setInnerValue(oNewValue);
+			}
+		}
 
-        @Override
-        public void changedUpdate(DocumentEvent e) {
+		@Override
+		public void changedUpdate(DocumentEvent e) {
 
-        }
+		}
 
-        /**
-         * Gets the inner value.
-         * <p>
-         * @return the inner value
-         */
-        public Object getInnerValue() {
-            return this.innerValue;
-        }
+		/**
+		 * Gets the inner value.
+		 * <p>
+		 * @return the inner value
+		 */
+		public Object getInnerValue() {
+			return this.innerValue;
+		}
 
-        /**
-         * Sets the inner value.
-         * <p>
-         * @param o the inner value
-         */
-        public void setInnerValue(Object o) {
-            this.innerValue = o;
-        }
+		/**
+		 * Sets the inner value.
+		 * <p>
+		 * @param o the inner value
+		 */
+		public void setInnerValue(Object o) {
+			this.innerValue = o;
+		}
 
-        /**
-         * Compares the inner value with parameter.
-         * <p>
-         * @param newValue the value to compare
-         * @return the condition
-         */
-        protected boolean isEqualInnerValue(Object newValue) {
-            if ((newValue == null) && (this.innerValue == null)) {
-                return true;
-            }
-            if ((newValue == null) || (this.innerValue == null)) {
-                return false;
-            }
-            return this.innerValue.equals(newValue);
-        }
+		/**
+		 * Compares the inner value with parameter.
+		 * <p>
+		 * @param newValue the value to compare
+		 * @return the condition
+		 */
+		protected boolean isEqualInnerValue(Object newValue) {
+			if ((newValue == null) && (this.innerValue == null)) {
+				return true;
+			}
+			if ((newValue == null) || (this.innerValue == null)) {
+				return false;
+			}
+			return this.innerValue.equals(newValue);
+		}
 
-    }
+	}
+
+	/**
+	 * This class implements a inner listener for field.
+	 * <p>
+	 *
+	 * @author Imatia Innovation
+	 */
+	protected class InnerListener implements ChangeListener {
+
+		/**
+		 * The condition about inner listener activation. By default, true
+		 */
+		protected boolean innerListenerEnabled = true;
+
+		/**
+		 * Stores the inner value. By default, null.
+		 */
+		protected Object storeInnerValue = null;
+
+		/**
+		 * Sets enable the inner listener in function of condition.
+		 * <p>
+		 * @param eanbled the condition of activation
+		 */
+		public void setInnerListenerEnabled(boolean enabled) {
+			this.innerListenerEnabled = enabled;
+		}
+
+		/**
+		 * Gets the inner value.
+		 * <p>
+		 * @return the stored inner value
+		 */
+		public Object getInnerValue() {
+			return this.storeInnerValue;
+		}
+
+		/**
+		 * Sets the inner value.
+		 * <p>
+		 * @param o the object to set
+		 */
+		public void setInnerValue(Object o) {
+			this.storeInnerValue = o;
+		}
+
+		/**
+		 * Compares the inner value with parameter.
+		 * <p>
+		 * @param newValue the value to compare
+		 * @return the condition
+		 */
+		protected boolean isEqualInnerValue(Object newValue) {
+			if ((newValue == null) && (this.storeInnerValue == null)) {
+				return true;
+			}
+			if ((newValue == null) || (this.storeInnerValue == null)) {
+				return false;
+			}
+			return this.storeInnerValue.equals(newValue);
+		}
+
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			if (this.innerListenerEnabled) {
+				SpinnerDataField.this.fireValueChanged(SpinnerDataField.this.getValue(), this.storeInnerValue,
+						ValueEvent.USER_CHANGE);
+				this.storeInnerValue = SpinnerDataField.this.getValue();
+			}
+
+		}
+
+	};
+
+	/**
+	 * The inner listener instance.
+	 */
+	protected InnerListener innerListener = new InnerListener();
+
+	protected JCheckBoxMenuItem includeMenu = new JCheckBoxMenuItem(CheckDataField.INCLUDE_MENU_KEY, true);
+
+	protected InnerDocumentListener innerDocumentListener = null;
+
+	public SpinnerDataField(Map<Object, Object> parameters) {
+		this.init(parameters);
+	}
 
     /**
-     * This class implements a inner listener for field.
-     * <p>
-     *
-     * @author Imatia Innovation
-     */
-    protected class InnerListener implements ChangeListener {
+	 * Method that reads the xml parameters. <p>
+	 * 
+	 * @param parameters
+	 *            the <code>Map</code> with parameters. Allows the next parameters: <p> <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX> <tr> <td><b>attribute</td>
+	 *            <td><b>values</td> <td><b>default</td> <td><b>required</td> <td><b>meaning</td> </tr> <tr> <td>max</td> <td></td> <td></td> <td>no</td> <td>Maximum value for
+	 *            spinner when not specified 'values' and type is number.</td> </tr> <tr> <td>min</td> <td></td> <td></td> <td>no</td> <td>Minimum value for spinner when not
+	 *            specified 'values' and type is number.</td> </tr> <tr> <td>numberclass</td> <td>Integer/Float/Long/Double</td> <td>Integer</td> <td>no</td> <td>Number class that
+	 *            uses spinner in data model. It used when type is number</td> </tr> <tr> <td>step</td> <td></td> <td></td> <td>no</td> <td>Step used to increase/decrease value in
+	 *            spinner when type is number. </tr> <tr> <td>type</td> <td>text/number</td> <td>text</td> <td>no</td> <td>The type of data allowed for this field.</td> </tr> <tr>
+	 *            <td>values</td> <td></td> <td></td> <td>no</td> <td>Used to set a fixed values to spinner. Available for type text and number.</td> </tr> </TABLE>
+	 */
+	@Override
+	public void init(Map<Object, Object> parameters) {
 
-        /**
-         * The condition about inner listener activation. By default, true
-         */
-        protected boolean innerListenerEnabled = true;
+		this.createDataField();
+		super.init(parameters);
+		this.installInnerListener();
 
-        /**
-         * Stores the inner value. By default, null.
-         */
-        protected Object storeInnerValue = null;
+		Object otype = parameters.get(SpinnerDataField.TYPE);
+		if (otype != null) {
+			if (otype.equals(SpinnerDataField.TYPE_TEXT)) {
+				this.type = (String) otype;
+			} else if (otype.equals(SpinnerDataField.TYPE_DATE)) {
+				this.type = (String) otype;
+			} else {
+				this.type = SpinnerDataField.TYPE_NUMBER; // by default
+			}
+		}
 
-        /**
-         * Sets enable the inner listener in function of condition.
-         * <p>
-         * @param eanbled the condition of activation
-         */
-        public void setInnerListenerEnabled(boolean enabled) {
-            this.innerListenerEnabled = enabled;
-        }
+		Object oinitial = parameters.get(SpinnerDataField.INITIAL);
+		Object omin = parameters.get(SpinnerDataField.MIN);
+		Object omax = parameters.get(SpinnerDataField.MAX);
+		Object ostep = parameters.get(SpinnerDataField.STEP);
 
-        /**
-         * Gets the inner value.
-         * <p>
-         * @return the stored inner value
-         */
-        public Object getInnerValue() {
-            return this.storeInnerValue;
-        }
+		Object onumberclass = parameters.get(SpinnerDataField.NUMBERCLASS);
+		if (onumberclass != null) {
+			this.numberclass = ParseUtils.getIntTypeForName((String) onumberclass);
+		}
 
-        /**
-         * Sets the inner value.
-         * <p>
-         * @param o the object to set
-         */
-        public void setInnerValue(Object o) {
-            this.storeInnerValue = o;
-        }
+		Object oformat = parameters.get(SpinnerDataField.FORMAT);
+		if (oformat != null) {
+			this.format = oformat.toString();
+		}
 
-        /**
-         * Compares the inner value with parameter.
-         * <p>
-         * @param newValue the value to compare
-         * @return the condition
-         */
-        protected boolean isEqualInnerValue(Object newValue) {
-            if ((newValue == null) && (this.storeInnerValue == null)) {
-                return true;
-            }
-            if ((newValue == null) || (this.storeInnerValue == null)) {
-                return false;
-            }
-            return this.storeInnerValue.equals(newValue);
-        }
+		this.values = parameters.get(SpinnerDataField.VALUES);
+		List<Object> vecValues = new ArrayList<>();
+		if (this.values != null) {
+			StringTokenizer st = new StringTokenizer(this.values.toString(), ";");
+			while (st.hasMoreTokens()) {
+				Object token = st.nextToken();
+				Object elem = null;
+				if (this.type.equals(SpinnerDataField.TYPE_NUMBER)) {
+					elem = ParseUtils.getValueForClassType(token, this.numberclass);
+				} else if (this.type.equals(SpinnerDataField.TYPE_DATE)) {
+					// TODO Unimplemented.
+				} else if (this.type.equals(SpinnerDataField.TYPE_TEXT)) {
+					elem = token;
+				}
+				vecValues.add(elem);
+			}
+		}
 
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            if (this.innerListenerEnabled) {
-                SpinnerDataField.this.fireValueChanged(SpinnerDataField.this.getValue(), this.storeInnerValue,
-                        ValueEvent.USER_CHANGE);
-                this.storeInnerValue = SpinnerDataField.this.getValue();
-            }
+		if (this.dataField instanceof JSpinner) {
+			// SetModel.
+			if (this.values != null) {
+				// Sets SpinnerListModel.
+				CustomSpinnerListModel spinnerListModel = new CustomSpinnerListModel(vecValues);
+				((JSpinner) this.dataField).setModel(spinnerListModel);
+				CustomListEditor editor = new CustomListEditor((JSpinner) this.dataField);
+				((JSpinner) this.dataField).setEditor(editor);
+				if (this.type.equals(SpinnerDataField.TYPE_NUMBER)) {
+					CustomNumberEditor.NumberFormatterFactory factory = new CustomNumberEditor.NumberFormatterFactory();
+					factory.setValueClass(ParseUtils.getClassType(this.numberclass));
+					editor.getTextField().setFormatterFactory(factory);
+				}
+			} else if (this.type.equals(SpinnerDataField.TYPE_NUMBER) && (this.values == null)) {
+				// Sets SpinnerNumberModel.
+				Object initialValue = null;
+				Object minValue = null;
+				Object maxValue = null;
+				Object stepValue = null;
+				if (omin != null) {
+					minValue = ParseUtils.getValueForClassType(omin, this.numberclass);
+				}
+				if (omax != null) {
+					maxValue = ParseUtils.getValueForClassType(omax, this.numberclass);
+				}
+				if (ostep != null) {
+					stepValue = ParseUtils.getValueForClassType(ostep, this.numberclass);
+				} else {
+					stepValue = ParseUtils.getValueForClassType("1", this.numberclass);
+				}
+				if (oinitial != null) {
+					initialValue = ParseUtils.getValueForClassType(oinitial, this.numberclass);
+				} else {
+					initialValue = ParseUtils.getValueForClassType("0", this.numberclass);
+				}
 
-        }
+				CustomSpinnerNumberModel spinnerNumberModel = new CustomSpinnerNumberModel(this.numberclass,
+						(Number) initialValue, (Comparable) minValue, (Comparable) maxValue,
+						(Number) stepValue);
+				((JSpinner) this.dataField).setModel(spinnerNumberModel);
+				CustomNumberEditor customNumberEditor = new CustomNumberEditor((JSpinner) this.dataField);
+				((JSpinner) this.dataField).setEditor(customNumberEditor);
 
-    };
+				CustomNumberEditor.NumberFormatterFactory factory = new CustomNumberEditor.NumberFormatterFactory();
+				factory.setValueClass(ParseUtils.getClassType(this.numberclass));
+				customNumberEditor.getTextField().setFormatterFactory(factory);
 
-    /**
-     * The inner listener instance.
-     */
-    protected InnerListener innerListener = new InnerListener();
+				if ((this.numberclass == ParseTools.DOUBLE_) || (this.numberclass == ParseTools.FLOAT_)) {
+					customNumberEditor.setDocument(new RealDocument());
+				} else {
+					customNumberEditor.setDocument(new IntegerDocument());
+				}
+			} else if (this.type.equals(SpinnerDataField.TYPE_DATE) && (this.values == null)) {
+				// Sets SpinnerDateModel.
+				CustomSpinnerDateModel spinnerDateModel = null;
+				if (ostep != null) {
+					int calendarField = ParseUtils.getCalendarField(ostep.toString());
+					spinnerDateModel = new CustomSpinnerDateModel(null, null, calendarField);
+				} else {
+					spinnerDateModel = new CustomSpinnerDateModel();
+				}
 
-    protected JCheckBoxMenuItem includeMenu = new JCheckBoxMenuItem(CheckDataField.INCLUDE_MENU_KEY, true);
+				((JSpinner) this.dataField).setModel(spinnerDateModel);
+				CustomDateEditor editor = new CustomDateEditor((JSpinner) this.dataField);
+				((JSpinner) this.dataField).setEditor(editor);
 
-    protected InnerDocumentListener innerDocumentListener = null;
+				SpinnerDateDocument dataDoc = null;
+				if (this.format != null) {
+					dataDoc = new SpinnerDateDocument(this.format);
+				} else {
+					dataDoc = new SpinnerDateDocument();
+				}
+				((DefaultEditor) ((JSpinner) this.dataField).getEditor()).getTextField().setDocument(dataDoc);
+				// TODO Insert the formatter in dateeditor.
 
-    public SpinnerDataField(Hashtable parameters) {
-        this.init(parameters);
-    }
+			} else {
+				// If no model is set, the default model is Integer
+				// SpinnerNumberModel.
+				SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel();
+				((JSpinner) this.dataField).setModel(spinnerNumberModel);
+			}
+		}
 
-    /**
-     * Method that reads the xml parameters.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters. Allows the next parameters:
-     *        <p>
-     *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
-     *        <tr>
-     *        <td><b>attribute</td>
-     *        <td><b>values</td>
-     *        <td><b>default</td>
-     *        <td><b>required</td>
-     *        <td><b>meaning</td>
-     *        </tr>
-     *        <tr>
-     *        <td>max</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Maximum value for spinner when not specified 'values' and type is number.</td>
-     *        </tr>
-     *        <tr>
-     *        <td>min</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Minimum value for spinner when not specified 'values' and type is number.</td>
-     *        </tr>
-     *        <tr>
-     *        <td>numberclass</td>
-     *        <td>Integer/Float/Long/Double</td>
-     *        <td>Integer</td>
-     *        <td>no</td>
-     *        <td>Number class that uses spinner in data model. It used when type is number</td>
-     *        </tr>
-     *        <tr>
-     *        <td>step</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Step used to increase/decrease value in spinner when type is number.
-     *        </tr>
-     *        <tr>
-     *        <td>type</td>
-     *        <td>text/number</td>
-     *        <td>text</td>
-     *        <td>no</td>
-     *        <td>The type of data allowed for this field.</td>
-     *        </tr>
-     *        <tr>
-     *        <td>values</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Used to set a fixed values to spinner. Available for type text and number.</td>
-     *        </tr>
-     *        </TABLE>
-     */
-    @Override
-    public void init(Hashtable parameters) {
+		this.installInnerDocumentListener();
 
-        this.createDataField();
-        super.init(parameters);
-        this.installInnerListener();
+	}
 
-        Object otype = parameters.get(SpinnerDataField.TYPE);
-        if (otype != null) {
-            if (otype.equals(SpinnerDataField.TYPE_TEXT)) {
-                this.type = (String) otype;
-            } else if (otype.equals(SpinnerDataField.TYPE_DATE)) {
-                this.type = (String) otype;
-            } else {
-                this.type = SpinnerDataField.TYPE_NUMBER; // by default
-            }
-        }
+	protected void setInnerListenerEnabled(boolean enabled) {
+		this.innerListener.setInnerListenerEnabled(enabled);
+		if (this.innerDocumentListener != null) {
+			this.innerDocumentListener.setInnerListenerEnabled(enabled);
+		}
+	}
 
-        Object oinitial = parameters.get(SpinnerDataField.INITIAL);
-        Object omin = parameters.get(SpinnerDataField.MIN);
-        Object omax = parameters.get(SpinnerDataField.MAX);
-        Object ostep = parameters.get(SpinnerDataField.STEP);
+	/**
+	 * Installs the inner listener.
+	 */
+	protected void installInnerListener() {
+		if (this.dataField != null) {
+			((JSpinner) this.dataField).addChangeListener(this.innerListener);
+		}
+	}
 
-        Object onumberclass = parameters.get(SpinnerDataField.NUMBERCLASS);
-        if (onumberclass != null) {
-            this.numberclass = ParseUtils.getIntTypeForName((String) onumberclass);
-        }
+	protected void installInnerDocumentListener() {
+		if (this.dataField != null) {
+			JComponent editor = ((JSpinner) this.dataField).getEditor();
+			Document doc = ((DefaultEditor) editor).getTextField().getDocument();
+			if (doc != null) {
+				if (this.innerDocumentListener == null) {
+					this.innerDocumentListener = new InnerDocumentListener();
+				}
+				doc.addDocumentListener(this.innerDocumentListener);
+			}
+		}
+	}
 
-        Object oformat = parameters.get(SpinnerDataField.FORMAT);
-        if (oformat != null) {
-            this.format = oformat.toString();
-        }
+	@Override
+	public void deleteData() {
+		this.setInnerListenerEnabled(false);
+		Object oPreviousValue = this.getValue();
+		((JSpinner) this.dataField).setValue(null);
+		this.valueSave = this.getValue();
+		this.innerListener.setInnerValue(this.valueSave);
+		if (this.innerDocumentListener != null) {
+			this.innerDocumentListener.setInnerValue(this.valueSave);
+		}
+		this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
+		this.setInnerListenerEnabled(true);
+	}
 
-        this.values = parameters.get(SpinnerDataField.VALUES);
-        Vector vecValues = new Vector();
-        if (this.values != null) {
-            StringTokenizer st = new StringTokenizer(this.values.toString(), ";");
-            while (st.hasMoreTokens()) {
-                Object token = st.nextToken();
-                Object elem = null;
-                if (this.type.equals(SpinnerDataField.TYPE_NUMBER)) {
-                    elem = ParseUtils.getValueForClassType(token, this.numberclass);
-                } else if (this.type.equals(SpinnerDataField.TYPE_DATE)) {
-                    // TODO Unimplemented.
-                } else if (this.type.equals(SpinnerDataField.TYPE_TEXT)) {
-                    elem = token;
-                }
-                vecValues.add(elem);
-            }
-        }
+	@Override
+	public int getSQLDataType() {
+		return ParseUtils.getSQLType(this.numberclass, ParseTools.INTEGER_);
+	}
 
-        if (this.dataField instanceof JSpinner) {
-            // SetModel.
-            if (this.values != null) {
-                // Sets SpinnerListModel.
-                CustomSpinnerListModel spinnerListModel = new CustomSpinnerListModel(vecValues);
-                ((JSpinner) this.dataField).setModel(spinnerListModel);
-                CustomListEditor editor = new CustomListEditor((JSpinner) this.dataField);
-                ((JSpinner) this.dataField).setEditor(editor);
-                if (this.type.equals(SpinnerDataField.TYPE_NUMBER)) {
-                    CustomNumberEditor.NumberFormatterFactory factory = new CustomNumberEditor.NumberFormatterFactory();
-                    factory.setValueClass(ParseUtils.getClassType(this.numberclass));
-                    editor.getTextField().setFormatterFactory(factory);
-                }
-            } else if (this.type.equals(SpinnerDataField.TYPE_NUMBER) && (this.values == null)) {
-                // Sets SpinnerNumberModel.
-                Object initialValue = null;
-                Object minValue = null;
-                Object maxValue = null;
-                Object stepValue = null;
-                if (omin != null) {
-                    minValue = ParseUtils.getValueForClassType(omin, this.numberclass);
-                }
-                if (omax != null) {
-                    maxValue = ParseUtils.getValueForClassType(omax, this.numberclass);
-                }
-                if (ostep != null) {
-                    stepValue = ParseUtils.getValueForClassType(ostep, this.numberclass);
-                } else {
-                    stepValue = ParseUtils.getValueForClassType("1", this.numberclass);
-                }
-                if (oinitial != null) {
-                    initialValue = ParseUtils.getValueForClassType(oinitial, this.numberclass);
-                } else {
-                    initialValue = ParseUtils.getValueForClassType("0", this.numberclass);
-                }
+	@Override
+	public boolean isModified() {
+		return super.isModified();
+	}
 
-                CustomSpinnerNumberModel spinnerNumberModel = new CustomSpinnerNumberModel(this.numberclass,
-                        (Number) initialValue, (Comparable) minValue, (Comparable) maxValue,
-                        (Number) stepValue);
-                ((JSpinner) this.dataField).setModel(spinnerNumberModel);
-                CustomNumberEditor customNumberEditor = new CustomNumberEditor((JSpinner) this.dataField);
-                ((JSpinner) this.dataField).setEditor(customNumberEditor);
+	@Override
+	public boolean isEmpty() {
+		Object obj = ((JSpinner) this.dataField).getValue();
+		if (obj == null) {
+			return true;
+		} else {
+			if (obj instanceof String) {
+				if (((String) obj).length() == 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
-                CustomNumberEditor.NumberFormatterFactory factory = new CustomNumberEditor.NumberFormatterFactory();
-                factory.setValueClass(ParseUtils.getClassType(this.numberclass));
-                customNumberEditor.getTextField().setFormatterFactory(factory);
+	@Override
+	public Object getValue() {
+		if (this.isEmpty()) {
+			return null;
+		}
+		return ((JSpinner) this.dataField).getValue();
+	}
 
-                if ((this.numberclass == ParseTools.DOUBLE_) || (this.numberclass == ParseTools.FLOAT_)) {
-                    customNumberEditor.setDocument(new RealDocument());
-                } else {
-                    customNumberEditor.setDocument(new IntegerDocument());
-                }
-            } else if (this.type.equals(SpinnerDataField.TYPE_DATE) && (this.values == null)) {
-                // Sets SpinnerDateModel.
-                CustomSpinnerDateModel spinnerDateModel = null;
-                if (ostep != null) {
-                    int calendarField = ParseUtils.getCalendarField(ostep.toString());
-                    spinnerDateModel = new CustomSpinnerDateModel(null, null, calendarField);
-                } else {
-                    spinnerDateModel = new CustomSpinnerDateModel();
-                }
+	@Override
+	public void setValue(Object value) {
+		this.setInnerListenerEnabled(false);
+		Object oPreviousValue = this.getValue();
+		((JSpinner) this.dataField).setValue(value);
+		this.valueSave = this.getValue();
+		this.innerListener.setInnerValue(this.valueSave);
+		if (this.innerDocumentListener != null) {
+			this.innerDocumentListener.setInnerValue(this.valueSave);
+		}
+		this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
+		this.setInnerListenerEnabled(true);
+	}
 
-                ((JSpinner) this.dataField).setModel(spinnerDateModel);
-                CustomDateEditor editor = new CustomDateEditor((JSpinner) this.dataField);
-                ((JSpinner) this.dataField).setEditor(editor);
+	@Override
+	public void setEnabled(boolean enabled) {
+		if (!enabled && (this instanceof AdvancedDataComponent)) {
+			((AdvancedDataComponent) this).setAdvancedQueryMode(false);
+		}
+		if (!enabled) {
+			if (this.conditions != null) {
+				this.conditions.setVisible(false);
+			}
+			this.advancedQueryMode = false;
+		}
+		if (enabled) {
+			boolean permission = this.checkEnabledPermission();
+			if (permission) {
+				if (!this.advancedQueryMode) {
+					this.dataField.setEnabled(enabled);
+				} else {
+					if (this.includeMenu.isSelected()) {
+						this.dataField.setEnabled(true);
+					} else {
+						this.dataField.setEnabled(false);
+					}
+				}
+				this.enabled = enabled;
+				this.updateBackgroundColor();
+			}
+		} else {
+			this.dataField.setEnabled(enabled);
+			this.enabled = enabled;
+		}
+	}
 
-                SpinnerDateDocument dataDoc = null;
-                if (this.format != null) {
-                    dataDoc = new SpinnerDateDocument(this.format);
-                } else {
-                    dataDoc = new SpinnerDateDocument();
-                }
-                ((DefaultEditor) ((JSpinner) this.dataField).getEditor()).getTextField().setDocument(dataDoc);
-                // TODO Insert the formatter in dateeditor.
+	protected void createDataField() {
+		EJSpinner spinner = new EJSpinner() {
 
-            } else {
-                // If no model is set, the default model is Integer
-                // SpinnerNumberModel.
-                SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel();
-                ((JSpinner) this.dataField).setModel(spinnerNumberModel);
-            }
-        }
+			@Override
+			public Dimension getPreferredSize() {
+				// Changed to addapt size to values stored and consider buttons
+				// width
+				int buttonsWidth = this.getComponent(0).getWidth();
+				char charMaxWidth = ((JSpinner) SpinnerDataField.this.dataField)
+						.getModel() instanceof SpinnerNumberModel ? '0' : 'W';
+				return new Dimension(
+						(SpinnerDataField.this.fieldSize * this.getFontMetrics(this.getFont()).charWidth(charMaxWidth))
+						+ buttonsWidth,
+						super.getPreferredSize().height);
+			}
+		};
+		this.dataField = spinner;
+	}
 
-        this.installInnerDocumentListener();
+	@Override
+	protected void createPopupMenu() {
+		if (this.popupMenu == null) {
+			// this.popupMenu = new ExtendedJPopupMenu();
+			super.createPopupMenu();
+			this.popupMenu.addSeparator();
+			String sMenuText = CheckDataField.INCLUDE_MENU_KEY;
+			try {
+				if (this.resources != null) {
+					sMenuText = this.resources.getString(CheckDataField.INCLUDE_MENU_KEY);
+				}
+			} catch (Exception e) {
+				SpinnerDataField.logger.trace(null, e);
+			}
 
-    }
+			this.includeMenu.setText(sMenuText);
+			this.popupMenu.add(this.includeMenu);
+			this.includeMenu.addActionListener(e -> {
+				if (!SpinnerDataField.this.includeMenu.isSelected()) {
+					// Update the checkbox
+					((AbstractButton) SpinnerDataField.this.dataField).setEnabled(false);
+				} else {
+					((AbstractButton) SpinnerDataField.this.dataField).setEnabled(true);
+				}
+			});
+		}
+	}
 
-    protected void setInnerListenerEnabled(boolean enabled) {
-        this.innerListener.setInnerListenerEnabled(enabled);
-        if (this.innerDocumentListener != null) {
-            this.innerDocumentListener.setInnerListenerEnabled(enabled);
-        }
-    }
+	@Override
+	protected void showPopupMenu(Component c, int x, int y) {
+		// if(this.isEnabled()==false) return;
+		if (this.popupMenu == null) {
+			this.createPopupMenu();
+		}
+		if (this.popupMenu != null) {
+			this.configurePopupMenuHelp();
+			this.includeMenu.setVisible(this.advancedQueryMode && this.isEnabled());
+			this.popupMenu.show(c, x, y);
+		}
+	}
 
-    /**
-     * Installs the inner listener.
-     */
-    protected void installInnerListener() {
-        if (this.dataField != null) {
-            ((JSpinner) this.dataField).addChangeListener(this.innerListener);
-        }
-    }
+	public void setAdvancedQueryMode(boolean enabled) {
+		this.advancedQueryMode = enabled;
+		if (!this.advancedQueryMode) {
+			this.dataField.setEnabled(this.isEnabled());
+		} else {
+			// By default it is not included in the query
+			this.includeMenu.setSelected(false);
+			this.dataField.setEnabled(false);
+		}
+	}
 
-    protected void installInnerDocumentListener() {
-        if (this.dataField != null) {
-            JComponent editor = ((JSpinner) this.dataField).getEditor();
-            Document doc = ((DefaultEditor) editor).getTextField().getDocument();
-            if (doc != null) {
-                if (this.innerDocumentListener == null) {
-                    this.innerDocumentListener = new InnerDocumentListener();
-                }
-                doc.addDocumentListener(this.innerDocumentListener);
-            }
-        }
-    }
+	@Override
+	public void setComponentLocale(Locale l) {
+		// Object value = getValue();
+		super.setComponentLocale(l);
+		// Document d = ((DefaultEditor)((JSpinner)
+		// this.dataField).getEditor()).getTextField().getDocument();
+		// if (d != null && d instanceof Internationalization) {
+		// ((Internationalization) d).setComponentLocale(l);
+		// }
+		// boolean events = this.fireValueEvents;
+		// this.fireValueEvents = false;
+		// if(value!=null){
+		// this.setValue(value);
+		// }
+		// this.fireValueEvents = events;
 
-    @Override
-    public void deleteData() {
-        this.setInnerListenerEnabled(false);
-        Object oPreviousValue = this.getValue();
-        ((JSpinner) this.dataField).setValue(null);
-        this.valueSave = this.getValue();
-        this.innerListener.setInnerValue(this.valueSave);
-        if (this.innerDocumentListener != null) {
-            this.innerDocumentListener.setInnerValue(this.valueSave);
-        }
-        this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
-        this.setInnerListenerEnabled(true);
-    }
-
-    @Override
-    public int getSQLDataType() {
-        return ParseUtils.getSQLType(this.numberclass, ParseTools.INTEGER_);
-    }
-
-    @Override
-    public boolean isModified() {
-        return super.isModified();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        Object obj = ((JSpinner) this.dataField).getValue();
-        if (obj == null) {
-            return true;
-        } else {
-            if (obj instanceof String) {
-                if (((String) obj).length() == 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public Object getValue() {
-        if (this.isEmpty()) {
-            return null;
-        }
-        return ((JSpinner) this.dataField).getValue();
-    }
-
-    @Override
-    public void setValue(Object value) {
-        this.setInnerListenerEnabled(false);
-        Object oPreviousValue = this.getValue();
-        ((JSpinner) this.dataField).setValue(value);
-        this.valueSave = this.getValue();
-        this.innerListener.setInnerValue(this.valueSave);
-        if (this.innerDocumentListener != null) {
-            this.innerDocumentListener.setInnerValue(this.valueSave);
-        }
-        this.fireValueChanged(this.valueSave, oPreviousValue, ValueEvent.PROGRAMMATIC_CHANGE);
-        this.setInnerListenerEnabled(true);
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        if (!enabled && (this instanceof AdvancedDataComponent)) {
-            ((AdvancedDataComponent) this).setAdvancedQueryMode(false);
-        }
-        if (!enabled) {
-            if (this.conditions != null) {
-                this.conditions.setVisible(false);
-            }
-            this.advancedQueryMode = false;
-        }
-        if (enabled) {
-            boolean permission = this.checkEnabledPermission();
-            if (permission) {
-                if (!this.advancedQueryMode) {
-                    this.dataField.setEnabled(enabled);
-                } else {
-                    if (this.includeMenu.isSelected()) {
-                        this.dataField.setEnabled(true);
-                    } else {
-                        this.dataField.setEnabled(false);
-                    }
-                }
-                this.enabled = enabled;
-                this.updateBackgroundColor();
-            }
-        } else {
-            this.dataField.setEnabled(enabled);
-            this.enabled = enabled;
-        }
-    }
-
-    protected void createDataField() {
-        EJSpinner spinner = new EJSpinner() {
-
-            @Override
-            public Dimension getPreferredSize() {
-                // Changed to addapt size to values stored and consider buttons
-                // width
-                int buttonsWidth = this.getComponent(0).getWidth();
-                char charMaxWidth = ((JSpinner) SpinnerDataField.this.dataField)
-                    .getModel() instanceof SpinnerNumberModel ? '0' : 'W';
-                return new Dimension(
-                        (SpinnerDataField.this.fieldSize * this.getFontMetrics(this.getFont()).charWidth(charMaxWidth))
-                                + buttonsWidth,
-                        super.getPreferredSize().height);
-            }
-        };
-        this.dataField = spinner;
-    }
-
-    @Override
-    protected void createPopupMenu() {
-        if (this.popupMenu == null) {
-            // this.popupMenu = new ExtendedJPopupMenu();
-            super.createPopupMenu();
-            this.popupMenu.addSeparator();
-            String sMenuText = CheckDataField.INCLUDE_MENU_KEY;
-            try {
-                if (this.resources != null) {
-                    sMenuText = this.resources.getString(CheckDataField.INCLUDE_MENU_KEY);
-                }
-            } catch (Exception e) {
-                SpinnerDataField.logger.trace(null, e);
-            }
-
-            this.includeMenu.setText(sMenuText);
-            this.popupMenu.add(this.includeMenu);
-            this.includeMenu.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (!SpinnerDataField.this.includeMenu.isSelected()) {
-                        // Update the checkbox
-                        ((AbstractButton) SpinnerDataField.this.dataField).setEnabled(false);
-                    } else {
-                        ((AbstractButton) SpinnerDataField.this.dataField).setEnabled(true);
-                    }
-                }
-            });
-        }
-    }
-
-    @Override
-    protected void showPopupMenu(Component c, int x, int y) {
-        // if(this.isEnabled()==false) return;
-        if (this.popupMenu == null) {
-            this.createPopupMenu();
-        }
-        if (this.popupMenu != null) {
-            this.configurePopupMenuHelp();
-            this.includeMenu.setVisible(this.advancedQueryMode && this.isEnabled());
-            this.popupMenu.show(c, x, y);
-        }
-    }
-
-    public void setAdvancedQueryMode(boolean enabled) {
-        this.advancedQueryMode = enabled;
-        if (!this.advancedQueryMode) {
-            this.dataField.setEnabled(this.isEnabled());
-        } else {
-            // By default it is not included in the query
-            this.includeMenu.setSelected(false);
-            this.dataField.setEnabled(false);
-        }
-    }
-
-    @Override
-    public void setComponentLocale(Locale l) {
-        // Object value = getValue();
-        super.setComponentLocale(l);
-        // Document d = ((DefaultEditor)((JSpinner)
-        // this.dataField).getEditor()).getTextField().getDocument();
-        // if (d != null && d instanceof Internationalization) {
-        // ((Internationalization) d).setComponentLocale(l);
-        // }
-        // boolean events = this.fireValueEvents;
-        // this.fireValueEvents = false;
-        // if(value!=null){
-        // this.setValue(value);
-        // }
-        // this.fireValueEvents = events;
-
-    }
+	}
 
 }

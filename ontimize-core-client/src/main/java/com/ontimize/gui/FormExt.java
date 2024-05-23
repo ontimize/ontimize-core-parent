@@ -7,8 +7,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -20,14 +21,15 @@ import javax.swing.JScrollPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.container.TabPanel;
 import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.ImageDataField;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.gui.table.Table;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 public class FormExt extends Form {
 
@@ -46,7 +48,7 @@ public class FormExt extends Form {
 
         private final JPanel checkBoxPanel = new JPanel(new GridLayout(0, 2));
 
-        private final Vector checkBoxList = new Vector();
+        private final List<Object> checkBoxList = new ArrayList<>();
 
         private final JLabel labelInfo = new JLabel();
 
@@ -56,9 +58,9 @@ public class FormExt extends Form {
 
         private Thread printingThread = null;
 
-        private Hashtable kvQuery = null;
+        private Map<Object, Object> kvQuery = null;
 
-        public PrintingSetupWindow(Hashtable queryFilter) {
+        public PrintingSetupWindow(Map<Object, Object> queryFilter) {
             super(FormExt.this.parentFrame, true);
             this.kvQuery = queryFilter;
             String windowTitle = "Print form data";
@@ -93,7 +95,7 @@ public class FormExt extends Form {
 
         private void createCheckBoxPanel() {
             // Search the fields attributes
-            Vector vFieldsAttributes = new Vector();
+            List<Object> vFieldsAttributes = new ArrayList<>();
             for (int i = 0; i < FormExt.this.getDataFieldAttributeList().size(); i++) {
                 Object attribute = FormExt.this.getDataFieldAttributeList().get(i);
                 if (attribute instanceof String) {
@@ -139,7 +141,7 @@ public class FormExt extends Form {
                     // Print
                     PrintingSetupWindow.this.acceptButton.setEnabled(false);
                     PrintingSetupWindow.this.cancelButton.setEnabled(false);
-                    final Vector queryAttributes = new Vector();
+                    final List<Object> queryAttributes = new ArrayList<>();
                     for (int i = 0; i < PrintingSetupWindow.this.checkBoxList.size(); i++) {
                         JCheckBox cb = (JCheckBox) PrintingSetupWindow.this.checkBoxList.get(i);
                         if (cb.isSelected()) {
@@ -175,7 +177,7 @@ public class FormExt extends Form {
                                     w.hide();
                                     w.dispose();
                                     // Creates the table
-                                    Hashtable p = new Hashtable();
+                                    Map<Object, Object> p = new HashMap<>();
                                     StringBuilder sbColumns = new StringBuilder();
                                     for (int i = 0; i < queryAttributes.size(); i++) {
                                         Object oAttribute = queryAttributes.get(i);
@@ -236,14 +238,14 @@ public class FormExt extends Form {
     };
 
     /** A list with the record indexes which has been queried */
-    protected Vector queryRecordIndex = null;
+    protected List<Object> queryRecordIndex = null;
 
     /**
      * Creates a Form instance with the parameters establishes in <code>Hastable</code>
      * @param parameters
      * @throws Exception
      */
-    public FormExt(Hashtable parameters) throws Exception {
+    public FormExt(Map<Object, Object> parameters) throws Exception {
         super(parameters);
         if ((this.printButton != null) && this.buttons) {
             this.printButton.setVisible(true);
@@ -383,8 +385,8 @@ public class FormExt extends Form {
     }
 
     @Override
-    public void updateDataFields(Hashtable data) {
-        this.updateDataFields(data, 0);
+    public void updateDataFields(Map<?, ?> data) {
+        this.updateDataFields((EntityResult) new EntityResultMapImpl(new HashMap<>(data)), 0);
     }
 
     @Override
@@ -411,39 +413,39 @@ public class FormExt extends Form {
                 }
                 // remove previous values
                 if (totalDataList != null) {
-                    for (Object ob : new ArrayList(totalDataList.keySet())) {
+                    for (Object ob : new ArrayList<>(totalDataList.keySet())) {
                         if (!getAttributesToQuery().contains(ob)) {
                             totalDataList.remove(ob);
                         }
                     }
                 }
                 // Put the values in the data list in the appropriate index
-                Enumeration keys = result.keys();
+                Enumeration<?> keys = result.keys();
                 while (keys.hasMoreElements()) {
                     Object key = keys.nextElement();
                     Object oValue = result.get(key);
-                    if (oValue instanceof Vector) {
+                    if (oValue instanceof List) {
                         // Search for the vector in the data list
-                        Vector vValues = (Vector) FormExt.this.totalDataList.get(key);
+                    	List<Object> vValues = (List<Object>) FormExt.this.totalDataList.get(key);
                         if ((vValues == null) || vValues.isEmpty()) {
-                            vValues = new Vector(this.vectorSize);
+                            vValues = new ArrayList<>(this.vectorSize);
                             for (int i = 0; i < this.vectorSize; i++) {
                                 vValues.add(i, null);
                             }
                             this.totalDataList.put(key, vValues);
                         }
                         vValues.remove(index);
-                        if (((Vector) oValue).size() > 0) {
-                            vValues.add(index, ((Vector) oValue).get(0));
+                        if (((List<?>) oValue).size() > 0) {
+                            vValues.add(index, ((List<?>) oValue).get(0));
                         } else {
                             vValues.add(index, null);
                         }
                     } else {
                         // Search for the value in the data list
-                        Vector vValues = (Vector) this.totalDataList.get(key);
+                        List<Object> vValues = (List<Object>) this.totalDataList.get(key);
                         if (vValues == null) {
                             // Initializes the vector
-                            vValues = new Vector(this.vectorSize);
+                            vValues = new ArrayList<>(this.vectorSize);
                             for (int i = 0; i < this.vectorSize; i++) {
                                 vValues.add(i, null);
                             }
@@ -468,8 +470,8 @@ public class FormExt extends Form {
      * established in the 'column' xml parameter and the columns established by the user in table view.
      * @return a <Vector> with the attribute list.
      */
-    public Vector getAttributesToQuery() {
-        Vector v = (Vector) this.keys.clone();
+    public List<Object> getAttributesToQuery() {
+        List<Object> v = new ArrayList<>(this.keys);
         if ((this.tableViewColumns != null) && (this.tableViewColumns.size() > 0)) {
             for (int i = 0; i < this.tableViewColumns.size(); i++) {
                 if (!v.contains(this.tableViewColumns.get(i))) {
@@ -496,7 +498,7 @@ public class FormExt extends Form {
     protected boolean existNoQueriedDataField() {
         for (int i = 0; i < this.componentList.size(); i++) {
             if (this.componentList.get(i) instanceof TabPanel) {
-                Vector v = ((TabPanel) this.componentList.get(i)).initNotQueriedDataFieldAttributes();
+                List<?> v = ((TabPanel) this.componentList.get(i)).initNotQueriedDataFieldAttributes();
                 if (v.size() > 0) {
                     return true;
                 }
@@ -527,9 +529,9 @@ public class FormExt extends Form {
 
     /**
      * Shows a window where the column list to print can be selected in.
-     * @param keysValues a <code>Hashtable</code> with the record keys to be printed.
+     * @param keysValues a <code>Map</code> with the record keys to be printed.
      */
-    public void printMultipleRecords(Hashtable keysValues) {
+    public void printMultipleRecords(Map<Object, Object> keysValues) {
         // Show a window to select the columns to query:
         if (this.printButton != null) {
             this.printButton.setEnabled(false);
@@ -550,13 +552,10 @@ public class FormExt extends Form {
     }
 
     @Override
-    public void updateDataFields(Hashtable data, int currentIndex) {
-        this.queryRecordIndex = new Vector();
+    public void updateDataFields(EntityResult data, int currentIndex) {
+        this.queryRecordIndex = new ArrayList<>();
         if (data == null) {
-            data = new Hashtable();
-        }
-        if (!(data instanceof EntityResult)) {
-            data = new EntityResult(data);
+            data = new EntityResultMapImpl();
         }
         if (!data.isEmpty()) {
             // Checks if the keys exist.
@@ -564,14 +563,14 @@ public class FormExt extends Form {
             for (int i = 0; i < this.keys.size(); i++) {
                 Object oKey = this.keys.get(i);
                 Object v = data.get(oKey);
-                if (!(v instanceof Vector)) {
+                if (!(v instanceof List)) {
                     FormExt.logger.warn(
                             "The Hashtable used by method updateDataFields() does not contain a vector for the key: {}.",
                             oKey);
                     this.vectorSize = 1;
                     continue;
                 }
-                Vector vKeys = (Vector) v;
+                List<?> vKeys = (List<?>) v;
                 // if (vKeys == null) {
                 // logger.warn("The Hashtable used by method updateDataFields() does not contain the key: {}.",
                 // oKey);
@@ -617,7 +616,7 @@ public class FormExt extends Form {
             for (int i = 0; i < this.queryRecordIndex.size(); i++) {
                 Object ind = this.queryRecordIndex.get(i);
                 if ((ind != null) && (((Number) ind).intValue() > index)) {
-                    this.queryRecordIndex.setElementAt(new Integer(((Number) ind).intValue() - 1), i);
+                    this.queryRecordIndex.set(i, new Integer(((Number) ind).intValue() - 1));
                 }
             }
         }

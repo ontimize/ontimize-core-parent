@@ -6,14 +6,13 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -46,490 +45,479 @@ import com.ontimize.util.swing.text.XMLEditorKit;
  */
 public class XMLDataField extends MemoDataField {
 
-    private static final Logger logger = LoggerFactory.getLogger(XMLDataField.class);
+	private static final Logger logger = LoggerFactory.getLogger(XMLDataField.class);
 
-    /**
-     * For debugging mode. By default, false.
-     */
-    public static boolean DEBUG = false;
+	/**
+	 * For debugging mode. By default, false.
+	 */
+	public static boolean DEBUG = false;
 
-    /**
-     * A reference to document factory. By default, null.
-     */
-    protected DocumentBuilderFactory docBFactory = null;
+	/**
+	 * A reference to document factory. By default, null.
+	 */
+	protected DocumentBuilderFactory docBFactory = null;
 
-    /**
-     * A reference to document builder. By default, null.
-     */
-    protected DocumentBuilder docB = null;
+	/**
+	 * A reference to document builder. By default, null.
+	 */
+	protected DocumentBuilder docB = null;
 
-    /**
-     * An instance for error text attribute.
-     */
-    protected SimpleAttributeSet errorTextAttribute = new SimpleAttributeSet();
+	/**
+	 * An instance for error text attribute.
+	 */
+	protected SimpleAttributeSet errorTextAttribute = new SimpleAttributeSet();
 
-    /**
-     * An instance for OK text attribute.
-     */
-    protected SimpleAttributeSet oKTextAttribute = new SimpleAttributeSet();
+	/**
+	 * An instance for OK text attribute.
+	 */
+	protected SimpleAttributeSet oKTextAttribute = new SimpleAttributeSet();
 
-    /**
-     * The key for XML analyse.
-     */
-    public static String analyzeKey = "xmldatafield.analyse_xml";
+	/**
+	 * The key for XML analyse.
+	 */
+	public static String analyzeKey = "xmldatafield.analyse_xml";
 
-    /**
-     * An instance of analyze menu item.
-     */
-    protected JMenuItem analyzeMenu = new JMenuItem(XMLDataField.analyzeKey);
+	/**
+	 * An instance of analyze menu item.
+	 */
+	protected JMenuItem analyzeMenu = new JMenuItem(XMLDataField.analyzeKey);
 
-    protected JMenuItem indentItem;
+	protected JMenuItem indentItem;
 
-    public static String indentKey = "xmldatafield.indent_xml";
+	public static String indentKey = "xmldatafield.indent_xml";
 
-    protected boolean format;
+	protected boolean format;
 
-    protected int indentSize;
+	protected int indentSize;
 
-    /**
-     * The class constructor. Calls to <code>super()</code> with parameters. This field has not
-     * additional XML parameters.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
-     * @throws Exception when an Exception occurs
-     */
-    public XMLDataField(Hashtable parameters) throws Exception {
-        super(parameters);
-        // GridBagLayout l = (GridBagLayout)this.getLayout();
-        // Object constraints = l.getConstraints(scroll);
-        this.scroll.setPreferredSize(new Dimension(this.dataField.getPreferredSize().width,
-                this.dataField.getFontMetrics(this.dataField.getFont()).getHeight() * this.rows));
-        this.docBFactory = DocumentBuilderFactory.newInstance();
-        this.docB = this.docBFactory.newDocumentBuilder();
-        StyleConstants.setBackground(this.errorTextAttribute, Color.red.brighter());
-        StyleConstants.setForeground(this.errorTextAttribute, Color.black);
-        if (this.fontColor != null) {
-            StyleConstants.setForeground(this.oKTextAttribute, this.fontColor);
-        }
-        ((JTextPane) this.dataField).getDocument().putProperty(DefaultEditorKit.EndOfLineStringProperty, "\n");
-    }
+	/**
+	 * The class constructor. Calls to <code>super()</code> with parameters. This field has not additional XML parameters. <p>
+	 *
+	 * @param parameters
+	 *            the <code>Map</code> with parameters
+	 * @throws Exception
+	 *             when an Exception occurs
+	 */
+	public XMLDataField(Map<Object, Object> parameters) throws Exception {
+		super(parameters);
+		// GridBagLayout l = (GridBagLayout)this.getLayout();
+		// Object constraints = l.getConstraints(scroll);
+		this.scroll.setPreferredSize(new Dimension(this.dataField.getPreferredSize().width,
+				this.dataField.getFontMetrics(this.dataField.getFont()).getHeight() * this.rows));
+		this.docBFactory = DocumentBuilderFactory.newInstance();
+		this.docB = this.docBFactory.newDocumentBuilder();
+		StyleConstants.setBackground(this.errorTextAttribute, Color.red.brighter());
+		StyleConstants.setForeground(this.errorTextAttribute, Color.black);
+		if (this.fontColor != null) {
+			StyleConstants.setForeground(this.oKTextAttribute, this.fontColor);
+		}
+		((JTextPane) this.dataField).getDocument().putProperty(DefaultEditorKit.EndOfLineStringProperty, "\n");
+	}
 
-    @Override
-    public void init(Hashtable params) {
-        super.init(params);
-        this.format = ParseUtils.getBoolean((String) params.get("format"), false);
-        this.indentSize = ParseUtils.getInteger((String) params.get("identsize"), 4);
-        this.indentItem = new JMenuItem(XMLDataField.indentKey);
-        this.indentItem.addActionListener(new ActionListener() {
+	@Override
+	public void init(Map<Object, Object> params) {
+		super.init(params);
+		this.format = ParseUtils.getBoolean((String) params.get("format"), false);
+		this.indentSize = ParseUtils.getInteger((String) params.get("identsize"), 4);
+		this.indentItem = new JMenuItem(XMLDataField.indentKey);
+		this.indentItem.addActionListener(event -> ((JTextComponent) XMLDataField.this.dataField)
+				.setText(XMLDataField.this.doFormat((String) XMLDataField.this.getValue())));
+	}
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ((JTextComponent) XMLDataField.this.dataField)
-                    .setText(XMLDataField.this.doFormat((String) XMLDataField.this.getValue()));
-            }
-        });
-    }
+	@Override
+	protected void createPopupMenu() {
+		if (this.popupMenu == null) {
+			super.createPopupMenu();
+			try {
+				this.analyzeMenu.setText(this.resources.getString(XMLDataField.analyzeKey));
+			} catch (Exception e) {
+				if (ApplicationManager.DEBUG) {
+					XMLDataField.logger.debug(null, e);
+				} else {
+					XMLDataField.logger.trace(null, e);
+				}
+			}
+			this.popupMenu.addSeparator();
+			this.popupMenu.add(this.analyzeMenu);
+			this.analyzeMenu.addActionListener(e -> XMLDataField.this.showErrors());
 
-    @Override
-    protected void createPopupMenu() {
-        if (this.popupMenu == null) {
-            super.createPopupMenu();
-            try {
-                this.analyzeMenu.setText(this.resources.getString(XMLDataField.analyzeKey));
-            } catch (Exception e) {
-                if (ApplicationManager.DEBUG) {
-                    XMLDataField.logger.debug(null, e);
-                } else {
-                    XMLDataField.logger.trace(null, e);
-                }
-            }
-            this.popupMenu.addSeparator();
-            this.popupMenu.add(this.analyzeMenu);
-            this.analyzeMenu.addActionListener(new ActionListener() {
+			if (this.indentItem != null) {
+				this.popupMenu.addSeparator();
+				this.popupMenu.add(this.indentItem);
+			}
+		}
+	}
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    XMLDataField.this.showErrors();
-                }
-            });
+	@Override
+	protected void showPopupMenu(Component s, int x, int y) {
+		if (this.isEmpty()) {
+			this.analyzeMenu.setEnabled(false);
+		} else {
+			this.analyzeMenu.setEnabled(true);
+		}
+		super.showPopupMenu(s, x, y);
+	}
 
-            if (this.indentItem != null) {
-                this.popupMenu.addSeparator();
-                this.popupMenu.add(this.indentItem);
-            }
-        }
-    }
+	@Override
+	public void setResourceBundle(ResourceBundle res) {
+		super.setResourceBundle(res);
+		if (this.analyzeMenu != null) {
+			try {
+				this.analyzeMenu.setText(this.resources.getString(XMLDataField.analyzeKey));
+			} catch (Exception e) {
+				if (ApplicationManager.DEBUG) {
+					XMLDataField.logger.debug(null, e);
+				} else {
+					XMLDataField.logger.trace(null, e);
+				}
+			}
+		}
 
-    @Override
-    protected void showPopupMenu(Component s, int x, int y) {
-        if (this.isEmpty()) {
-            this.analyzeMenu.setEnabled(false);
-        } else {
-            this.analyzeMenu.setEnabled(true);
-        }
-        super.showPopupMenu(s, x, y);
-    }
+		if (this.indentItem != null) {
+			this.indentItem.setText(ApplicationManager.getTranslation(XMLDataField.indentKey, res));
+		}
+	}
 
-    @Override
-    public void setResourceBundle(ResourceBundle res) {
-        super.setResourceBundle(res);
-        if (this.analyzeMenu != null) {
-            try {
-                this.analyzeMenu.setText(this.resources.getString(XMLDataField.analyzeKey));
-            } catch (Exception e) {
-                if (ApplicationManager.DEBUG) {
-                    XMLDataField.logger.debug(null, e);
-                } else {
-                    XMLDataField.logger.trace(null, e);
-                }
-            }
-        }
+	@Override
+	public List<String> getTextsToTranslate() {
+		List<String> v = super.getTextsToTranslate();
+		v.add(XMLDataField.analyzeKey);
+		v.add(XMLDataField.indentKey);
+		return v;
+	}
 
-        if (this.indentItem != null) {
-            this.indentItem.setText(ApplicationManager.getTranslation(XMLDataField.indentKey, res));
-        }
-    }
+	@Override
+	public void setValue(Object value) {
+		super.setValue(this.format ? this.doFormat((String) value) : value);
+	}
 
-    @Override
-    public Vector getTextsToTranslate() {
-        Vector v = super.getTextsToTranslate();
-        v.add(XMLDataField.analyzeKey);
-        v.add(XMLDataField.indentKey);
-        return v;
-    }
+	/**
+	 * Checks the field errors.
+	 * <p>
+	 * @return the error condition
+	 */
+	public boolean hasErrors() {
 
-    @Override
-    public void setValue(Object value) {
-        super.setValue(this.format ? this.doFormat((String) value) : value);
-    }
+		if (this.isEmpty()) {
+			return false;
+		} else {
+			this.setOkAttributes(0, ((JTextComponent) this.dataField).getText().length());
+			ByteArrayInputStream bIn = null;
+			try {
+				bIn = new ByteArrayInputStream(((JTextComponent) this.dataField).getText().getBytes());
+				this.docB.parse(bIn);
 
-    /**
-     * Checks the field errors.
-     * <p>
-     * @return the error condition
-     */
-    public boolean hasErrors() {
+				return false;
+			} catch (IOException e) {
+				XMLDataField.logger.error(null, e);
+				return true;
+			} catch (SAXException e) {
+				XMLDataField.logger.error(null, e);
+				return true;
+			}
 
-        if (this.isEmpty()) {
-            return false;
-        } else {
-            this.setOkAttributes(0, ((JTextComponent) this.dataField).getText().length());
-            ByteArrayInputStream bIn = null;
-            try {
-                bIn = new ByteArrayInputStream(((JTextComponent) this.dataField).getText().getBytes());
-                this.docB.parse(bIn);
+			finally {
+				if (bIn != null) {
+					try {
+						bIn.close();
+					} catch (Exception e) {
+						XMLDataField.logger.trace(null, e);
+					}
+				}
+			}
+		}
+	}
 
-                return false;
-            } catch (IOException e) {
-                XMLDataField.logger.error(null, e);
-                return true;
-            } catch (SAXException e) {
-                XMLDataField.logger.error(null, e);
-                return true;
-            }
+	/**
+	 * Parses XML and shows incorrect buildings.
+	 * <p>
+	 * @return the correct or incorrect parsed condition
+	 */
+	public boolean showErrors() {
 
-            finally {
-                if (bIn != null) {
-                    try {
-                        bIn.close();
-                    } catch (Exception e) {
-                        XMLDataField.logger.trace(null, e);
-                    }
-                }
-            }
-        }
-    }
+		if (this.isEmpty()) {
+			return false;
+		} else {
+			this.setOkAttributes(0, ((JTextComponent) this.dataField).getText().length());
+			ByteArrayInputStream bIn = null;
+			try {
+				bIn = new ByteArrayInputStream(((JTextComponent) this.dataField).getText().getBytes());
+				this.docB.parse(bIn);
+				return false;
+			} catch (Exception e) {
+				XMLDataField.logger.error(null, e);
+				int line = -1;
+				int column = -1;
+				if (e instanceof SAXParseException) {
+					column = ((SAXParseException) e).getColumnNumber();
+					line = ((SAXParseException) e).getLineNumber();
+					if (line < 0) {
+						line = 0;
+					}
+					int iBeginOffset = this.getStartLineOffset(line);
+					int iEndOffset = this.getEndLineOffset(line);
+					if (iEndOffset <= iBeginOffset) {
+						iEndOffset = iBeginOffset + 1;
+					}
+					if (column >= 0) {
+						this.setErrorAttributes(iBeginOffset + Math.max(0, column), 2);
+					} else {
+						this.setErrorAttributes(iBeginOffset, iEndOffset - iBeginOffset);
+					}
+				}
+				String message = null;
+				if (line >= 0) {
+					message = "XML is incorrect. Line: " + line + ". Column: " + column;
+				} else {
+					message = "XML is incorrect.";
+				}
+				Window w = SwingUtilities.getWindowAncestor(this);
+				if (w instanceof Dialog) {
+					MessageDialog.showMessage((Dialog) w, message, e.getMessage(), JOptionPane.ERROR_MESSAGE,
+							this.resources);
+				} else {
+					MessageDialog.showMessage((Frame) w, message, e.getMessage(), JOptionPane.ERROR_MESSAGE,
+							this.resources);
+				}
+				return true;
+			} finally {
+				try {
+					if (bIn != null) {
+						bIn.close();
+					}
+				} catch (Exception e) {
+					XMLDataField.logger.trace(null, e);
+				}
+			}
 
-    /**
-     * Parses XML and shows incorrect buildings.
-     * <p>
-     * @return the correct or incorrect parsed condition
-     */
-    public boolean showErrors() {
+		}
+	}
 
-        if (this.isEmpty()) {
-            return false;
-        } else {
-            this.setOkAttributes(0, ((JTextComponent) this.dataField).getText().length());
-            ByteArrayInputStream bIn = null;
-            try {
-                bIn = new ByteArrayInputStream(((JTextComponent) this.dataField).getText().getBytes());
-                this.docB.parse(bIn);
-                return false;
-            } catch (Exception e) {
-                XMLDataField.logger.error(null, e);
-                int line = -1;
-                int column = -1;
-                if (e instanceof SAXParseException) {
-                    column = ((SAXParseException) e).getColumnNumber();
-                    line = ((SAXParseException) e).getLineNumber();
-                    if (line < 0) {
-                        line = 0;
-                    }
-                    int iBeginOffset = this.getStartLineOffset(line);
-                    int iEndOffset = this.getEndLineOffset(line);
-                    if (iEndOffset <= iBeginOffset) {
-                        iEndOffset = iBeginOffset + 1;
-                    }
-                    if (column >= 0) {
-                        this.setErrorAttributes(iBeginOffset + Math.max(0, column), 2);
-                    } else {
-                        this.setErrorAttributes(iBeginOffset, iEndOffset - iBeginOffset);
-                    }
-                }
-                String message = null;
-                if (line >= 0) {
-                    message = "XML is incorrect. Line: " + line + ". Column: " + column;
-                } else {
-                    message = "XML is incorrect.";
-                }
-                Window w = SwingUtilities.getWindowAncestor(this);
-                if (w instanceof Dialog) {
-                    MessageDialog.showMessage((Dialog) w, message, e.getMessage(), JOptionPane.ERROR_MESSAGE,
-                            this.resources);
-                } else {
-                    MessageDialog.showMessage((Frame) w, message, e.getMessage(), JOptionPane.ERROR_MESSAGE,
-                            this.resources);
-                }
-                return true;
-            } finally {
-                try {
-                    if (bIn != null) {
-                        bIn.close();
-                    }
-                } catch (Exception e) {
-                    XMLDataField.logger.trace(null, e);
-                }
-            }
+	/**
+	 * Gets the start line offset.
+	 * <p>
+	 * @param line the line to get start line offset
+	 * @return the line offset value
+	 */
+	public int getStartLineOffset(int line) {
+		int offset = 0;
+		int currentLine = 1;
+		String sText = ((JTextComponent) this.dataField).getText();
+		for (int i = 0; i < sText.length(); i++) {
+			if (sText.charAt(i) == '\n') {
+				currentLine++;
+			}
+			if (currentLine >= line) {
+				offset = i + 1;
+				break;
+			}
+		}
+		if (XMLDataField.DEBUG) {
+			// Offset at the beginning of the line
+			XMLDataField.logger.debug("Offset at the beginning of the line: " + line + ":" + offset);
+		}
+		return offset;
+	}
 
-        }
-    }
+	/**
+	 * Gets the end line offset.
+	 * <p>
+	 * @param line the line to get end line offset
+	 * @return the line offset value
+	 */
+	public int getEndLineOffset(int line) {
+		int offset = 0;
+		int currentLine = 1;
+		String sText = ((JTextComponent) this.dataField).getText();
+		for (int i = 0; i < sText.length(); i++) {
+			if (sText.charAt(i) == '\n') {
+				currentLine++;
+			}
+			if (currentLine > line) {
+				offset = i;
+				break;
+			}
+		}
+		if (XMLDataField.DEBUG) {
+			XMLDataField.logger.debug("Offset at the end of the line: " + line + ":" + offset);
+		}
+		return offset;
+	}
 
-    /**
-     * Gets the start line offset.
-     * <p>
-     * @param line the line to get start line offset
-     * @return the line offset value
-     */
-    public int getStartLineOffset(int line) {
-        int offset = 0;
-        int currentLine = 1;
-        String sText = ((JTextComponent) this.dataField).getText();
-        for (int i = 0; i < sText.length(); i++) {
-            if (sText.charAt(i) == '\n') {
-                currentLine++;
-            }
-            if (currentLine >= line) {
-                offset = i + 1;
-                break;
-            }
-        }
-        if (XMLDataField.DEBUG) {
-            // Offset at the beginning of the line
-            XMLDataField.logger.debug("Offset at the beginning of the line: " + line + ":" + offset);
-        }
-        return offset;
-    }
+	/**
+	 * Sets the error attributes.
+	 * <p>
+	 * @param offsetIni the initial offset position
+	 * @param length the length
+	 */
+	protected void setErrorAttributes(int offsetIni, int length) {
+		try {
+			StyledDocument doc = ((JTextPane) this.dataField).getStyledDocument();
+			if (offsetIni >= (doc.getLength() - 1)) {
+				return;
+			}
+			doc.setCharacterAttributes(offsetIni, Math.min(doc.getLength() - offsetIni, length),
+					this.errorTextAttribute, true);
+		} catch (Exception e) {
+			XMLDataField.logger.error(null, e);
+		}
+	}
 
-    /**
-     * Gets the end line offset.
-     * <p>
-     * @param line the line to get end line offset
-     * @return the line offset value
-     */
-    public int getEndLineOffset(int line) {
-        int offset = 0;
-        int currentLine = 1;
-        String sText = ((JTextComponent) this.dataField).getText();
-        for (int i = 0; i < sText.length(); i++) {
-            if (sText.charAt(i) == '\n') {
-                currentLine++;
-            }
-            if (currentLine > line) {
-                offset = i;
-                break;
-            }
-        }
-        if (XMLDataField.DEBUG) {
-            XMLDataField.logger.debug("Offset at the end of the line: " + line + ":" + offset);
-        }
-        return offset;
-    }
+	/**
+	 * Sets the OK attributes.
+	 * <p>
+	 * @param offsetIni the initial offset position
+	 * @param lenght the length
+	 */
+	protected void setOkAttributes(int offsetIni, int lenght) {
+		try {
+			StyledDocument doc = ((JTextPane) this.dataField).getStyledDocument();
+			doc.setCharacterAttributes(offsetIni, Math.min(doc.getLength() - offsetIni, lenght), this.oKTextAttribute,
+					true);
+		} catch (Exception e) {
+			XMLDataField.logger.error(null, e);
+		}
+	}
 
-    /**
-     * Sets the error attributes.
-     * <p>
-     * @param offsetIni the initial offset position
-     * @param length the length
-     */
-    protected void setErrorAttributes(int offsetIni, int length) {
-        try {
-            StyledDocument doc = ((JTextPane) this.dataField).getStyledDocument();
-            if (offsetIni >= (doc.getLength() - 1)) {
-                return;
-            }
-            doc.setCharacterAttributes(offsetIni, Math.min(doc.getLength() - offsetIni, length),
-                    this.errorTextAttribute, true);
-        } catch (Exception e) {
-            XMLDataField.logger.error(null, e);
-        }
-    }
+	@Override
+	protected void createDataField() {
+		this.dataField = new JTextPane() {
 
-    /**
-     * Sets the OK attributes.
-     * <p>
-     * @param offsetIni the initial offset position
-     * @param lenght the length
-     */
-    protected void setOkAttributes(int offsetIni, int lenght) {
-        try {
-            StyledDocument doc = ((JTextPane) this.dataField).getStyledDocument();
-            doc.setCharacterAttributes(offsetIni, Math.min(doc.getLength() - offsetIni, lenght), this.oKTextAttribute,
-                    true);
-        } catch (Exception e) {
-            XMLDataField.logger.error(null, e);
-        }
-    }
+			@Override
+			protected void processKeyEvent(KeyEvent e) {
+				if ((e.getKeyCode() == KeyEvent.VK_F3) && (e.getID() == KeyEvent.KEY_RELEASED)) {
+					if (XMLDataField.this.dQuery == null) {
+						XMLDataField.this.dQuery = new FindDialog(XMLDataField.this.parentFrame,
+								(JTextPane) XMLDataField.this.dataField);
+						XMLDataField.this.dQuery.setResourceBundle(XMLDataField.this.resources);
+						XMLDataField.this.dQuery.setComponentLocale(XMLDataField.this.locale);
+						XMLDataField.this.dQuery
+						.show(((JTextComponent) XMLDataField.this.dataField).getCaretPosition());
+					} else {
+						if (XMLDataField.this.dQuery != null) {
+							XMLDataField.this.dQuery
+							.find(((JTextComponent) XMLDataField.this.dataField).getCaretPosition());
+						}
+					}
+					e.consume();
+					return;
+				}
+				super.processKeyEvent(e);
+			}
 
-    @Override
-    protected void createDataField() {
-        this.dataField = new JTextPane() {
+			@Override
+			public void setText(String t) {
+				super.setText(t);
+				this.setCaretPosition(0);
+			}
+		};
 
-            @Override
-            protected void processKeyEvent(KeyEvent e) {
-                if ((e.getKeyCode() == KeyEvent.VK_F3) && (e.getID() == KeyEvent.KEY_RELEASED)) {
-                    if (XMLDataField.this.dQuery == null) {
-                        XMLDataField.this.dQuery = new FindDialog(XMLDataField.this.parentFrame,
-                                (JTextPane) XMLDataField.this.dataField);
-                        XMLDataField.this.dQuery.setResourceBundle(XMLDataField.this.resources);
-                        XMLDataField.this.dQuery.setComponentLocale(XMLDataField.this.locale);
-                        XMLDataField.this.dQuery
-                            .show(((JTextComponent) XMLDataField.this.dataField).getCaretPosition());
-                    } else {
-                        if (XMLDataField.this.dQuery != null) {
-                            XMLDataField.this.dQuery
-                                .find(((JTextComponent) XMLDataField.this.dataField).getCaretPosition());
-                        }
-                    }
-                    e.consume();
-                    return;
-                }
-                super.processKeyEvent(e);
-            }
+		((JTextPane) this.dataField).setEditorKitForContentType(XMLEditorKit.XML_CONTENT_TYPE, new XMLEditorKit());
+		((JTextPane) this.dataField).setContentType(XMLEditorKit.XML_CONTENT_TYPE);
+	}
 
-            @Override
-            public void setText(String t) {
-                super.setText(t);
-                this.setCaretPosition(0);
-            }
-        };
+	protected String getIndentText() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.indentSize; i++) {
+			sb.append(" ");
+		}
+		return sb.toString();
+	}
 
-        ((JTextPane) this.dataField).setEditorKitForContentType(XMLEditorKit.XML_CONTENT_TYPE, new XMLEditorKit());
-        ((JTextPane) this.dataField).setContentType(XMLEditorKit.XML_CONTENT_TYPE);
-    }
-
-    protected String getIndentText() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < this.indentSize; i++) {
-            sb.append(" ");
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Reflow XML
-     */
-    public String doFormat(String xml) {
-        String indentText = this.getIndentText();
-        Vector parts = new Vector();
-        char[] chars = xml.toCharArray();
-        int index = 0;
-        int first = 0;
-        String part = null;
-        while (index < chars.length) {
-            // Check for start of tag
-            if (chars[index] == '<') {
-                // Did we have data before this tag?
-                if (first < index) {
-                    part = new String(chars, first, index - first);
-                    part = part.trim();
-                    // Save non-whitespace data
-                    if (part.length() > 0) {
-                        parts.addElement(part);
-                    }
-                }
-                // Save the start of tag
-                first = index;
-            }
-            // Check for end of tag
-            if (chars[index] == '>') {
-                // Save the tag
-                part = new String(chars, first, (index - first) + 1);
-                parts.addElement(part);
-                first = index + 1;
-            }
-            // Check for end of line
-            if ((chars[index] == '\n') || (chars[index] == '\r')) {
-                // Was there data on this line?
-                if (first < index) {
-                    part = new String(chars, first, index - first);
-                    part = part.trim();
-                    // Save non-whitespace data
-                    if (part.length() > 0) {
-                        parts.addElement(part);
-                    }
-                }
-                first = index + 1;
-            }
-            index++;
-        }
-        // Reflow as XML
-        StringBuilder buf = new StringBuilder();
-        Object[] list = parts.toArray();
-        int indent = 0;
-        int pad = 0;
-        index = 0;
-        while (index < list.length) {
-            part = (String) list[index];
-            if (buf.length() == 0) {
-                // Just add first tag (should be XML header)
-                buf.append(part);
-            } else {
-                // All other parts need to start on a new line
-                buf.append('\n');
-                // If we're at an end tag then decrease indent
-                if (part.startsWith("</")) {
-                    indent--;
-                }
-                // Add any indent
-                for (pad = 0; pad < indent; pad++) {
-                    buf.append(indentText);
-                }
-                // Add the tag or data
-                buf.append(part);
-                // If this is a start tag then increase indent
-                if (part.startsWith("<") && !part.startsWith("</") && !part.endsWith("/>")
-                        && !part.startsWith("<!--")) {
-                    indent++;
-                    // Check for special <tag>data</tag> case
-                    if ((index + 2) < list.length) {
-                        part = (String) list[index + 2];
-                        if (part.startsWith("</")) {
-                            part = (String) list[index + 1];
-                            if (!part.startsWith("<")) {
-                                buf.append(part);
-                                part = (String) list[index + 2];
-                                buf.append(part);
-                                index = index + 2;
-                                indent--;
-                            }
-                        }
-                    }
-                }
-            }
-            index++;
-        }
-        return new String(buf);
-    }
+	/**
+	 * Reflow XML
+	 */
+	public String doFormat(String xml) {
+		String indentText = this.getIndentText();
+		List<Object> parts = new ArrayList<>();
+		char[] chars = xml.toCharArray();
+		int index = 0;
+		int first = 0;
+		String part = null;
+		while (index < chars.length) {
+			// Check for start of tag
+			if (chars[index] == '<') {
+				// Did we have data before this tag?
+				if (first < index) {
+					part = new String(chars, first, index - first);
+					part = part.trim();
+					// Save non-whitespace data
+					if (part.length() > 0) {
+						parts.add(part);
+					}
+				}
+				// Save the start of tag
+				first = index;
+			}
+			// Check for end of tag
+			if (chars[index] == '>') {
+				// Save the tag
+				part = new String(chars, first, (index - first) + 1);
+				parts.add(part);
+				first = index + 1;
+			}
+			// Check for end of line
+			if ((chars[index] == '\n') || (chars[index] == '\r')) {
+				// Was there data on this line?
+				if (first < index) {
+					part = new String(chars, first, index - first);
+					part = part.trim();
+					// Save non-whitespace data
+					if (part.length() > 0) {
+						parts.add(part);
+					}
+				}
+				first = index + 1;
+			}
+			index++;
+		}
+		// Reflow as XML
+		StringBuilder buf = new StringBuilder();
+		Object[] list = parts.toArray();
+		int indent = 0;
+		int pad = 0;
+		index = 0;
+		while (index < list.length) {
+			part = (String) list[index];
+			if (buf.length() == 0) {
+				// Just add first tag (should be XML header)
+				buf.append(part);
+			} else {
+				// All other parts need to start on a new line
+				buf.append('\n');
+				// If we're at an end tag then decrease indent
+				if (part.startsWith("</")) {
+					indent--;
+				}
+				// Add any indent
+				for (pad = 0; pad < indent; pad++) {
+					buf.append(indentText);
+				}
+				// Add the tag or data
+				buf.append(part);
+				// If this is a start tag then increase indent
+				if (part.startsWith("<") && !part.startsWith("</") && !part.endsWith("/>")
+						&& !part.startsWith("<!--")) {
+					indent++;
+					// Check for special <tag>data</tag> case
+					if ((index + 2) < list.length) {
+						part = (String) list[index + 2];
+						if (part.startsWith("</")) {
+							part = (String) list[index + 1];
+							if (!part.startsWith("<")) {
+								buf.append(part);
+								part = (String) list[index + 2];
+								buf.append(part);
+								index = index + 2;
+								indent--;
+							}
+						}
+					}
+				}
+			}
+			index++;
+		}
+		return new String(buf);
+	}
 
 }

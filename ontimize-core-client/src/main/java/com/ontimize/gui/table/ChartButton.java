@@ -33,7 +33,7 @@ import com.ontimize.gui.Form;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.gui.preferences.ApplicationPreferences;
 import com.ontimize.gui.preferences.BasicApplicationPreferences;
-import com.ontimize.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
 import com.ontimize.util.swing.MenuButton;
 
 public class ChartButton extends TableButtonSelection {
@@ -84,9 +84,9 @@ public class ChartButton extends TableButtonSelection {
                 this.chartUtilities = new ChartUtilities_1_0(this.table);
             } else {
                 try {
-                    Class rootClass = Class.forName("com.ontimize.chart.ChartUtilities");
-                    Class[] p = { Table.class };
-                    Constructor constructorChart = rootClass.getConstructor(p);
+                    Class<?> rootClass = Class.forName("com.ontimize.chart.ChartUtilities");
+                    Class<?>[] p = { Table.class };
+                    Constructor<?> constructorChart = rootClass.getConstructor(p);
                     Object[] parameters = { this.table };
                     this.chartUtilities = (IChartUtilities) constructorChart.newInstance(parameters);
                 } catch (Exception e) {

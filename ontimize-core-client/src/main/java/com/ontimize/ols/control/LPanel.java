@@ -5,7 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.swing.JLabel;
@@ -36,15 +36,15 @@ public class LPanel extends JPanel {
 
     private ResourceBundle bundle = null;
 
-    public LPanel(Hashtable h, ResourceBundle bundle) {
+    public LPanel(Map<Object, Object> h, ResourceBundle bundle) {
         this.constructor(h, bundle);
     }
 
-    public LPanel(Hashtable h) {
+    public LPanel(Map<Object, Object> h) {
         this.constructor(h, null);
     }
 
-    private void constructor(Hashtable h, ResourceBundle bundle) {
+    private void constructor(Map<Object, Object> h, ResourceBundle bundle) {
         this.bundle = bundle;
         this.init();
         this.setValues(h);
@@ -146,7 +146,7 @@ public class LPanel extends JPanel {
 
     }
 
-    public void setValues(Hashtable h) {
+    public void setValues(Map<Object, Object> h) {
         if (h == null) {
             return;
         }

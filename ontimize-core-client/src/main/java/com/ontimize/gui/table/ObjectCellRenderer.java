@@ -6,10 +6,10 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.Freeable;
 import com.ontimize.gui.FreeableUtils;
+import com.ontimize.jee.common.db.NullValue;
 
 /**
  * Renderer used to show Object data in a table.

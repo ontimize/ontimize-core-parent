@@ -1,10 +1,11 @@
 package com.ontimize.gui.container;
 
 import java.awt.LayoutManager;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 
@@ -23,66 +24,67 @@ import com.ontimize.gui.field.FormComponent;
  */
 public class RadioItemGroup extends ButtonGroup implements FormComponent, Freeable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RadioItemGroup.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(RadioItemGroup.class);
 
     /**
-     * Class constructor. Empty.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
-     */
-    public RadioItemGroup(Hashtable parameters) {
-    }
+	 * Class constructor. Empty. <p>
+	 * 
+	 * @param parameters
+	 *            the <code>Map</code> with parameters
+	 */
+	public RadioItemGroup(Map<Object, Object> parameters) {
+	}
 
-    @Override
-    public Object getConstraints(LayoutManager layout) {
-        return null;
-    }
+	@Override
+	public Object getConstraints(LayoutManager layout) {
+		return null;
+	}
 
-    @Override
-    public void init(Hashtable parameters) {
-    }
+	@Override
+	public void init(Map<Object, Object> parameters) {
+	}
 
-    /**
-     * Gets the attribute.
-     * <p>
-     * @return null
-     */
-    public Object getAttribute() {
-        return null;
-    }
+	/**
+	 * Gets the attribute.
+	 * <p>
+	 * @return null
+	 */
+	public Object getAttribute() {
+		return null;
+	}
 
-    @Override
-    public void setResourceBundle(ResourceBundle resources) {
-    }
+	@Override
+	public void setResourceBundle(ResourceBundle resources) {
+	}
 
-    @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
-        return v;
-    }
+	@Override
+	public List<String> getTextsToTranslate() {
+		List<String> v = new ArrayList<>();
+		return v;
+	}
 
-    @Override
-    public void setComponentLocale(Locale l) {
-    }
+	@Override
+	public void setComponentLocale(Locale l) {
+	}
 
-    @Override
-    public void setEnabled(boolean enabled) {
-    }
+	@Override
+	public void setEnabled(boolean enabled) {
+	}
 
-    @Override
-    public void free() {
-        if (com.ontimize.gui.ApplicationManager.DEBUG) {
-            RadioItemGroup.LOGGER.debug(this.getClass().toString() + " Free");
-        }
-    }
+	@Override
+	public void free() {
+		if (com.ontimize.gui.ApplicationManager.DEBUG) {
+			RadioItemGroup.LOGGER.debug(this.getClass().toString() + " Free");
+		}
+	}
 
-    @Override
-    public void setVisible(boolean visible) {
-    }
+	@Override
+	public void setVisible(boolean visible) {
+	}
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
 
 }

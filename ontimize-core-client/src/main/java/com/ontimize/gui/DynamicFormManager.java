@@ -1,12 +1,12 @@
 package com.ontimize.gui;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import com.ontimize.gui.manager.IFormManager;
 
 public interface DynamicFormManager {
 
-    public String getForm(Hashtable data);
+    public String getForm(Map<?,?> data);
 
     public String getFormInteractionManagerClass(String formName);
 

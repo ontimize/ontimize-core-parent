@@ -17,10 +17,11 @@ import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -42,8 +43,8 @@ import com.ontimize.gui.field.CheckDataField;
 import com.ontimize.gui.field.PasswordDataField;
 import com.ontimize.gui.field.TextDataField;
 import com.ontimize.gui.i18n.Internationalization;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.util.ParseUtils;
 import com.ontimize.xml.DefaultXMLParametersManager;
 
@@ -111,7 +112,7 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
 
     }
 
-    public LoginDialog(Application mainApplication, Hashtable parameters, EntityReferenceLocator locator) {
+    public LoginDialog(Application mainApplication, Map<Object, Object> parameters, EntityReferenceLocator locator) {
         super(mainApplication, parameters, locator);
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.setUndecorated(true);
@@ -127,7 +128,7 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
         return backgroundDimension;
     }
 
-    protected void layoutComponents(Hashtable parameters) {
+    protected void layoutComponents(Map<Object, Object> parameters) {
         ImageIcon icon = this.createImage(parameters);
         if (icon != null) {
             this.background = new BackgroundPanel(icon);
@@ -150,7 +151,7 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
         this.pack();
     }
 
-    protected JPanel createCenterPanel(Hashtable parameters) {
+    protected JPanel createCenterPanel(Map<Object, Object> parameters) {
         JPanel centerPanel = new JPanel(new GridBagLayout()) {
 
             @Override
@@ -260,8 +261,8 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<String>();
         this.addTextToTranslate(this.password, v);
         this.addTextToTranslate(this.user, v);
         this.addTextToTranslate(this.acceptButton, v);
@@ -271,9 +272,9 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
         return v;
     }
 
-    protected void addTextToTranslate(Internationalization component, Vector texts) {
+    protected void addTextToTranslate(Internationalization component, List<String> texts) {
         if (component != null) {
-            Vector textsToTranslate = component.getTextsToTranslate();
+            List<String> textsToTranslate = component.getTextsToTranslate();
             if ((textsToTranslate != null) && (!textsToTranslate.isEmpty())) {
                 texts.addAll(textsToTranslate);
             }
@@ -291,8 +292,8 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
     }
 
     @Override
-    protected CheckDataField createRememberLogin(Hashtable parameters) {
-        Hashtable p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_CHECK_DATA_FIELD);
+    protected CheckDataField createRememberLogin(Map<Object, Object> parameters) {
+    	Map<Object, Object> p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_CHECK_DATA_FIELD);
         p.put("attr", "RememberLogin");
         p.put("labelposition", "left");
 
@@ -301,16 +302,16 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
         check.setFont(font);
         try {
             check.setForeground(ColorConstants.parseColor("#333333"));
-        } catch (Exception e) {
-            LoginDialog.logger.error(null, e);
+        } catch (Exception exc) {
+            LoginDialog.logger.error(null, exc);
         }
 
         return check;
     }
 
     @Override
-    protected CheckDataField createRememberPassword(Hashtable parameters) {
-        Hashtable p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_CHECK_DATA_FIELD);
+    protected CheckDataField createRememberPassword(Map<Object, Object> parameters) {
+    	Map<Object, Object> p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_CHECK_DATA_FIELD);
         p.put("attr", "RememberPassword");
         p.put("labelposition", "left");
 
@@ -319,15 +320,15 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
         check.setFont(font);
         try {
             check.setForeground(ColorConstants.parseColor("#333333"));
-        } catch (Exception e) {
-            LoginDialog.logger.error(null, e);
+        } catch (Exception exc) {
+            LoginDialog.logger.error(null, exc);
         }
         return check;
     }
 
     @Override
-    protected TextDataField createLogin(Hashtable parameters) {
-        Hashtable p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_TEXT_DATA_FIELD);
+    protected TextDataField createLogin(Map<Object, Object> parameters) {
+    	Map<Object, Object> p = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_TEXT_DATA_FIELD);
         if (!p.containsKey("attr")) {
             p.put("attr", "User_");
         }
@@ -361,15 +362,15 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
             text.setForeground(ParseUtils.getColor((String) p.get("fontcolor"), ColorConstants.parseColor("#333333")));
             text.setLabelFontColor(
                     ParseUtils.getColor((String) p.get("labelfontcolor"), ColorConstants.parseColor("#333333")));
-        } catch (Exception e) {
-            LoginDialog.logger.error(null, e);
+        } catch (Exception exc) {
+            LoginDialog.logger.error(null, exc);
         }
         return text;
     }
 
     @Override
-    protected PasswordDataField createPassword(Hashtable parameters) {
-        Hashtable p2 = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
+    protected PasswordDataField createPassword(Map<Object, Object> parameters) {
+    	Map<Object, Object> p2 = DefaultXMLParametersManager.getParameters(AbstractLoginDialog.LOGIN_PASSWORD_DATA_FIELD);
         if (!p2.containsKey("attr")) {
             p2.put("attr", "Password");
         }
@@ -392,14 +393,14 @@ public class LoginDialog extends AbstractLoginDialog implements MouseInputListen
             text.setForeground(ParseUtils.getColor((String) p2.get("fontcolor"), ColorConstants.parseColor("#333333")));
             text.setLabelFontColor(
                     ParseUtils.getColor((String) p2.get("labelfontcolor"), ColorConstants.parseColor("#333333")));
-        } catch (Exception e) {
-            LoginDialog.logger.error(null, e);
+        } catch (Exception exc) {
+            LoginDialog.logger.error(null, exc);
         }
         return text;
     }
 
     @Override
-    protected JLabel createStatusLabel(Hashtable parameters) {
+    protected JLabel createStatusLabel(Map<Object, Object> parameters) {
         JLabel label = new JLabel("", SwingConstants.CENTER) {
 
             @Override

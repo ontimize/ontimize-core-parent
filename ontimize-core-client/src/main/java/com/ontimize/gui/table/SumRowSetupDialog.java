@@ -14,11 +14,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -210,7 +212,7 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
 
     protected JButton okButton = null;
 
-    protected Vector additionalTotalRowOperations;
+    protected List<Object> additionalTotalRowOperations;
 
     public SumRowSetupDialog(Frame f, Table t) {
         super(f, SumRowSetupDialog.keyDialogMessage, true);
@@ -310,7 +312,6 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
         this.table = t;
         this.bundle = t.getResourceBundle();
         this.table = t;
-        // Vector v = new Vector();
         this.installOperationMenu();
         this.columnsList = new JList();
         this.columnsList.addMouseListener(new MouseAdapter() {
@@ -397,7 +398,7 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Hashtable hSumColumns = new Hashtable();
+                Map<Object, Object> hSumColumns = new HashMap<>();
                 for (int i = 0; i < SumRowSetupDialog.this.columnsList.getModel().getSize(); i++) {
                     if (SumRowSetupDialog.this.columnsList.getModel()
                         .getElementAt(i) instanceof SumRowSetupDialog.SelectableFunctionItem) {
@@ -434,14 +435,14 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
     }
 
     public void setColumn() {
-        Hashtable h = null;
-        Vector operationCols = this.table.getOperationColumns();
-        Vector vFixedColumns = this.table.getOriginalSumRowCols();
+        Map<Object, Object> h = null;
+        List<Object> operationCols = this.table.getOperationColumns();
+        List<String> vFixedColumns = this.table.getOriginalSumRowCols();
 
         TableModel model = this.table.getJTable().getModel();
         if ((model != null) && (model instanceof TableSorter)) {
             h = ((TableSorter) model).getOperationColumn();
-            Vector list = new Vector();
+            List<SelectableFunctionItem> list = new ArrayList<>();
 
             for (int i = 0; i < operationCols.size(); i++) {
                 String sKey = (String) operationCols.get(i);
@@ -462,7 +463,7 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
                 list.add(item);
             }
             Collections.sort(list);
-            this.columnsList.setListData(list);
+            this.columnsList.setListData(list.toArray());
         }
     }
 
@@ -490,10 +491,10 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
 
     /**
      * getTextsToTranslate
-     * @return Vector
+     * @return List
      */
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         return null;
     }
 

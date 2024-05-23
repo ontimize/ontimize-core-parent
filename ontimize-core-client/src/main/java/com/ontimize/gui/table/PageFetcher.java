@@ -14,7 +14,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.swing.Action;
@@ -31,20 +31,20 @@ import javax.swing.event.TableModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.AdvancedEntity;
-import com.ontimize.db.AdvancedEntityResult;
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.SQLStatementBuilder.Expression;
 import com.ontimize.gui.ApplicationManager;
-import com.ontimize.gui.ConnectionManager;
-import com.ontimize.gui.ConnectionOptimizer;
 import com.ontimize.gui.ExtendedJPopupMenu;
 import com.ontimize.gui.Form;
 import com.ontimize.gui.field.document.IntegerDocument;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.AdvancedEntity;
+import com.ontimize.jee.common.db.AdvancedEntityResult;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.SQLStatementBuilder.Expression;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.gui.ConnectionManager;
+import com.ontimize.jee.common.gui.ConnectionOptimizer;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 /**
  * Class that defines additional buttons for <code>Table</code> when it is pageable. These buttons
@@ -584,7 +584,7 @@ public class PageFetcher extends JPanel implements TableModelListener {
             EntityReferenceLocator locator = this.table.getParentForm().getFormManager().getReferenceLocator();
             Entity ent = locator.getEntityReference(this.table.getEntityName());
 
-            Hashtable kv = this.table.getParentKeyValues();
+            Map<?,?> kv = this.table.getParentKeyValues();
 
             AdvancedEntityResult res = ((AdvancedEntity) ent).query(kv, this.table.getAttributeList(),
                     locator.getSessionId(), recordNumber, offset, this.table.getSQLOrderList());

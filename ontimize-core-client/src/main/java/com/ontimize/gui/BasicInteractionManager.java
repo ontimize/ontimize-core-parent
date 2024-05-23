@@ -13,8 +13,11 @@ import java.lang.reflect.Constructor;
 import java.rmi.NoSuchObjectException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.JComponent;
@@ -26,13 +29,6 @@ import javax.swing.tree.TreePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.CancellableQueryEntity;
-import com.ontimize.db.DynamicMemoryEntity;
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.NullValue;
-import com.ontimize.db.SQLStatementBuilder.ExtendedSQLConditionValuesProcessor;
-import com.ontimize.db.query.QueryExpression;
 import com.ontimize.gui.button.AttachmentFileButton;
 import com.ontimize.gui.button.Button;
 import com.ontimize.gui.button.DeleteAttachmentButton;
@@ -50,17 +46,27 @@ import com.ontimize.gui.field.CheckDataField;
 import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.FormComponent;
 import com.ontimize.gui.field.HTMLDataField;
-import com.ontimize.gui.field.ReferenceFieldAttribute;
 import com.ontimize.gui.field.SliderDataField;
 import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.manager.ITreeFormManager;
 import com.ontimize.gui.table.Table;
-import com.ontimize.gui.table.TableAttribute;
 import com.ontimize.gui.tree.OTreeNode;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.db.CancellableQueryEntity;
+import com.ontimize.jee.common.db.DynamicMemoryEntity;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.db.SQLStatementBuilder.ExtendedSQLConditionValuesProcessor;
+import com.ontimize.jee.common.db.query.QueryExpression;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.gui.ConnectionManager;
+import com.ontimize.jee.common.gui.ConnectionOptimizer;
+import com.ontimize.jee.common.gui.field.ReferenceFieldAttribute;
+import com.ontimize.jee.common.gui.table.TableAttribute;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.tools.Pair;
 import com.ontimize.ols.WindowLError;
-import com.ontimize.util.Pair;
 
 /**
  * BasicInteractionManager is the class that manages the {@link Form} instances, extending the
@@ -115,15 +121,15 @@ public class BasicInteractionManager extends InteractionManager {
      */
     public static boolean CLOSE_DETAIL_FORM_AFTER_INSERT_DEFAULT_VALUE = false;
 
-    protected Hashtable keysValuesLastQuery = null;
+    protected Map<Object, Object> keysValuesLastQuery = null;
 
-    protected Hashtable keysValues = null;
+    protected Map<Object, Object> keysValues = null;
 
     protected QueryExpression expression = null;
 
-    protected Hashtable attributesValues = null;
+    protected Map<Object, Object> attributesValues = null;
 
-    protected Vector attributes = null;
+    protected List<Object> attributes = null;
 
     protected boolean detailForm = false;
 
@@ -449,7 +455,7 @@ public class BasicInteractionManager extends InteractionManager {
                                     }
                                 } catch (NoSuchObjectException ex) {
                                     BasicInteractionManager.logger.trace(null, ex);
-                                    this.res = new EntityResult();
+                                    this.res = new EntityResultMapImpl();
                                     ((EntityResult) this.res).setCode(EntityResult.OPERATION_WRONG);
                                     ((EntityResult) this.res).setMessage(ex.getMessage());
                                     if (BasicInteractionManager.this.formManager
@@ -465,14 +471,14 @@ public class BasicInteractionManager extends InteractionManager {
                                         }
                                     }
                                     return;
-                                } catch (Exception e) {
+                                } catch (Exception exc) {
                                     if (this.isCancelled()) {
                                         return;
                                     }
-                                    BasicInteractionManager.logger.error(null, e);
-                                    this.res = new EntityResult();
+                                    BasicInteractionManager.logger.error(null, exc);
+                                    this.res = new EntityResultMapImpl();
                                     ((EntityResult) this.res).setCode(EntityResult.OPERATION_WRONG);
-                                    ((EntityResult) this.res).setMessage(e.getMessage());
+                                    ((EntityResult) this.res).setMessage(exc.getMessage());
                                 }
                                 this.hasFinished = true;
                             }
@@ -640,8 +646,8 @@ public class BasicInteractionManager extends InteractionManager {
                         Object autonumerical = pair.getFirst();
                         Object autonumericalKey = pair.getSecond();
 
-                        Hashtable queryFilter = new Hashtable();
-                        Vector tableKeys = sourceTable.getKeys();
+                        Map<Object, Object> queryFilter = new HashMap<>();
+                        List<Object> tableKeys = sourceTable.getKeys();
                         boolean allKeysFound = true;
                         for (int i = 0; i < tableKeys.size(); i++) {
                             Object oParentValue = null;
@@ -674,7 +680,7 @@ public class BasicInteractionManager extends InteractionManager {
                             queryFilter.put(tableKeys.get(i), oParentValue);
                         }
                         // Put the parentkeys
-                        Hashtable parentKeysValues = sourceTable.getParentKeyValues();
+                        Map<Object, Object> parentKeysValues = sourceTable.getParentKeyValues();
                         Enumeration keys = parentKeysValues.keys();
                         while (keys.hasMoreElements()) {
                             Object key = keys.nextElement();
@@ -1661,10 +1667,10 @@ public class BasicInteractionManager extends InteractionManager {
         if (this.managedForm instanceof FormExt) {
             this.attributes = this.getQueryAttributesValues();
             // Then add the query column to the table view
-            Vector vQueryColumn = new Vector();
-            Enumeration enumKeys = this.keysValues.keys();
-            while (enumKeys.hasMoreElements()) {
-                Object oKey = enumKeys.nextElement();
+            List<Object> vQueryColumn = new ArrayList<>();
+            Iterator<?> enumKeys = this.keysValues.keySet().iterator();
+            while (enumKeys.hasNext()) {
+                Object oKey = enumKeys.next();
                 if (!this.attributes.contains(oKey)
                         && !(this.managedForm.getDataFieldReference(oKey.toString()) instanceof CalculatedDataField)
                         && !(this.managedForm
@@ -1688,15 +1694,15 @@ public class BasicInteractionManager extends InteractionManager {
      * Returns the attributes that must be queried.
      * @return a vector with the query attributes
      */
-    protected Vector getQueryAttributes() {
-        Vector at = new Vector();
+    protected List<Object> getQueryAttributes() {
+        List<Object> at = new ArrayList<>();
         if (this.managedForm instanceof FormExt) {
             at = ((FormExt) this.managedForm).getAttributesToQuery();
             if (this.keysValues != null) {
-                Vector queryColumns = new Vector();
-                Enumeration enumKeys = this.keysValues.keys();
-                while (enumKeys.hasMoreElements()) {
-                    Object oKey = enumKeys.nextElement();
+                List<Object> queryColumns = new ArrayList<>();
+                Iterator<?> enumKeys = this.keysValues.keySet().iterator();
+                while (enumKeys.hasNext()) {
+                    Object oKey = enumKeys.next();
                     if (!at.contains(oKey)) {
                         at.add(oKey);
                         queryColumns.add(oKey);
@@ -1740,7 +1746,7 @@ public class BasicInteractionManager extends InteractionManager {
                 return scriptResult.booleanValue();
             }
         }
-        Vector emptyRequiredDataField = this.managedForm.getEmptyRequiredDataField();
+        List<Object> emptyRequiredDataField = this.managedForm.getEmptyRequiredDataField();
         if ((emptyRequiredDataField != null) && (emptyRequiredDataField.size() > 0)) {
             // managedForm.message(M_FILL_ALL_REQUIRED_FIELDS,
             // Form.WARNING_MESSAGE);
@@ -1758,7 +1764,7 @@ public class BasicInteractionManager extends InteractionManager {
      * the form
      * @param emptyRequiredDataField List of all the empty required field names (String attr)
      */
-    protected void requestFocusForEmptyRequiredComponent(Vector emptyRequiredDataField) {
+    protected void requestFocusForEmptyRequiredComponent(List<Object> emptyRequiredDataField) {
         Component component = (Component) this.managedForm
             .getDataFieldReference(emptyRequiredDataField.get(0).toString());
         component.requestFocus();
@@ -1882,7 +1888,7 @@ public class BasicInteractionManager extends InteractionManager {
             }
         }
 
-        Vector emptyRequiredDataField = this.managedForm.getEmptyRequiredDataField();
+        List<Object> emptyRequiredDataField = this.managedForm.getEmptyRequiredDataField();
         if ((emptyRequiredDataField != null) && (emptyRequiredDataField.size() > 0)) {
             // managedForm.message(M_FILL_ALL_REQUIRED_FIELDS,
             // Form.WARNING_MESSAGE);
@@ -1903,7 +1909,7 @@ public class BasicInteractionManager extends InteractionManager {
      * @param emptyFields
      * @return
      */
-    protected String getEmptyRequiredFieldsMessage(Vector emptyFields) {
+    protected String getEmptyRequiredFieldsMessage(List<Object> emptyFields) {
         StringBuilder translation = new StringBuilder(ApplicationManager
             .getTranslation(BasicInteractionManager.M_FILL_ALL_REQUIRED_FIELDS, this.managedForm.getResourceBundle()));
         boolean isHTML = false;

@@ -33,10 +33,6 @@
 			<artifactId>ontimize-core-common</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.ontimize.jee</groupId>
-			<artifactId>ontimize-jee-common</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.ontimize.labs</groupId>
 			<artifactId>ontimize-core-icons-lgpl</artifactId>
 			<version>${project.version}</version>

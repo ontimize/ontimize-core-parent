@@ -8,10 +8,10 @@ import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.SelectCurrencyValues;
 import com.ontimize.gui.field.DateDataField;
 import com.ontimize.gui.field.document.CurrencyDocument;
+import com.ontimize.jee.common.db.NullValue;
 
 /**
  * Renderer used to show double or float data types in tables.

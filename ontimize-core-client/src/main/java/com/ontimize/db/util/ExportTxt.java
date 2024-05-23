@@ -4,8 +4,12 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import org.slf4j.Logger;
@@ -23,17 +27,16 @@ public abstract class ExportTxt {
 
     private static final Logger logger = LoggerFactory.getLogger(ExportTxt.class);
 
-    public static String exportData(Hashtable data, char delimiter, char rowDelimiter) {
+    public static String exportData(Map<Object, Object> data, char delimiter, char rowDelimiter) {
         if (data == null) {
             throw new IllegalArgumentException("ExportTxt: data is null");
         }
         if (data.isEmpty()) {
             throw new IllegalArgumentException("ExportTxt: data is empty");
         } else {
-            Vector vKeys = new Vector();
-            Enumeration eKeys = data.keys();
-            while (eKeys.hasMoreElements()) {
-                vKeys.add(eKeys.nextElement());
+            List<Object> vKeys = new ArrayList<>();
+            for(Entry<Object, Object> entry:data.entrySet()) {
+            	vKeys.add(entry.getKey());
             }
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < vKeys.size(); i++) {
@@ -42,11 +45,11 @@ public abstract class ExportTxt {
                     res.append(delimiter);
                 }
             }
-            int size = ((Vector) data.get(vKeys.get(0))).size();
+            int size = ((List<?>) data.get(vKeys.get(0))).size();
             for (int j = 0; j < size; j++) {
                 res.append(rowDelimiter);
                 for (int i = 0; i < vKeys.size(); i++) {
-                    Vector v = (Vector) data.get(vKeys.get(i));
+                	List<?> v = (List<?>) data.get(vKeys.get(i));
                     if (v.get(j) != null) {
                         res.append(v.get(j));
                     }
@@ -60,7 +63,7 @@ public abstract class ExportTxt {
         }
     }
 
-    public static void exportData(Hashtable data, char delimiter, char rowDelimiter, File f) throws IOException {
+    public static void exportData(Map<Object, Object> data, char delimiter, char rowDelimiter, File f) throws IOException {
         FileWriter fW = null;
         BufferedWriter bW = null;
         try {
@@ -68,9 +71,9 @@ public abstract class ExportTxt {
             bW = new BufferedWriter(fW);
             bW.write(ExportTxt.exportData(data, delimiter, rowDelimiter));
             bW.flush();
-        } catch (IOException e) {
-            ExportTxt.logger.error(null, e);
-            throw e;
+        } catch (IOException exc) {
+            ExportTxt.logger.error(null, exc);
+            throw exc;
         } finally {
             if (bW != null) {
                 bW.close();

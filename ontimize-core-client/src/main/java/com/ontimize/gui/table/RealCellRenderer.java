@@ -3,9 +3,10 @@ package com.ontimize.gui.table;
 import java.awt.Component;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -14,10 +15,10 @@ import javax.swing.table.TableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.field.DateDataField;
 import com.ontimize.gui.i18n.Internationalization;
+import com.ontimize.jee.common.db.NullValue;
 
 /**
  * Renderer used to show Double and float types in a table.
@@ -203,8 +204,8 @@ public class RealCellRenderer extends CellRenderer implements Internationalizati
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        return new Vector(0);
+    public List<String> getTextsToTranslate() {
+        return new ArrayList<>(0);
     }
 
     public Format getFormat() {

@@ -5,11 +5,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JPanel;
 
@@ -38,7 +40,7 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     /**
      * The attribute list instance.
      */
-    protected Vector attributeList = new Vector();
+    protected ArrayList<Object> attributeList = new ArrayList<>();
 
     /**
      * The reference to parent form. By default, null.
@@ -59,9 +61,9 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     /**
      * The class constructor. Inits parameters.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      */
-    public BasicDataComponentGroup(Hashtable parameters) {
+    public BasicDataComponentGroup(Map<Object, Object> parameters) {
         this.init(parameters);
     }
 
@@ -103,14 +105,14 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         return null;
     }
 
     /**
      * Initializes parameters.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters. Adds the next parameters:
+     * @param parameters the <code>Map</code> with parameters. Adds the next parameters:
      *
      *        <p>
      *
@@ -143,7 +145,7 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
      *        </TABLE>
      */
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         Object attr = parameters.get("attr");
         if (attr == null) {
             BasicDataComponentGroup.logger.debug(this.getClass().toString() + ": 'attr' parameter is required");
@@ -171,8 +173,8 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     }
 
     @Override
-    public Hashtable getGroupValue() {
-        Hashtable hValue = new Hashtable();
+    public Map<Object, Object> getGroupValue() {
+    	Map<Object, Object> hValue = new HashMap<>();
         for (int i = 0; i < this.attributeList.size(); i++) {
             Object oKey = this.attributeList.get(i);
             Object v = this.parentForm.getDataFieldValue((String) oKey);
@@ -184,7 +186,7 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     }
 
     @Override
-    public void setGroupValue(Hashtable values) {
+    public void setGroupValue(Map<?, ?> values) {
         for (int i = 0; i < this.attributeList.size(); i++) {
             Object oKey = this.attributeList.get(i);
             this.parentForm.setDataFieldValue(oKey, values.get(oKey));
@@ -239,8 +241,8 @@ public class BasicDataComponentGroup extends JPanel implements DataComponentGrou
     }
 
     @Override
-    public Vector getAttributes() {
-        return (Vector) this.attributeList.clone();
+    public List<Object> getAttributes() {
+        return (List<Object>) this.attributeList.clone();
     }
 
     @Override

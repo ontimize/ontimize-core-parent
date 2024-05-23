@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.ontimize.gui.i18n.DatabaseBundleDescriptor;
-import com.ontimize.gui.i18n.DatabaseBundleValues;
-import com.ontimize.gui.i18n.IDatabaseBundleManager;
+import com.ontimize.jee.common.gui.i18n.DatabaseBundleDescriptor;
+import com.ontimize.jee.common.gui.i18n.DatabaseBundleValues;
+import com.ontimize.jee.common.gui.i18n.IDatabaseBundleManager;
 import com.ontimize.jee.common.services.i18n.II18nService;
 import com.ontimize.jee.common.tools.CheckingTools;
 import com.ontimize.jee.common.tools.proxy.AbstractInvocationDelegate;

@@ -25,6 +25,7 @@ import com.ontimize.gui.button.Button;
 import com.ontimize.gui.container.CardPanel;
 import com.ontimize.gui.container.Column;
 import com.ontimize.gui.container.Row;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.tools.ConcatTools;
 import com.ontimize.jee.desktopclient.components.treetabbedformmanager.ITreeTabbedFormManager;
 import com.ontimize.jee.desktopclient.components.treetabbedformmanager.TreeTabbedDetailForm;
@@ -109,12 +110,12 @@ public class DefaultLevelManager extends Column implements LevelManager {
 
     private ResourceBundle resourceBundle;
 
-    public DefaultLevelManager(Hashtable parameters) {
+    public DefaultLevelManager(Map<Object, Object> parameters) {
         super(parameters);
     }
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         super.init(parameters);
         String pathManager = (String) parameters.get(LevelManager.PATH_MANAGER_CLASS);
         if (pathManager != null) {
@@ -122,9 +123,9 @@ public class DefaultLevelManager extends Column implements LevelManager {
             try {
                 classObject = Class.forName(pathManager);
 
-                Constructor[] constructors = classObject.getConstructors();
+                Constructor<?>[] constructors = classObject.getConstructors();
                 Object[] params = { parameters };
-                for (Constructor constructor : constructors) {
+                for (Constructor<?> constructor : constructors) {
                     if (constructor.getParameterTypes().length == 1) {
                         // TODO here we should check it is the correct constructor
                         this.pathManager = (PathManager) constructor.newInstance(params);
@@ -132,8 +133,8 @@ public class DefaultLevelManager extends Column implements LevelManager {
                     }
                 }
 
-            } catch (Exception e) {
-                DefaultLevelManager.logger.error(e.getMessage(), e);
+            } catch (Exception exc) {
+                DefaultLevelManager.logger.error(exc.getMessage(), exc);
             }
         }
         if (this.pathManager == null) {
@@ -191,7 +192,7 @@ public class DefaultLevelManager extends Column implements LevelManager {
      * @param buttons
      */
     private Component createButtons(String buttons) {
-        Row rowButtons = new Row(new Hashtable());
+        Row rowButtons = new Row(new HashMap<>());
         if (buttons != null) {
             String[] split = StringUtils.split(buttons, '|');
             for (String buttonKey : split) {
@@ -302,7 +303,7 @@ public class DefaultLevelManager extends Column implements LevelManager {
     }
 
     protected Component createMain() {
-        Hashtable params = new Hashtable();
+        Map<Object, Object> params = new HashMap<>();
         params.put("attr", "cardPanel");
         params.put("opaque", "no");
         params.put("enabled", "yes");
@@ -311,7 +312,7 @@ public class DefaultLevelManager extends Column implements LevelManager {
     }
 
     protected Button createButton(String key, String tip, String icon, ActionListener actionListener) {
-        Hashtable bP = new Hashtable();
+    	Map<Object, Object> bP = new HashMap<>();
         bP.put("key", key);
         bP.put("tip", tip);
         bP.put("rollover", "yes");
@@ -494,7 +495,7 @@ public class DefaultLevelManager extends Column implements LevelManager {
         } else if (mode == InteractionManager.QUERY) {
             ((TreeTabbedDetailForm) detailForm).setQueryMode();
         } else {
-            detailForm.setKeys(new Hashtable<>(level.getSelectedData()), 0);
+            detailForm.setKeys(new EntityResultMapImpl(new HashMap<>(level.getSelectedData())), 0);
             detailForm.setUpdateMode();
         }
         detailForm.showDetailForm();
@@ -502,7 +503,7 @@ public class DefaultLevelManager extends Column implements LevelManager {
 
     @Override
     public void add(Level level) {
-        Hashtable colParams = new Hashtable();
+    	Map<Object, Object> colParams = new HashMap<>();
         colParams.put("attr", DefaultLevelManager.COL_TAG + level.getId());
         if (level instanceof JComponent) {
             ((JComponent) level).setEnabled(true);

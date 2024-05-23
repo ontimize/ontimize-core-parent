@@ -1,11 +1,13 @@
 package com.ontimize.util.swing.popuplist;
 
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractListModel;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 
 public class PopupListModel extends AbstractListModel {
 
@@ -32,7 +34,7 @@ public class PopupListModel extends AbstractListModel {
 
     @Override
     public Object getElementAt(int index) {
-        Hashtable h = this.record.getRecordValues(index);
+        Map<?,?> h = this.record.getRecordValues(index);
         // return h.get(key);
         return h;
     }
@@ -45,14 +47,14 @@ public class PopupListModel extends AbstractListModel {
         int end = this.getSize();
         this.record = res;
         if (this.record == null) {
-            this.record = new EntityResult();
+            this.record = new EntityResultMapImpl();
         }
         this.fireContentsChanged(this, 0, end - 1);
     }
 
-    public Hashtable getRegistry(Object o) {
+    public Map<Object, Object> getRegistry(Object o) {
         if (this.record.containsKey(this.key)) {
-            Vector v = (Vector) this.record.get(this.key);
+            List<?> v = (List<?>) this.record.get(this.key);
             int index = v.indexOf(o);
             if (index >= 0) {
                 return this.record.getRecordValues(index);

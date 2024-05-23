@@ -22,8 +22,6 @@ import java.awt.Window;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -34,7 +32,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +44,7 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.PrivilegedAction;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
@@ -62,17 +60,16 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
-import java.util.Vector;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -146,26 +143,12 @@ import com.ontimize.chart.ChartInfoRepository;
 import com.ontimize.chart.ChartUtilities_1_0;
 import com.ontimize.chart.ChartVersionControl;
 import com.ontimize.chart.IChartUtilities;
-import com.ontimize.db.AdvancedEntity;
-import com.ontimize.db.AdvancedEntityResult;
-import com.ontimize.db.DynamicMemoryEntity;
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.db.EntityResultUtils;
-import com.ontimize.db.NullValue;
-import com.ontimize.db.SQLStatementBuilder;
-import com.ontimize.db.SQLStatementBuilder.BasicExpression;
-import com.ontimize.db.SQLStatementBuilder.BasicField;
-import com.ontimize.db.SQLStatementBuilder.BasicOperator;
-import com.ontimize.db.SQLStatementBuilder.Expression;
-import com.ontimize.db.SQLStatementBuilder.ExtendedSQLConditionValuesProcessor;
 import com.ontimize.gui.Application;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.BackgroundFormBuilderManager;
 import com.ontimize.gui.BorderManager;
 import com.ontimize.gui.ColorConstants;
-import com.ontimize.gui.ConnectionManager;
-import com.ontimize.gui.ConnectionOptimizer;
 import com.ontimize.gui.CreateForms;
 import com.ontimize.gui.DetailForm;
 import com.ontimize.gui.DynamicFormManager;
@@ -206,7 +189,6 @@ import com.ontimize.gui.preferences.BasicApplicationPreferences;
 import com.ontimize.gui.preferences.HasPreferenceComponent;
 import com.ontimize.gui.preferences.PreferenceEvent;
 import com.ontimize.gui.table.SumRowTable.SumRowBorder;
-import com.ontimize.gui.table.TableSorter.ColumnSizeEvent;
 import com.ontimize.gui.table.TableSorter.DateFilter;
 import com.ontimize.gui.table.TableSorter.Filter;
 import com.ontimize.gui.table.TableSorter.GroupTableModel.GroupList;
@@ -217,29 +199,46 @@ import com.ontimize.gui.table.blocked.BlockedBoundedRangeModel;
 import com.ontimize.gui.table.blocked.BlockedTable;
 import com.ontimize.gui.table.blocked.BlockedTableModel;
 import com.ontimize.help.HelpUtilities;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.db.AdvancedEntity;
+import com.ontimize.jee.common.db.AdvancedEntityResult;
+import com.ontimize.jee.common.db.DynamicMemoryEntity;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.db.SQLStatementBuilder;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicExpression;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicField;
+import com.ontimize.jee.common.db.SQLStatementBuilder.BasicOperator;
+import com.ontimize.jee.common.db.SQLStatementBuilder.Expression;
+import com.ontimize.jee.common.db.SQLStatementBuilder.ExtendedSQLConditionValuesProcessor;
+import com.ontimize.jee.common.db.SQLStatementBuilder.SQLOrder;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.gui.ConnectionManager;
+import com.ontimize.jee.common.gui.ConnectionOptimizer;
+import com.ontimize.jee.common.gui.table.TableAttribute;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.security.FormPermission;
+import com.ontimize.jee.common.security.TableFormPermission;
+import com.ontimize.jee.common.tools.Pair;
+import com.ontimize.jee.common.util.remote.BytesBlock;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
+import com.ontimize.jee.common.util.share.SharedElement;
+import com.ontimize.jee.common.util.swing.SwingUtils;
 import com.ontimize.ols.CheckLComponent;
 import com.ontimize.report.DefaultReportDialog;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.FormPermission;
-import com.ontimize.security.TableFormPermission;
 import com.ontimize.util.FileUtils;
 import com.ontimize.util.FormatPattern;
-import com.ontimize.util.Pair;
 import com.ontimize.util.ParseUtils;
 import com.ontimize.util.PreferenceUtils;
 import com.ontimize.util.math.MathExpressionParserFactory;
-import com.ontimize.util.remote.BytesBlock;
 import com.ontimize.util.share.FormAddSharedReference;
 import com.ontimize.util.share.FormAddUserSharedReference;
 import com.ontimize.util.share.FormUpdateSharedReference;
-import com.ontimize.util.share.IShareRemoteReference;
-import com.ontimize.util.share.SharedElement;
 import com.ontimize.util.swing.MenuButton;
 import com.ontimize.util.swing.RolloverButton;
-import com.ontimize.util.swing.SwingUtils;
 import com.ontimize.util.swing.Toast;
 import com.ontimize.util.swing.table.PivotTableUtils;
 import com.ontimize.util.swing.table.PivotTableUtils.PivotDialog;
@@ -261,14 +260,14 @@ import com.ontimize.util.xls.XLSExporterFactory;
  * &lt;Table {attribute=value} /&gt;
  * <P>
  * The attributes allowed can be found in methods: </br>
- * - {@link #init(Hashtable params)} where params contains the xml attributes.</br>
- * -{@link #configureButtons(Hashtable params)} where all table button icons are configured. </br>
- * - {@link SortTableCellRenderer#init(Hashtable params)} where are additional configurations for
+ * - {@link #init(Map params)} where params contains the xml attributes.</br>
+ * -{@link #configureButtons(Map params)} where all table button icons are configured. </br>
+ * - {@link SortTableCellRenderer#init(Map params)} where are additional configurations for
  * table header.</br>
- * - {@link #configureQuickFilter(Hashtable params)} where are additional configurations for table
+ * - {@link #configureQuickFilter(Map params)} where are additional configurations for table
  * quickfilter search box.</br>
  * -When table is autoinsertable (<b>inserttable='yes'</b>) there are additional parameters in
- * {@link #configureInsertTable(Hashtable params)}
+ * {@link #configureInsertTable(Map params)}
  */
 
 public class Table extends JRootPane
@@ -851,7 +850,7 @@ public class Table extends JRootPane
         /**
          * The image cell renderer set to this RendererManager
          */
-        protected ImageCellRenderer rImage = new ImageCellRenderer(new Hashtable());
+        protected ImageCellRenderer rImage = new ImageCellRenderer(new HashMap<>());
 
         /**
          * Returns a cell renderer depending on the cell data type.
@@ -1492,7 +1491,7 @@ public class Table extends JRootPane
     /**
      * The table columns that will use memo render
      */
-    protected Vector memoRenderColumns = new Vector(2, 2);
+    protected List<Object> memoRenderColumns = new ArrayList<>(2);
 
     /**
      * Minimum row height, by default is MIN_ROW_HEIGHT
@@ -1517,7 +1516,7 @@ public class Table extends JRootPane
 
     protected boolean opaquebuttons;
 
-    protected Hashtable buttonIcons;
+    protected Map<Object, Object> buttonIcons;
 
     protected boolean dataBaseInsert;
 
@@ -1526,9 +1525,9 @@ public class Table extends JRootPane
     /**
      * List with the required columns to insert
      */
-    protected Vector vrequiredCols;
+    protected List<String> vrequiredCols;
 
-    protected Vector vupdateEditableColumns;
+    protected List<Object> vupdateEditableColumns;
 
     /**
      * boolean to know when the insertion is executing
@@ -1548,15 +1547,11 @@ public class Table extends JRootPane
      *
      * @see #evaluatePreferredRowsHeight()
      */
-    protected PropertyChangeListener columnWidthListener = new PropertyChangeListener() {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent e) {
-            if ("width".equals(e.getPropertyName())) {
-                Table.this.evaluatePreferredRowsHeight();
-            }
-        }
-    };
+    protected PropertyChangeListener columnWidthListener = e -> {
+	    if ("width".equals(e.getPropertyName())) {
+	        Table.this.evaluatePreferredRowsHeight();
+	    }
+	};
 
     private static final String SPACE = " ";
 
@@ -1571,7 +1566,7 @@ public class Table extends JRootPane
     /**
      * The parameters passed to the table when it is builded. These parameters are set in the xml.
      */
-    protected Hashtable parameters = null;
+    protected Map<Object, Object> parameters = null;
 
     protected BorderLayout layout = null;
 
@@ -1593,7 +1588,7 @@ public class Table extends JRootPane
     /**
      * Contains the columns and keys names
      */
-    protected Vector attributes = new Vector(5);
+    protected List<String> attributes = new ArrayList<>(5);
 
     /**
      * The detail form name
@@ -1625,13 +1620,13 @@ public class Table extends JRootPane
 
     protected String memoryEntity = null;
 
-    protected Vector primaryKey = new Vector(2);
+    protected List<Object> primaryKey = new ArrayList<>(2);
 
     protected String keyField = null;
 
-    protected Vector keyFields = null;
+    protected List<Object> keyFields = null;
 
-    protected Hashtable codValues = null;
+    protected Map<Object, Object> codValues = null;
 
     /**
      * @deprecated. Now must use {@link #parentkeys}
@@ -1641,33 +1636,33 @@ public class Table extends JRootPane
     /**
      * @deprecated. Now must use {@link #parentkeys}
      */
-    protected Vector otherParentKeys = new Vector(2);
+    protected List<Object> otherParentKeys = new ArrayList<>(2);
 
     /**
      * List with all the fields in the parent form used to filter the table values
      */
-    protected List parentkeys;
+    protected List<Object> parentkeys;
 
-    protected Hashtable hParentkeyEquivalences;
+    protected Map<Object, Object> hParentkeyEquivalences;
 
     /**
      * The vector with attributes to update when data field value changed. By default, null.
      */
-    protected Vector onsetvaluesetAttributes = null;
+    protected List<Object> onsetvaluesetAttributes = null;
 
     /**
      * This object is used to store onsetvalueset attributes and equivalences (for these fields in
      * entity) when structure of parameter <code>onsetvalueset</code> is:
      * "fieldonset1:SUM(fieldentitypk1);fieldonset2:CONCAT(fieldentitypk2);...fieldonsetn:MAX(fieldentitypkn)"
      */
-    protected Hashtable hOnSetValueSetEquivalences = new Hashtable();
+    protected Map<Object, Object> hOnSetValueSetEquivalences = new HashMap<>();
 
     /**
      * This object is used to store onsetvalueset attributes and function when structure of parameter
      * <code>onsetvalueset</code> is:
      * "fieldonset1:SUM(fieldentitypk1);fieldonset2:CONCAT(fieldentitypk2);...fieldonsetn:MAX(fieldentitypkn)"
      */
-    protected Hashtable hOnSetValueSetFunction;
+    protected Map<Object, Object> hOnSetValueSetFunction;
 
     protected Frame parentFrame = null;
 
@@ -1719,15 +1714,11 @@ public class Table extends JRootPane
 
     protected boolean debug = false;
 
-    protected PropertyChangeListener buttonChangeListener = new PropertyChangeListener() {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (ControlPanel.CHANGE_BUTTON_PROPERTY.equalsIgnoreCase(evt.getPropertyName())) {
-                Table.this.saveControlPanelConfiguration();
-            }
-        }
-    };
+    protected PropertyChangeListener buttonChangeListener = evt -> {
+	    if (ControlPanel.CHANGE_BUTTON_PROPERTY.equalsIgnoreCase(evt.getPropertyName())) {
+	        Table.this.saveControlPanelConfiguration();
+	    }
+	};
 
     protected JLabel lInfoFilter = new JLabel();
 
@@ -1909,9 +1900,9 @@ public class Table extends JRootPane
 
     public static boolean createCalculatedButton = true;
 
-    protected Vector addButtons = new Vector(2, 2);
+    protected List<Object> addButtons = new ArrayList<>(2);
 
-    protected Vector addComponents = new Vector(2, 2);
+    protected List<Object> addComponents = new ArrayList<>(2);
 
     protected PrintingWindow printingWindow = null;
 
@@ -1929,13 +1920,13 @@ public class Table extends JRootPane
 
     protected List<String> attributesToFix;
 
-    protected Vector currencyColumns = new Vector(0, 1);
+    protected List<Object> currencyColumns = new ArrayList<>(0);
 
-    protected Vector hourRenderColumns = new Vector(0, 1);
+    protected List<Object> hourRenderColumns = new ArrayList<>(0);
 
-    protected Vector editableColumnsUpdateEntity = new Vector(0, 2);
+    protected List<Object> editableColumnsUpdateEntity = new ArrayList<>(0);
 
-    protected Vector editableColumns = new Vector(0, 2);
+    protected List<Object> editableColumns = new ArrayList<>(0);
 
     protected JMenuItem filter = new JMenuItem("Filtrar");
 
@@ -1957,9 +1948,9 @@ public class Table extends JRootPane
 
     protected ExtendedJPopupMenu chartMenu = null;
 
-    protected Vector menuChartItems = new Vector(0);
+    protected List<Object> menuChartItems = new ArrayList<>(0);
 
-    protected Vector chartGraphMenuItems = new Vector(0);
+    protected List<Object> chartGraphMenuItems = new ArrayList<>(0);
 
     protected IChartUtilities chartUtilities;
 
@@ -2039,7 +2030,7 @@ public class Table extends JRootPane
 
     protected boolean openInNewWindowByDefault = false;
 
-    protected Hashtable<String, Integer> hColumnSQLTypes = new Hashtable<String, Integer>();
+    protected Map<String, Integer> hColumnSQLTypes = new HashMap<String, Integer>();
 
     protected boolean allColumnTypes = false;
 
@@ -2104,75 +2095,65 @@ public class Table extends JRootPane
     /**
      * Defines a listener that in the event restored the sorting applied to the table.
      */
-    protected ActionListener reserOrderListener = new ActionListener() {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Table.this.resetOrder();
-        }
-    };
+    protected ActionListener reserOrderListener = e -> Table.this.resetOrder();
 
     /**
      * Defines a listener that opens the table detail form in inserting mode, in order to insert new
      * records to the table.
      */
-    protected ActionListener addRecordListener = new ActionListener() {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if ((Table.this.formName != null)
-                    || ((Table.this.formName == null) && (Table.this.insertFormName != null))) {
-                // Open the detail form
-                Cursor c = Table.this.getCursor();
-                try {
-                    Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    Table.this.openInsertDetailForm();
-                } catch (Exception ex) {
-                    Table.logger.error("RecordListener error", ex);
-                } finally {
-                    Table.this.setCursor(c);
-                }
-            }
-        }
-    };
+    protected ActionListener addRecordListener = e -> {
+	    if ((Table.this.formName != null)
+	            || ((Table.this.formName == null) && (Table.this.insertFormName != null))) {
+	        // Open the detail form
+	        Cursor c = Table.this.getCursor();
+	        try {
+	            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+	            Table.this.openInsertDetailForm();
+	        } catch (Exception ex) {
+	            Table.logger.error("RecordListener error", ex);
+	        } finally {
+	            Table.this.setCursor(c);
+	        }
+	    }
+	};
 
     protected void changeOpacity(JComponent c, boolean opaque) {
         c.setOpaque(opaque);
         Component[] components = c.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            if (components[i] instanceof JComponent) {
-                this.changeOpacity((JComponent) components[i], opaque);
+        for (Component component : components) {
+            if (component instanceof JComponent) {
+                this.changeOpacity((JComponent) component, opaque);
             }
         }
     }
 
-    protected Vector visibleColumns = new Vector(0, 3);
+    protected List<String> visibleColumns = new ArrayList<>();
 
     protected List<String> quickFilterColumns;
 
-    protected Vector defaultVisibleColumns;
+    protected List<String> defaultVisibleColumns;
 
-    protected Vector originalVisibleColumns = new Vector(0, 3);
+    protected List<String> originalVisibleColumns = new ArrayList<>(0);
 
-    protected Vector reportCols = new Vector();
+    protected List<Object> reportCols = new ArrayList<>();
 
     protected int[] columnWidthSet = new int[0];
 
     protected int preferredSizeInRows = 10;
 
-    protected Hashtable calculedColumns = new Hashtable(0);
+    protected Map<Object, Object> calculedColumns = new HashMap<>(0);
 
-    protected Vector originalCalculatedColumns;
+    protected List<Object> originalCalculatedColumns;
 
     public static boolean defaultModifiableCalculatedColumns = true;
 
     protected boolean modifiableCalculatedColumns = true;
 
-    protected Vector requiredColumnsCalculedColumns = new Vector();
+    protected List<String> requiredColumnsCalculedColumns = new ArrayList<>();
 
-    protected Vector columnsToOperate = null;
+    protected List<Object> columnsToOperate = null;
 
-    protected Vector columnsToSum = null;
+    protected List<String> columnsToSum = null;
 
     // protected Vector sumCellRenderers = new Vector(2);
     protected CurrencyCellRenderer currencyRenderer = null;
@@ -2579,7 +2560,7 @@ public class Table extends JRootPane
         }
 
         public boolean isStop() {
-			return stop;
+			return this.stop;
 		}
 
 		public void setStop(boolean stop) {
@@ -2602,16 +2583,12 @@ public class Table extends JRootPane
                         this.refreshState = RefreshTableEvent.CANCEL;
                         return;
                     }
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!RefreshThread.this.stop) {
-                                RefreshThread.this.table.showWaitPanel();
-                                RefreshThread.this.table.repaint();
-                            }
-                        }
-                    });
+                    SwingUtilities.invokeLater(() -> {
+					    if (!RefreshThread.this.stop) {
+					        RefreshThread.this.table.showWaitPanel();
+					        RefreshThread.this.table.repaint();
+					    }
+					});
 
                     EntityReferenceLocator referenceLocator = this.table.parentForm.getFormManager()
                         .getReferenceLocator();
@@ -2631,7 +2608,7 @@ public class Table extends JRootPane
                         return;
                     }
 
-                    Hashtable<Object, Object> kv = new Hashtable();
+                    Map<Object, Object> kv = new HashMap<>();
                     synchronized (this.table) {
                         kv = this.table.getParentKeyValues();
                         if (this.table.getPageFetcher() != null) {
@@ -2691,38 +2668,22 @@ public class Table extends JRootPane
                                 }
                             }
                             final EntityResult res2 = res;
-                            SwingUtilities.invokeLater(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    RefreshThread.this.table.setInnerValue(res2);
-                                }
-                            });
+                            SwingUtilities.invokeLater(() -> RefreshThread.this.table.setInnerValue(res2));
                         }
                     }
 
                 } catch (final Exception e) {
                     Table.logger.error(null, e);
                     this.refreshState = RefreshTableEvent.ERROR;
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            RefreshThread.this.table.showInformationPanel(ParseUtils.throwableToString(e, 10));
-                        }
-                    });
+                    SwingUtilities.invokeLater(() -> RefreshThread.this.table.showInformationPanel(ParseUtils.throwableToString(e, 10)));
                 } finally {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (!RefreshThread.this.stop) {
-                                RefreshThread.this.table.hideWaitPanel();
-                            }
-                            RefreshThread.this.table.fireRefreshTableEvent(
-                                    new RefreshTableEvent(RefreshThread.this.table, RefreshThread.this.refreshState));
-                        }
-                    });
+                    SwingUtilities.invokeLater(() -> {
+					    if (!RefreshThread.this.stop) {
+					        RefreshThread.this.table.hideWaitPanel();
+					    }
+					    RefreshThread.this.table.fireRefreshTableEvent(
+					            new RefreshTableEvent(RefreshThread.this.table, RefreshThread.this.refreshState));
+					});
                 }
             } catch (Exception e) {
                 Table.logger.trace(null, e);
@@ -2769,22 +2730,18 @@ public class Table extends JRootPane
     /**
      * The EJTable ListSelectionListener. It is notified each time a change to the selection occurs.
      */
-    protected ListSelectionListener selectionListener = new ListSelectionListener() {
-
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-            if (Table.this.buttonDelete != null) {
-                if (Table.this.getSelectedRowsNumber() > 0) {
-                    Table.this.setTableComponentEnabled(Table.BUTTON_DELETE, true);
-                } else {
-                    Table.this.setTableComponentEnabled(Table.BUTTON_DELETE, false);
-                }
-            }
-            if (Table.this.hasSumRow()) {
-                Table.this.repaint();
-            }
-        }
-    };
+    protected ListSelectionListener selectionListener = e -> {
+	    if (Table.this.buttonDelete != null) {
+	        if (Table.this.getSelectedRowsNumber() > 0) {
+	            Table.this.setTableComponentEnabled(Table.BUTTON_DELETE, true);
+	        } else {
+	            Table.this.setTableComponentEnabled(Table.BUTTON_DELETE, false);
+	        }
+	    }
+	    if (Table.this.hasSumRow()) {
+	        Table.this.repaint();
+	    }
+	};
 
     public void addListSelectionListener(ListSelectionListener listSelectionListener) {
         if ((this.table != null) && (this.table.getSelectionModel() != null)) {
@@ -2877,10 +2834,10 @@ public class Table extends JRootPane
      * @see #configureQueryPanel
      * @see #setButtonsTips
      */
-    public Table(Hashtable params) throws Exception {
+    public Table(Map<Object, Object> params) throws Exception {
         super();
         Table.initRendererMap();
-        this.parameters = (Hashtable) params.clone();
+        this.parameters = new HashMap<>(params);
 
         this.setOpaque(false);
         this.mainPanel = new JPanel();
@@ -3014,16 +2971,12 @@ public class Table extends JRootPane
         this.initRendererEditors();
 
         if ((this.onsetvaluesetAttributes != null) && !this.onsetvaluesetAttributes.isEmpty()) {
-            this.getJTable().getModel().addTableModelListener(new TableModelListener() {
-
-                @Override
-                public void tableChanged(TableModelEvent e) {
-                    if (e.getSource() instanceof ExtendedTableModel) {
-                        Hashtable data = Table.this.retrieveOnSetValueData();
-                        Table.this.updateOnSetValueSetAttributes(data);
-                    }
-                }
-            });
+            this.getJTable().getModel().addTableModelListener(e -> {
+			    if (e.getSource() instanceof ExtendedTableModel) {
+			        Map<Object, Object> data = Table.this.retrieveOnSetValueData();
+			        Table.this.updateOnSetValueSetAttributes(data);
+			    }
+			});
         }
 
         EntityReferenceLocator loc = ApplicationManager.getApplication().getReferenceLocator();
@@ -3031,8 +2984,8 @@ public class Table extends JRootPane
             this.shareRemoteReferenceFilters = (IShareRemoteReference) ((UtilReferenceLocator) loc).getRemoteReference(
                     IShareRemoteReference.REMOTE_NAME,
                     loc.getSessionId()) != null ? true : false;
-        } catch (Exception e) {
-            Table.logger.trace(null, e);
+        } catch (Exception exc) {
+            Table.logger.trace(null, exc);
             this.shareRemoteReferenceFilters = false;
         }
     }
@@ -3046,8 +2999,8 @@ public class Table extends JRootPane
                 String rendererConfig = (String) this.parameters.get("renderers");
                 if (rendererConfig != null) {
                     List allTokens = ApplicationManager.getTokensAt(rendererConfig, ";");
-                    for (int i = 0; i < allTokens.size(); i++) {
-                        String tokenI = (String) allTokens.get(i);
+                    for (Object allToken : allTokens) {
+                        String tokenI = (String) allToken;
                         List elementI = ApplicationManager.getTokensAt(tokenI, ":");
                         if (elementI.size() == 2) {
                             String columnName = (String) elementI.get(0);
@@ -3066,8 +3019,8 @@ public class Table extends JRootPane
                 String editorConfig = (String) this.parameters.get("editors");
                 if (editorConfig != null) {
                     List allTokens = ApplicationManager.getTokensAt(editorConfig, ";");
-                    for (int i = 0; i < allTokens.size(); i++) {
-                        String tokenI = (String) allTokens.get(i);
+                    for (Object allToken : allTokens) {
+                        String tokenI = (String) allToken;
                         List elementI = ApplicationManager.getTokensAt(tokenI, ":");
                         if (elementI.size() == 2) {
                             String columnName = (String) elementI.get(0);
@@ -3099,15 +3052,15 @@ public class Table extends JRootPane
     }
 
     /**
-     * Method that configures the component. The param <code>Hashtable</code> contains the values set in
+     * Method that configures the component. The param <code>Map</code> contains the values set in
      * the XML in which the <code>Table</code> is placed.</br>
      * </br>
      * More parameters in: <br>
-     * -{@link #configureButtons(Hashtable params)} where all table button icons are configured. </br>
-     * -{@link SortTableCellRenderer#init(Hashtable)} where are additional configurations for table
+     * -{@link #configureButtons(Map params)} where all table button icons are configured. </br>
+     * -{@link SortTableCellRenderer#init(Map)} where are additional configurations for table
      * header.<br>
      * <br>
-     * -{@link #configureQuickFilter(Hashtable)} where it is possible to manage additional graphical
+     * -{@link #configureQuickFilter(Map)} where it is possible to manage additional graphical
      * configurations for quickfilter box.
      * <p>
      * The attributes allowed are:
@@ -3628,7 +3581,7 @@ public class Table extends JRootPane
      * </table>
      */
     @Override
-    public void init(Hashtable parameters) throws Exception {
+    public void init(Map<Object, Object> parameters) throws Exception {
 
         this.blockedCols = ParseUtils.getBoolean((String) parameters.get(Table.BLOCKED_COLS), false);
         this.dynamicTable = ParseUtils.getBoolean((String) parameters.get(Table.DYNAMIC), false);
@@ -3743,7 +3696,7 @@ public class Table extends JRootPane
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 
-    protected void configureOpenInNewWindow(Hashtable parameters) {
+    protected void configureOpenInNewWindow(Map<Object, Object> parameters) {
         this.allowOpenInNewWindow = ParseUtils.getBoolean((String) parameters.get(Table.OPEN_NEW_WINDOW),
                 Table.SHOW_OPEN_IN_NEW_WINDOW_MENU);
         if (this.allowOpenInNewWindow) {
@@ -3752,7 +3705,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureDisableInsert(Hashtable parameters) {
+    protected void configureDisableInsert(Map<Object, Object> parameters) {
         this.disableInsert = ParseUtils.getBoolean((String) parameters.get(Table.DISABLE_INSERT), this.disableInsert);
         if (this.dynamicTable) {
             // In a dynamicTable it is not allowed to insert new records
@@ -3764,14 +3717,14 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureControlVisible(Hashtable parameters) {
+    protected void configureControlVisible(Map<Object, Object> parameters) {
         Object controlsvisible = parameters.get(Table.CONTROLS_VISIBLE);
         if (controlsvisible != null) {
             this.setControlsVisible(ApplicationManager.parseStringValue(controlsvisible.toString(), true));
         }
     }
 
-    protected void configureFitRowHeight(Hashtable parameters) {
+    protected void configureFitRowHeight(Map<Object, Object> parameters) {
         try {
             this.fitRowHeight = ParseUtils.getBoolean((String) parameters.get(Table.FITROWHEIGHT), this.fitRowHeight);
         } catch (Exception e) {
@@ -3779,33 +3732,33 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureMinRowHeight(Hashtable parameters) {
+    protected void configureMinRowHeight(Map<Object, Object> parameters) {
         try {
             String value = (String) parameters.get(Table.MINROWHEIGHT);
             if (value != null) {
                 this.fitRowHeight = true;
                 this.minRowHeight = ParseUtils.getInteger(value, this.minRowHeight);
             }
-        } catch (Exception e) {
-            Table.logger.error("Error in 'minrowheight' parameter", e);
+        } catch (Exception exc) {
+            Table.logger.error("Error in 'minrowheight' parameter", exc);
         }
     }
 
-    protected void configureRows(Hashtable parameters) {
+    protected void configureRows(Map<Object, Object> parameters) {
         try {
             this.preferredSizeInRows = ParseUtils.getInteger((String) parameters.get(Table.ROWS),
                     this.preferredSizeInRows);
-        } catch (Exception e) {
-            Table.logger.error("Error in 'rows' parameter", e);
+        } catch (Exception exc) {
+            Table.logger.error("Error in 'rows' parameter", exc);
         }
     }
 
-    protected void configureQueryRows(Hashtable parameters) {
+    protected void configureQueryRows(Map<Object, Object> parameters) {
         try {
             this.rowsNumberToQuery = ParseUtils.getInteger((String) parameters.get(Table.QUERY_ROWS),
                     this.rowsNumberToQuery);
-        } catch (Exception e) {
-            Table.logger.error("Error in 'queryrows' parameter", e);
+        } catch (Exception exc) {
+            Table.logger.error("Error in 'queryrows' parameter", exc);
         }
 
         this.queryRowsModifiable = ParseUtils.getBoolean((String) parameters.get(Table.QUERY_ROWS_MODIFIABLE), true);
@@ -3816,16 +3769,16 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureOnSetValueSet(Hashtable parameters) {
+    protected void configureOnSetValueSet(Map<Object, Object> parameters) {
         Object onsetvalueset = parameters.get(Table.ONSETVALUESET);
         if (onsetvalueset != null) {
             this.hOnSetValueSetEquivalences = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";", ":");
 
-            this.onsetvaluesetAttributes = new Vector();
+            this.onsetvaluesetAttributes = new ArrayList<>();
 
             // We can't use the keys of the hashtable to get the attribute names
             // because we have to use the same order that is in the xml
-            Vector valueNamesOrder = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";");
+            List<String> valueNamesOrder = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";");
             for (int i = 0; i < valueNamesOrder.size(); i++) {
                 int dotIndex = valueNamesOrder.get(i).toString().indexOf(":");
                 if (dotIndex > 0) {
@@ -3837,7 +3790,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureEntity(Hashtable parameters) {
+    protected void configureEntity(Map<Object, Object> parameters) {
         Object ent = parameters.get(Table.ENTITY);
         if (ent == null) {
             throw new IllegalArgumentException(this.getClass().getName() + ": entity parameter not found");
@@ -3846,33 +3799,33 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureSumRow(Hashtable parameters) {
+    protected void configureSumRow(Map<Object, Object> parameters) {
         Object sumrow = parameters.get(Table.SUM_ROW);
         if (sumrow != null) {
             this.columnsToSum = ApplicationManager.getTokensAt(sumrow.toString(), ";");
         }
     }
 
-    protected boolean configureVisibleColumns(Hashtable parameters) {
+    protected boolean configureVisibleColumns(Map<Object, Object> parameters) {
         Object visiblecols = parameters.get(Table.VISIBLE_COLS);
         if (visiblecols != null) {
             this.visibleColumns = ApplicationManager.getTokensAt(visiblecols.toString(), ";");
             return true;
         } else { // If visiblecols parameter does not exist then use the
             // same as columns
-            for (int i = 0; i < this.attributes.size(); i++) {
-                if (!this.visibleColumns.contains(this.attributes.get(i))) {
-                    this.visibleColumns.add(this.attributes.get(i));
+            for (Object element : this.attributes) {
+                if (!this.visibleColumns.contains(element)) {
+                    this.visibleColumns.add((String) element);
                 }
             }
         }
         return false;
     }
 
-    protected void configureKeys(Hashtable parameters) {
+    protected void configureKeys(Map<Object, Object> parameters) {
         Object key = parameters.get(Table.KEY);
         Object keys = parameters.get(Table.KEYS);
-        Vector keyTokens = null;
+        List<String> keyTokens = null;
         if (keys != null) {
             // This code is in case that 'keys' is not nulla and 'key' is
             // null
@@ -3898,7 +3851,7 @@ public class Table extends JRootPane
 
         if ((keyTokens != null) && (keyTokens.size() > 0)) {
             // Now configure the key fields
-            this.keyFields = new Vector();
+            this.keyFields = new ArrayList<>();
             for (int k = 0; k < keyTokens.size(); k++) {
                 String keyName = (String) keyTokens.get(k);
                 this.keyFields.add(keyName);
@@ -3915,7 +3868,7 @@ public class Table extends JRootPane
                     this.codValues = ApplicationManager.getTokensAt(cods.toString(), ";", ":");
                 } else {
                     StringTokenizer st = new StringTokenizer(cods.toString(), ";");
-                    this.codValues = new Hashtable();
+                    this.codValues = new HashMap<>();
 
                     while (st.hasMoreTokens()) {
                         String tablek = st.nextToken();
@@ -3930,18 +3883,17 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureParentKeys(Hashtable parameters) {
+    protected void configureParentKeys(Map<Object, Object> parameters) {
         String sParentkeys = (String) parameters.get("parentkeys");
         if (sParentkeys != null) {
             this.hParentkeyEquivalences = ApplicationManager.getTokensAt(sParentkeys, ";", ":");
-            Enumeration parentKeysEnum = this.hParentkeyEquivalences.keys();
-            this.parentkeys = new Vector(this.hParentkeyEquivalences.size());
-            while (parentKeysEnum.hasMoreElements()) {
-                this.parentkeys.add(parentKeysEnum.nextElement());
+            this.parentkeys = new ArrayList<>(this.hParentkeyEquivalences.size());
+            for(Entry<Object,Object> entry:this.hParentkeyEquivalences.entrySet()) {
+            	this.parentkeys.add(entry.getKey());
             }
         } else {
             this.parentKey = ParseUtils.getString((String) parameters.get(Table.PARENTKEY), this.parentKey);
-            this.parentkeys = new Vector();
+            this.parentkeys = new ArrayList<>();
             if (this.parentKey == null) {
                 Table.logger.debug("{} parameter hasn't been found in table component", Table.PARENTKEY);
             } else {
@@ -3962,9 +3914,9 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureReportColumns(Hashtable parameters) {
+    protected void configureReportColumns(Map<Object, Object> parameters) {
         // Create report columns to show in custom report dialog
-        Vector reportCols = new Vector();
+        List<String> reportCols = new ArrayList<>();
         reportCols = ApplicationManager.getTokensAt((String) parameters.get(Table.REPORT_COLS), ";");
         if (reportCols.isEmpty()) {
             this.reportCols.addAll(this.visibleColumns);
@@ -3974,7 +3926,7 @@ public class Table extends JRootPane
 
     }
 
-    protected void configureDynamicForm(Hashtable parameters) {
+    protected void configureDynamicForm(Map<Object, Object> parameters) {
         Object dynamicForm = parameters.get(Table.DYNAMIC_FORM);
         if (dynamicForm != null) {
             try {
@@ -3985,13 +3937,13 @@ public class Table extends JRootPane
                 this.dinamicFormClass = sStringClass;
                 this.dynamicFormManager = dFDynamicForm;
                 Table.logger.debug("{} class has been established as DynamicForm for the node.", sStringClass);
-            } catch (Exception e) {
-                Table.logger.error("Error loading class for DynamicForm", e);
+            } catch (Exception exc) {
+                Table.logger.error("Error loading class for DynamicForm", exc);
             }
         }
     }
 
-    protected void configureFixAttr(Hashtable parameters) {
+    protected void configureFixAttr(Map<Object, Object> parameters) {
         Object fixattr = parameters.get(Table.FIX_ATTR);
         if (fixattr != null) {
             this.hAttributesToFixEquivalences = ApplicationManager.getTokensAt((String) fixattr, ";", ":");
@@ -4003,7 +3955,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureCalculedColumns(Hashtable parameters, boolean hasVisibleColumns) {
+    protected void configureCalculedColumns(Map<Object, Object> parameters, boolean hasVisibleColumns) {
         Object oCalculatedColumns = parameters.get(Table.CALCULED_COLS);
         if (oCalculatedColumns != null) {
             // We need the column vector and the expressions
@@ -4021,7 +3973,7 @@ public class Table extends JRootPane
                     // Math expression
                     sExpression = token;
                     if (this.calculedColumns == null) {
-                        this.calculedColumns = new Hashtable(3);
+                        this.calculedColumns = new HashMap<>(3);
                     }
                     this.calculedColumns.put(sColumName, sExpression);
                     bOdd = true;
@@ -4029,7 +3981,7 @@ public class Table extends JRootPane
             }
 
             if ((this.calculedColumns != null) && !this.calculedColumns.isEmpty()) {
-                this.originalCalculatedColumns = new Vector(Arrays.asList(this.calculedColumns.keySet().toArray()));
+                this.originalCalculatedColumns = Arrays.asList(this.calculedColumns.keySet().toArray());
             }
         }
 
@@ -4037,13 +3989,12 @@ public class Table extends JRootPane
                 (String) parameters.get(Table.MODIFIABLE_CALCULATED_COLUMNS), Table.defaultModifiableCalculatedColumns);
 
         if (!hasVisibleColumns) {
-            Enumeration enumKeys = this.calculedColumns.keys();
-            while (enumKeys.hasMoreElements()) {
-                Object cc = enumKeys.nextElement();
-                if (!this.visibleColumns.contains(cc)) {
-                    this.visibleColumns.add(cc);
-                }
-            }
+        	for(Entry<Object, Object> entry:this.calculedColumns.entrySet()) {
+        		Object cc = entry.getKey();
+        		if (!this.visibleColumns.contains(cc)) {
+        			this.visibleColumns.add((String) cc);
+        		}
+        	}
         }
 
         Object calculedcolsrequiredfields = parameters.get(Table.CALCULED_COLS_REQUIRED_FIELDS);
@@ -4053,7 +4004,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureCurrencyColumns(Hashtable parameters) {
+    protected void configureCurrencyColumns(Map<Object, Object> parameters) {
         Object currency = parameters.get(Table.CURRENCY);
         if (currency != null) {
             StringTokenizer st = new StringTokenizer(currency.toString(), ";");
@@ -4067,7 +4018,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureTimeColumns(Hashtable parameters) {
+    protected void configureTimeColumns(Map<Object, Object> parameters) {
         Object rendertime = parameters.get(Table.TIME_RENDER);
         if (rendertime != null) {
             StringTokenizer st = new StringTokenizer(rendertime.toString(), ";");
@@ -4081,7 +4032,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureEditableColumns(Hashtable parameters) {
+    protected void configureEditableColumns(Map<Object, Object> parameters) {
         Object editablecolumns = parameters.get(Table.EDITABLE_COLUMNS);
         if (editablecolumns == null) {
         } else {
@@ -4100,7 +4051,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureMemoColumns(Hashtable parameters) {
+    protected void configureMemoColumns(Map<Object, Object> parameters) {
         Object rendermemo = parameters.get(Table.MEMO_RENDER);
         if (rendermemo != null) {
             StringTokenizer st = new StringTokenizer(rendermemo.toString(), ";");
@@ -4114,7 +4065,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected void configureColumns(Hashtable parameters) {
+    protected void configureColumns(Map<Object, Object> parameters) {
         Object cols = parameters.get(Table.COLS);
         if (cols != null) {
             String sColumnNames = cols.toString();
@@ -4127,7 +4078,7 @@ public class Table extends JRootPane
                 this.quickFilterColumns = ApplicationManager.getTokensAt(quickfiltercols.toString(), ";");
             }
 
-            this.originalVisibleColumns = (Vector) this.visibleColumns.clone();
+            this.originalVisibleColumns = new ArrayList<>(this.visibleColumns);
 
             Object oDefaultCols = parameters.get(Table.DEFAULT_VISIBLE_COLS);
             if (oDefaultCols != null) {
@@ -4160,8 +4111,8 @@ public class Table extends JRootPane
             // Parameter fontsize
             try {
                 this.fontSize = ParseUtils.getInteger((String) parameters.get(Table.FONT_SIZE), this.fontSize);
-            } catch (Exception e) {
-                Table.logger.error("Table: Error in parameter: " + Table.FONT_SIZE, e);
+            } catch (Exception exc) {
+                Table.logger.error("Table: Error in parameter: " + Table.FONT_SIZE, exc);
                 this.fontSize = 1;
             }
 
@@ -4284,9 +4235,9 @@ public class Table extends JRootPane
      *        </tr>
      *        </Table>
      */
-    protected void configureInsertTable(Hashtable params) {
+    protected void configureInsertTable(Map<Object, Object> params) {
         this.insertTableInsertRowListenerList = new EventListenerList();
-        this.vrequiredCols = new Vector();
+        this.vrequiredCols = new ArrayList<>();
         if (this.parameters.containsKey(Table.REQUIRED_COLS) && !this.parameters.get(Table.REQUIRED_COLS).equals("")) {
             this.vrequiredCols = ApplicationManager.getTokensAt((String) this.parameters.get(Table.REQUIRED_COLS), ";");
         }
@@ -4298,7 +4249,7 @@ public class Table extends JRootPane
         // }
     }
 
-    protected void configureRefreshTable(Hashtable params) {
+    protected void configureRefreshTable(Map<Object, Object> params) {
         this.refreshTableListenerList = new EventListenerList();
     }
 
@@ -4513,13 +4464,7 @@ public class Table extends JRootPane
             this.setTableComponentEnabled(Table.BUTTON_CHART, false);
             this.buttonChart.setMargin(new Insets(0, 0, 0, 0));
             this.controlsPanel.add(this.buttonChart);
-            this.buttonChart.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.showChartMenu(e);
-                }
-            });
+            this.buttonChart.addActionListener(e -> Table.this.showChartMenu(e));
         }
     }
 
@@ -4553,8 +4498,8 @@ public class Table extends JRootPane
                 final String description = descriptions.nextElement().toString();
                 ChartInfo info = repository.getChartInfo(description);
                 boolean found = false;
-                for (int i = 0; i < this.chartGraphMenuItems.size(); i++) {
-                    if (((JMenuItem) this.chartGraphMenuItems.get(i)).getName().equals(description)) {
+                for (Object element : this.chartGraphMenuItems) {
+                    if (((JMenuItem) element).getName().equals(description)) {
                         found = true;
                         break;
                     }
@@ -4596,13 +4541,7 @@ public class Table extends JRootPane
                 if (chartIcon != null) {
                     item.setIcon(chartIcon);
                 }
-                item.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        Table.this.showChart(description);
-                    }
-                });
+                item.addActionListener(e1 -> Table.this.showChart(description));
                 this.chartMenu.add(item);
                 this.chartGraphMenuItems.add(item);
             }
@@ -4639,16 +4578,16 @@ public class Table extends JRootPane
      * @return
      */
     public EntityResult getValueToExport(boolean calculatedRow, boolean translateHeader, boolean useNoStringKeys) {
-        EntityResult result = new EntityResult();
-        Vector columnNames = new Vector();
-        Hashtable hColumnSQLTypes = new Hashtable();
-        Vector visibleColumnNames = new Vector();
+        EntityResult result = new EntityResultMapImpl();
+        List<Object> columnNames = new ArrayList<>();
+        Map<Object, Object> hColumnSQLTypes = new HashMap<>();
+        List<Object> visibleColumnNames = new ArrayList<>();
         boolean bSetSqlTypes = false;
         Object currentValue = this.getValue();
         if (currentValue instanceof EntityResult) {
             bSetSqlTypes = true;
         }
-        Vector vCalculedColumns = new Vector(this.calculedColumns.keySet());
+        List<Object> vCalculedColumns = new ArrayList<>(this.calculedColumns.keySet());
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             TableColumn tc = this.table.getColumnModel().getColumn(i);
             Object oText = translateHeader ? tc.getHeaderValue() : tc.getIdentifier().toString();
@@ -4668,7 +4607,7 @@ public class Table extends JRootPane
                     }
                     visibleColumnNames.add(text);
                 }
-                result.put(text, new Vector());
+                result.put(text, new ArrayList<>());
 
             }
             columnNames.add(text);
@@ -4681,7 +4620,7 @@ public class Table extends JRootPane
         for (int j = 0; j < rowsCount; j++) {
             for (int i = 0; i < this.table.getColumnCount(); i++) {
                 String text = this.getCellValueAsString(j, i);
-                Vector v = (Vector) result.get(columnNames.get(i));
+                List<Object> v = (List<Object>) result.get(columnNames.get(i));
                 if (v != null) {
                     if (text != null) {
                         v.add(text);
@@ -4694,7 +4633,7 @@ public class Table extends JRootPane
         }
 
         if (calculatedRow && (this.sumRowTable.getRowCount() > 0)) {
-            Hashtable sumRowData = new Hashtable();
+            Map<Object, Object> sumRowData = new HashMap<>();
             for (int i = 0; i < this.sumRowTable.getColumnCount(); i++) {
                 Object columnName = columnNames.get(i);
                 if (result.containsKey(columnName)) {
@@ -4720,16 +4659,16 @@ public class Table extends JRootPane
      */
 
     public Object getValueToReport() {
-        EntityResult result = new EntityResult();
-        Vector columnNames = new Vector();
-        Vector visibleColumnNames = new Vector();
+        EntityResult result = new EntityResultMapImpl();
+        List<Object> columnNames = new ArrayList<>();
+        List<Object> visibleColumnNames = new ArrayList<>();
 
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             TableColumn tc = this.table.getColumnModel().getColumn(i);
             Object text = tc.getIdentifier().toString();
 
             if ((tc.getIdentifier() != null) && this.reportCols.contains(tc.getIdentifier().toString())) {
-                result.put(text, new Vector());
+                result.put(text, new ArrayList<>());
                 visibleColumnNames.add(text);
             }
             columnNames.add(text);
@@ -4750,7 +4689,7 @@ public class Table extends JRootPane
                         } else if (oText instanceof ValueByGroup) {
                             oText = ((ValueByGroup) oText).getValue();
                         }
-                        Vector v = (Vector) result.get(this.table.getColumnName(i));
+                        List<Object> v = (List<Object>) result.get(this.table.getColumnName(i));
                         v.add(oText);
                         result.put(columnNames.get(i), v);
                     }
@@ -4832,10 +4771,10 @@ public class Table extends JRootPane
         }
 
         if ((selectedRows != null) && (selectedRows.length > 0)) {
-            for (int j = 0; j < selectedRows.length; j++) {
+            for (int selectedRow : selectedRows) {
                 sbValues.append("\n");
                 for (int i = 0; i < this.table.getColumnCount(); i++) {
-                    String sText = this.getCellValueAsString(selectedRows[j], i);
+                    String sText = this.getCellValueAsString(selectedRow, i);
                     if (sText != null) {
                         sText = sText.replaceAll("\"", "\"\"");
                         sbValues.append("\"");
@@ -4964,8 +4903,8 @@ public class Table extends JRootPane
      * Returns the name of all the table columns.
      * @return the name of all the table columns
      */
-    public Vector getAttributeList() {
-        return (Vector) this.attributes.clone();
+    public List<Object> getAttributeList() {
+        return new ArrayList<>(this.attributes);
     }
 
     /**
@@ -5062,8 +5001,8 @@ public class Table extends JRootPane
         int[] widths = this.initColumnsWidth(this.preferredSizeInRows);
 
         int total = 0;
-        for (int i = 0; i < widths.length; i++) {
-            total = total + widths[i];
+        for (int width2 : widths) {
+            total = total + width2;
         }
         FontMetrics fontMetrics = this.getFontMetrics(this.getFont());
 
@@ -5094,9 +5033,9 @@ public class Table extends JRootPane
                 new Dimension(Math.min(600, preferredWidth), this.preferredSizeInRows * this.table.getRowHeight()));// fontMetrics.getHeight()));
     }
 
-    protected Vector getOperationColumns() {
-        Vector vColumns = this.getOriginalSumRowCols();
-        Vector vVisibleColumns = this.getOriginallyVisibleColumns();
+    protected List<Object> getOperationColumns() {
+    	List<String> vColumns = this.getOriginalSumRowCols();
+    	List<String> vVisibleColumns = this.getOriginallyVisibleColumns();
         TableCellRenderer renderer = null;
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             String sKey = this.table.getColumnName(i);
@@ -5114,8 +5053,8 @@ public class Table extends JRootPane
                 }
             }
         }
-        this.columnsToOperate = vColumns;
-        return vColumns;
+        this.columnsToOperate = new ArrayList<>(vColumns);
+        return new ArrayList<>(vColumns);
     }
 
     /**
@@ -5133,14 +5072,10 @@ public class Table extends JRootPane
         } else {
             final Object oValue = value;
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Table.this.hideInformationPanel();
-                        Table.this.setInnerValue(oValue);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> {
+				    Table.this.hideInformationPanel();
+				    Table.this.setInnerValue(oValue);
+				});
             } catch (Exception e) {
                 Table.logger.trace(null, e);
                 this.setInnerValue(oValue);
@@ -5160,13 +5095,7 @@ public class Table extends JRootPane
         } else {
             final Object oValue = value;
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Table.this.setInnerValue(oValue, autoSizeColumns);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> Table.this.setInnerValue(oValue, autoSizeColumns));
             } catch (Exception e) {
                 Table.logger.trace(null, e);
                 this.setInnerValue(oValue, autoSizeColumns);
@@ -5177,15 +5106,14 @@ public class Table extends JRootPane
     protected void retrieveSQLTypes(EntityResult res) {
         // Then use this information in pageable tables.
         if ((this.pageFetcher != null) && this.pageFetcher.isPageableEnabled()) {
-            Hashtable<String, Integer> sqlTypes = res.getColumnSQLTypes();
+            Map<String, Integer> sqlTypes = res.getColumnSQLTypes();
             if (sqlTypes != null) {
-                Enumeration<String> keys = sqlTypes.keys();
-                while (keys.hasMoreElements()) {
-                    String key = keys.nextElement();
+            	for(Entry<String, Integer> entry:sqlTypes.entrySet()) {
+            		String key = entry.getKey();
                     if (!this.hColumnSQLTypes.containsKey(key)) {
-                        this.hColumnSQLTypes.put(key, sqlTypes.get(key));
+                        this.hColumnSQLTypes.put(key, entry.getValue());
                     }
-                }
+            	}
             }
         }
     }
@@ -5219,7 +5147,7 @@ public class Table extends JRootPane
 
         long t = System.currentTimeMillis();
         this.changeToTableView();
-        if ((value == null) || (!(value instanceof Hashtable))) {
+        if ((value == null) || (!(value instanceof Map))) {
             this.deleteData();
         } else {
             if (value instanceof EntityResult) {
@@ -5245,7 +5173,7 @@ public class Table extends JRootPane
             }
 
             // Remove values that not belongs to the table attributes
-            Hashtable hData = (Hashtable) ((Hashtable) value).clone();
+            Map<Object, Object> hData = (Hashtable) ((Hashtable) value).clone();
             Enumeration enumKeys = hData.keys();
             while (enumKeys.hasMoreElements()) {
                 Object oKey = enumKeys.nextElement();
@@ -5331,8 +5259,8 @@ public class Table extends JRootPane
     }
 
     protected void setDynamicTableConfiguration(Object value) {
-        if (value instanceof Hashtable) {
-            Hashtable h = (Hashtable) value;
+        if (value instanceof Map) {
+            Map<?,?> h = (Map<?,?>) value;
             if ((h == null) || h.isEmpty()) {
                 // this means the hashtable is empty
                 // 1remove the filtering and the sorting and the grouping
@@ -5340,7 +5268,7 @@ public class Table extends JRootPane
                 this.resetFilter();
                 this.resetOrder();
                 // 2 remove the columns
-                Vector attributesClone = (Vector) this.attributes.clone();
+                List<String> attributesClone = new ArrayList<>(this.attributes);
                 if (attributesClone.size() > 0) {
                     String[] columns = (String[]) attributesClone.toArray(new String[attributesClone.size()]);
                     this.deleteColumn(columns);
@@ -5353,8 +5281,8 @@ public class Table extends JRootPane
                 // we have to check whether the new columns are the same to the
                 // old
                 // ones just replace the values
-                Vector hashtableKeys = value == null ? new Vector() : new Vector(Arrays.asList(h.keySet().toArray()));
-                Vector attributesClone = (Vector) this.attributes.clone();
+                List<String> hashtableKeys = value == null ? new ArrayList<>() : Arrays.asList(h.keySet().toArray(new String[] {}));
+                List<String> attributesClone = new ArrayList<>(this.attributes);
                 Collections.sort(hashtableKeys);
                 Collections.sort(attributesClone);
                 if (!hashtableKeys.equals(attributesClone)) {
@@ -5444,7 +5372,7 @@ public class Table extends JRootPane
             return this.entity;
         } else {
             TableAttribute tableAttribute = new TableAttribute();
-            tableAttribute.setEntityAndAttributes(this.entity, (Vector) this.attributes.clone());
+            tableAttribute.setEntityAndAttributes(this.entity, new ArrayList<>(this.attributes));
 
             if (this.pageFetcher != null) {
                 tableAttribute.setRecordNumberToInitiallyDownload(this.pageFetcher.getPageFetcherRecordNumber());
@@ -5462,10 +5390,10 @@ public class Table extends JRootPane
         }
     }
 
-    protected Vector getSQLOrderList() {
+    protected List<SQLOrder> getSQLOrderList() {
         String[] colOrd = this.getOrderColumns();
         boolean[] asce = this.getAscendents();
-        Vector orderBy = new Vector();
+        List<SQLOrder> orderBy = new ArrayList<>();
         for (int i = 0; i < colOrd.length; i++) {
             orderBy.add(new SQLStatementBuilder.SQLOrder(colOrd[i], asce[i]));
         }
@@ -5575,9 +5503,9 @@ public class Table extends JRootPane
         Hashtable h = new Hashtable();
         // Search the column in the table header
         Vector vKeys = this.getKeys();
-        for (int i = 0; i < this.attributes.size(); i++) {
-            if (!vKeys.contains(this.attributes.get(i))) {
-                vKeys.add(this.attributes.get(i));
+        for (Object element : this.attributes) {
+            if (!vKeys.contains(element)) {
+                vKeys.add(element);
             }
         }
 
@@ -5621,15 +5549,15 @@ public class Table extends JRootPane
      * attributes key and keys.
      * @return the configured keys for the table
      */
-    public Vector getKeys() {
+    public List<Object> getKeys() {
         if (this.keyFields != null) {
-            Vector v = (Vector) this.keyFields.clone();
+        	List<Object> v = new ArrayList<>(this.keyFields);
             if (!v.contains(this.keyField)) {
                 v.add(this.keyField);
             }
             return v;
         } else {
-            Vector v = new Vector();
+            List<Object> v = new ArrayList<>();
             v.add(this.keyField);
             return v;
         }
@@ -5655,8 +5583,8 @@ public class Table extends JRootPane
     @Override
     public Vector getTextsToTranslate() {
         Vector v = new Vector();
-        for (int i = 0; i < this.attributes.size(); i++) {
-            v.add(this.attributes.get(i).toString());
+        for (Object element : this.attributes) {
+            v.add(element.toString());
         }
         v.add(Table.COPY_CELL);
         v.add(Table.COPY_SELECTION);
@@ -5727,8 +5655,8 @@ public class Table extends JRootPane
             this.formatPattern.setResourceBundle(resourceBundle);
         }
 
-        for (int i = 0; i < this.attributes.size(); i++) {
-            TableColumn col = this.table.getColumn(this.attributes.get(i));
+        for (Object element : this.attributes) {
+            TableColumn col = this.table.getColumn(element);
             TableCellRenderer renderer = col.getCellRenderer();
             if (renderer instanceof Internationalization) {
                 ((Internationalization) renderer).setResourceBundle(resourceBundle);
@@ -5772,9 +5700,9 @@ public class Table extends JRootPane
         }
 
         if (this.addComponents != null) {
-            for (int i = 0; i < this.addComponents.size(); i++) {
-                if (this.addComponents.get(i) instanceof Internationalization) {
-                    ((Internationalization) this.addComponents.get(i)).setResourceBundle(resourceBundle);
+            for (Object element : this.addComponents) {
+                if (element instanceof Internationalization) {
+                    ((Internationalization) element).setResourceBundle(resourceBundle);
                 }
             }
         }
@@ -5933,13 +5861,13 @@ public class Table extends JRootPane
             return null;
         }
 
-        for (int i = 0; i < vKeys.size(); i++) {
-            TableColumn tc = this.table.getColumn(vKeys.get(i));
+        for (Object vKey : vKeys) {
+            TableColumn tc = this.table.getColumn(vKey);
             int columnModelIndex = tc.getModelIndex();
             if (tc != null) {
                 Object value = tableSorter.getValueAt(rowIndex, columnModelIndex);
                 if (value != null) {
-                    rowKeys.put(vKeys.get(i), value);
+                    rowKeys.put(vKey, value);
                 }
 
             }
@@ -5965,17 +5893,13 @@ public class Table extends JRootPane
             ((TableSorter) tableModel).deleteRows(rowIndex);
         } else {
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if ((Table.this.table != null) && Table.this.table.isEditing()
-                                && (((EJTable) Table.this.table).getCellEditor() != null)) {
-                            ((EJTable) Table.this.table).getCellEditor().stopCellEditing();
-                        }
-                        ((TableSorter) tableModel).deleteRows(rowIndex);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> {
+				    if ((Table.this.table != null) && Table.this.table.isEditing()
+				            && (((EJTable) Table.this.table).getCellEditor() != null)) {
+				        ((EJTable) Table.this.table).getCellEditor().stopCellEditing();
+				    }
+				    ((TableSorter) tableModel).deleteRows(rowIndex);
+				});
             } catch (Exception e) {
                 Table.logger.error("deleteRows: ", e);
             }
@@ -6001,17 +5925,13 @@ public class Table extends JRootPane
             ((TableSorter) tableModel).deleteRow(rowIndex);
         } else {
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if ((Table.this.table != null) && Table.this.table.isEditing()
-                                && (((EJTable) Table.this.table).getCellEditor() != null)) {
-                            ((EJTable) Table.this.table).getCellEditor().stopCellEditing();
-                        }
-                        ((TableSorter) tableModel).deleteRow(rowIndex);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> {
+				    if ((Table.this.table != null) && Table.this.table.isEditing()
+				            && (((EJTable) Table.this.table).getCellEditor() != null)) {
+				        ((EJTable) Table.this.table).getCellEditor().stopCellEditing();
+				    }
+				    ((TableSorter) tableModel).deleteRow(rowIndex);
+				});
             } catch (Exception e) {
                 Table.logger.error("deleteRow ", e);
             }
@@ -6046,10 +5966,10 @@ public class Table extends JRootPane
         for (int i = 0; i < this.table.getRowCount(); i++) {
             boolean keysMatch = true;
             Vector v = this.getKeys();
-            for (int j = 0; j < v.size(); j++) {
-                int iColIndex = this.table.convertColumnIndexToView(this.table.getColumn(v.get(j)).getModelIndex());
+            for (Object element : v) {
+                int iColIndex = this.table.convertColumnIndexToView(this.table.getColumn(element).getModelIndex());
                 Object oTableValue = this.table.getValueAt(i, iColIndex);
-                Object oKeysValues = keysValues.get(v.get(j));
+                Object oKeysValues = keysValues.get(element);
                 if (!oKeysValues.equals(oTableValue)) {
                     keysMatch = false;
                     break;
@@ -6273,8 +6193,8 @@ public class Table extends JRootPane
 
         // 1.- checks that all the values of viewRowIndex are a possible index
         // value:
-        for (int i = 0; i < viewRowIndex.length; i++) {
-            if (!this.checkBoundRow(viewRowIndex[i])) {
+        for (int element : viewRowIndex) {
+            if (!this.checkBoundRow(element)) {
                 return;
             }
         }
@@ -6301,8 +6221,8 @@ public class Table extends JRootPane
     @Override
     public void setComponentLocale(Locale locale) {
         this.locale = locale;
-        for (int i = 0; i < this.attributes.size(); i++) {
-            TableColumn col = this.table.getColumn(this.attributes.get(i));
+        for (Object element : this.attributes) {
+            TableColumn col = this.table.getColumn(element);
             TableCellRenderer renderer = col.getCellRenderer();
             if (renderer instanceof Internationalization) {
                 ((Internationalization) renderer).setComponentLocale(locale);
@@ -6315,9 +6235,9 @@ public class Table extends JRootPane
         }
 
         if (this.calculedColumns != null) {
-            Enumeration calculedKeys = this.calculedColumns.keys();
-            while (calculedKeys.hasMoreElements()) {
-                TableColumn col = this.table.getColumn(calculedKeys.nextElement());
+            Iterator<?> calculedKeys = this.calculedColumns.keySet().iterator();
+            while (calculedKeys.hasNext()) {
+                TableColumn col = this.table.getColumn(calculedKeys.next());
                 TableCellRenderer renderer = col.getCellRenderer();
                 if (renderer instanceof Internationalization) {
                     ((Internationalization) renderer).setComponentLocale(locale);
@@ -6378,8 +6298,8 @@ public class Table extends JRootPane
     protected void setSumRowTableComponentLocale(Locale locale) {
         if (this.sumRowTable != null) {
 
-            for (int i = 0; i < this.attributes.size(); i++) {
-                TableColumn col = this.sumRowTable.getColumn(this.attributes.get(i));
+            for (Object element : this.attributes) {
+                TableColumn col = this.sumRowTable.getColumn(element);
                 TableCellRenderer renderer = col.getCellRenderer();
                 if (renderer instanceof Internationalization) {
                     ((Internationalization) renderer).setComponentLocale(locale);
@@ -6392,9 +6312,9 @@ public class Table extends JRootPane
             }
 
             if (this.calculedColumns != null) {
-                Enumeration calculedKeys = this.calculedColumns.keys();
-                while (calculedKeys.hasMoreElements()) {
-                    TableColumn col = this.sumRowTable.getColumn(calculedKeys.nextElement());
+                Iterator<?> calculedKeys = this.calculedColumns.keySet().iterator();
+                while (calculedKeys.hasNext()) {
+                    TableColumn col = this.sumRowTable.getColumn(calculedKeys.next());
                     TableCellRenderer renderer = col.getCellRenderer();
                     if (renderer instanceof Internationalization) {
                         ((Internationalization) renderer).setComponentLocale(locale);
@@ -6469,12 +6389,12 @@ public class Table extends JRootPane
 
         this.setQuickFilterEnabled(enabled);
 
-        for (int i = 0; i < this.addButtons.size(); i++) {
-            ((AbstractButton) this.addButtons.get(i)).setEnabled(enabled);
+        for (Object element : this.addButtons) {
+            ((AbstractButton) element).setEnabled(enabled);
         }
 
-        for (int i = 0; i < this.addComponents.size(); i++) {
-            ((JComponent) this.addComponents.get(i)).setEnabled(enabled);
+        for (Object element : this.addComponents) {
+            ((JComponent) element).setEnabled(enabled);
         }
 
         if ((this.formName != null) || ((this.formName == null) && (this.insertFormName != null))) {
@@ -6766,32 +6686,32 @@ public class Table extends JRootPane
         dateDataField.setComponentLocale(this.locale);
         integerDataField.setComponentLocale(this.locale);
         currencyDataField.setComponentLocale(this.locale);
-        for (int i = 0; i < this.attributes.size(); i++) {
-            String sColumnName = this.attributes.get(i).toString();
+        for (Object element : this.attributes) {
+            String sColumnName = element.toString();
             Vector vColumnData = (Vector) ((Hashtable) this.getValue()).get(sColumnName);
             Object oValue = vColumnData.get(rowIndex);
             if (this.currencyColumns.contains(sColumnName)) {
                 currencyDataField.setValue(oValue);
                 String sText = new String(((JTextField) currencyDataField.getDataField()).getText());
-                hData.put(this.attributes.get(i), sText);
+                hData.put(element, sText);
             } else {
                 // Renderer to use depends on the data type.
                 if ((oValue instanceof java.sql.Date) || (oValue instanceof java.util.Date)) {
                     dateDataField.setValue(oValue);
                     String sText = new String(((JTextField) dateDataField.getDataField()).getText());
-                    hData.put(this.attributes.get(i), sText);
+                    hData.put(element, sText);
                     continue;
                 } else if (oValue instanceof Integer) {
                     integerDataField.setValue(oValue);
                     String sText = new String(((JTextField) integerDataField.getDataField()).getText());
                     vColumnData.add(sText);
-                    hData.put(this.attributes.get(i), sText);
+                    hData.put(element, sText);
                     continue;
                 } else if ((oValue instanceof Double) || (oValue instanceof Float)) {
                     realDataField.setValue(oValue);
                     String sText = new String(((JTextField) realDataField.getDataField()).getText());
                     vColumnData.add(sText);
-                    hData.put(this.attributes.get(i), sText);
+                    hData.put(element, sText);
                     continue;
                 } else if (oValue instanceof Boolean) {
                     String sText = "";
@@ -6801,10 +6721,10 @@ public class Table extends JRootPane
                         sText = "No";
                     }
                     vColumnData.add(sText);
-                    hData.put(this.attributes.get(i), sText);
+                    hData.put(element, sText);
                     continue;
                 }
-                hData.put(this.attributes.get(i), oValue.toString());
+                hData.put(element, oValue.toString());
             }
         }
         return hData.toString();
@@ -7118,13 +7038,13 @@ public class Table extends JRootPane
      * @param rowIndex the model index for the column
      * @return a {@link #Hashtable} with the row data
      */
-    public Hashtable getRowData(int rowIndex) {
+    public Map<Object, Object> getRowData(int rowIndex) {
         this.checkRefreshThread();
         TableSorter model = (TableSorter) this.table.getModel();
         return model.getRowData(rowIndex);
     }
 
-    public Hashtable getRowDataForKeys(Hashtable keysValues) {
+    public Map<Object, Object> getRowDataForKeys(Hashtable keysValues) {
         this.checkRefreshThread();
         TableSorter model = (TableSorter) this.table.getModel();
         return model.getRowDataForKeys(this.getKeys(), keysValues);
@@ -7135,7 +7055,7 @@ public class Table extends JRootPane
      * @param rowIndex the model row index
      * @return the row information
      */
-    public Hashtable getGroupedRowData(int rowIndex) {
+    public Map<Object, Object> getGroupedRowData(int rowIndex) {
         this.checkRefreshThread();
         TableSorter model = (TableSorter) this.table.getModel();
         return model.getGroupedRowData(rowIndex);
@@ -7236,8 +7156,8 @@ public class Table extends JRootPane
         this.table.setDefaultRenderer(Number.class, this.rReal);
         this.table.setDefaultRenderer(BytesBlock.class, this.rImagen);
 
-        for (int i = 0; i < this.currencyColumns.size(); i++) {
-            TableColumn col = this.table.getColumn(this.currencyColumns.get(i));
+        for (Object element : this.currencyColumns) {
+            TableColumn col = this.table.getColumn(element);
             if (col != null) {
                 if (this.currencyRenderer == null) {
                     this.currencyRenderer = new CurrencyCellRenderer();
@@ -7248,8 +7168,8 @@ public class Table extends JRootPane
             }
         }
 
-        for (int i = 0; i < this.hourRenderColumns.size(); i++) {
-            TableColumn col = this.table.getColumn(this.hourRenderColumns.get(i));
+        for (Object element : this.hourRenderColumns) {
+            TableColumn col = this.table.getColumn(element);
             if (col != null) {
                 if (this.hourRenderer == null) {
                     this.hourRenderer = new DateCellRenderer(true);
@@ -7259,8 +7179,8 @@ public class Table extends JRootPane
             }
         }
 
-        for (int i = 0; i < this.memoRenderColumns.size(); i++) {
-            TableColumn col = this.table.getColumn(this.memoRenderColumns.get(i));
+        for (Object element : this.memoRenderColumns) {
+            TableColumn col = this.table.getColumn(element);
             if (col != null) {
                 if (this.rMemo == null) {
                     this.rMemo = new MemoCellRenderer();
@@ -7282,8 +7202,8 @@ public class Table extends JRootPane
             this.sumRowTable.setDefaultRenderer(String.class, this.rObject);
             this.sumRowTable.setDefaultRenderer(Number.class, this.rReal);
 
-            for (int i = 0; i < this.currencyColumns.size(); i++) {
-                TableColumn col = this.sumRowTable.getColumn(this.currencyColumns.get(i));
+            for (Object element : this.currencyColumns) {
+                TableColumn col = this.sumRowTable.getColumn(element);
                 if (col != null) {
                     if (this.currencyRenderer == null) {
                         this.currencyRenderer = new CurrencyCellRenderer();
@@ -7449,8 +7369,8 @@ public class Table extends JRootPane
     @Override
     public void showCurrencyValue(String currencySymbol) {
         // Currency columns
-        for (int i = 0; i < this.currencyColumns.size(); i++) {
-            TableColumn col = this.table.getColumn(this.currencyColumns.get(i));
+        for (Object element : this.currencyColumns) {
+            TableColumn col = this.table.getColumn(element);
             TableCellRenderer renderer = col.getCellRenderer();
             if (renderer instanceof CurrencyCellRenderer) {
                 ((CurrencyCellRenderer) renderer).showCurrencyValue(currencySymbol);
@@ -7566,27 +7486,23 @@ public class Table extends JRootPane
             this.menuDetail.setIcon(detailIcon);
         }
         this.menu.add(this.menuDetail);
-        this.menuDetail.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (Table.this.formName != null) {
-                    Cursor c = Table.this.getCursor();
-                    // Open the detail form
-                    try {
-                        Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        if (Table.this.table.getSelectedRowCount() < 0) {
-                            return;
-                        }
-                        Table.this.detail(null);
-                    } catch (Exception ex) {
-                        Table.logger.error("menuDetail", ex);
-                    } finally {
-                        Table.this.setCursor(c);
-                    }
-                }
-            }
-        });
+        this.menuDetail.addActionListener(e -> {
+		    if (Table.this.formName != null) {
+		        Cursor c = Table.this.getCursor();
+		        // Open the detail form
+		        try {
+		            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		            if (Table.this.table.getSelectedRowCount() < 0) {
+		                return;
+		            }
+		            Table.this.detail(null);
+		        } catch (Exception ex) {
+		            Table.logger.error("menuDetail", ex);
+		        } finally {
+		            Table.this.setCursor(c);
+		        }
+		    }
+		});
 
         String sInsertText = ApplicationManager.getTranslation(Table.insertKey, this.resourcesFile);
 
@@ -7620,49 +7536,24 @@ public class Table extends JRootPane
         String sFilterText = ApplicationManager.getTranslation(Table.FILTER_COLUMN_es_ES, this.resourcesFile);
         this.menuFilter = new JMenuItem(sFilterText);
         this.menuFilter.setIcon(ImageManager.getIcon(ImageManager.FUNNEL_ADD));
-        this.menuFilter.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.insertFilter();
-            }
-        });
+        this.menuFilter.addActionListener(e -> Table.this.insertFilter());
         this.menu.add(this.menuFilter);
 
         String sFilterByValueText = ApplicationManager.getTranslation(Table.FILTER_BY_VALUE_es_ES, this.resourcesFile);
         this.menuFilterByValue = new JMenuItem(sFilterByValueText);
         this.menuFilterByValue.setIcon(ImageManager.getIcon(ImageManager.FUNNEL_ADD));
-        this.menuFilterByValue.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.insertFilterByValue();
-            }
-        });
+        this.menuFilterByValue.addActionListener(e -> Table.this.insertFilterByValue());
         this.menu.add(this.menuFilterByValue);
 
         sFilterText = ApplicationManager.getTranslation(Table.DELETE_FILTER_es_ES, this.resourcesFile);
         this.menuDeleteFilter = new JMenuItem(sFilterText);
         this.menuDeleteFilter.setIcon(ImageManager.getIcon(ImageManager.FUNNEL_DELETE));
-        this.menuDeleteFilter.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.deleteFilter();
-            }
-
-        });
+        this.menuDeleteFilter.addActionListener(e -> Table.this.deleteFilter());
 
         sFilterText = ApplicationManager.getTranslation(Table.DELETE_FILTER_COLUMN, this.resourcesFile);
         this.menuDeleteColumnFilter = new JMenuItem(sFilterText);
         this.menuDeleteColumnFilter.setIcon(ImageManager.getIcon(ImageManager.FUNNEL_DELETE));
-        this.menuDeleteColumnFilter.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.deleteColumnFilter();
-            }
-        });
+        this.menuDeleteColumnFilter.addActionListener(e -> Table.this.deleteColumnFilter());
 
         this.menu.add(this.menuDeleteColumnFilter);
         this.menu.add(this.menuDeleteFilter);
@@ -7674,13 +7565,7 @@ public class Table extends JRootPane
             this.menuGroup = new JMenuItem(groupText);
             this.menuGroup.setIcon(ImageManager.getIcon(ImageManager.GROUP));
 
-            this.menuGroup.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup();
-                }
-            });
+            this.menuGroup.addActionListener(e -> Table.this.insertGroup());
 
             String dateGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_DATE_es_ES,
                     this.resourcesFile);
@@ -7692,87 +7577,44 @@ public class Table extends JRootPane
             this.menuGroupByYear = new JMenuItem(yearGroupText);
             this.menuGroupDate.add(this.menuGroupByYear);
 
-            this.menuGroupByYear.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.YEAR);
-                }
-            });
+            this.menuGroupByYear.addActionListener(e -> Table.this.insertGroup(TableSorter.YEAR));
 
             String monthGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_MONTH, this.resourcesFile);
             this.menuGroupByMonth = new JMenuItem(monthGroupText);
             this.menuGroupDate.add(this.menuGroupByMonth);
 
-            this.menuGroupByMonth.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.MONTH);
-                }
-            });
+            this.menuGroupByMonth.addActionListener(e -> Table.this.insertGroup(TableSorter.MONTH));
 
             String monthYearGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_YEAR_MONTH,
                     this.resourcesFile);
             this.menuGroupByYearMonth = new JMenuItem(monthYearGroupText);
             this.menuGroupDate.add(this.menuGroupByYearMonth);
 
-            this.menuGroupByYearMonth.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.YEAR_MONTH);
-                }
-            });
+            this.menuGroupByYearMonth.addActionListener(e -> Table.this.insertGroup(TableSorter.YEAR_MONTH));
 
             String dayMonthYearGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_YEAR_MONTH_DAY,
                     this.resourcesFile);
             this.menuGroupYearMonthDay = new JMenuItem(dayMonthYearGroupText);
             this.menuGroupDate.add(this.menuGroupYearMonthDay);
 
-            this.menuGroupYearMonthDay.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.YEAR_MONTH_DAY);
-                }
-            });
+            this.menuGroupYearMonthDay.addActionListener(e -> Table.this.insertGroup(TableSorter.YEAR_MONTH_DAY));
             String quarterYearGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_QUARTER_YEAR,
                     this.resourcesFile);
             this.menuGroupByQuarterYear = new JMenuItem(quarterYearGroupText);
             this.menuGroupDate.add(this.menuGroupByQuarterYear);
-            this.menuGroupByQuarterYear.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.QUARTER_YEAR);
-                }
-            });
+            this.menuGroupByQuarterYear.addActionListener(e -> Table.this.insertGroup(TableSorter.QUARTER_YEAR));
 
             String weekYearGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_WEEK_YEAR,
                     this.resourcesFile);
             this.menuGroupByWeekYear = new JMenuItem(weekYearGroupText);
             this.menuGroupDate.add(this.menuGroupByWeekYear);
-            this.menuGroupByWeekYear.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.WEEK_YEAR);
-
-                }
-            });
+            this.menuGroupByWeekYear.addActionListener(e -> Table.this.insertGroup(TableSorter.WEEK_YEAR));
 
             String quarterGroupText = ApplicationManager.getTranslation(Table.GROUP_COLUMN_BY_QUARTER,
                     this.resourcesFile);
             this.menuGroupByQuarter = new JMenuItem(quarterGroupText);
             this.menuGroupDate.add(this.menuGroupByQuarter);
-            this.menuGroupByQuarter.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.insertGroup(TableSorter.QUARTER);
-                }
-            });
+            this.menuGroupByQuarter.addActionListener(e -> Table.this.insertGroup(TableSorter.QUARTER));
 
             this.menu.add(this.menuGroup);
 
@@ -7797,59 +7639,33 @@ public class Table extends JRootPane
             this.menuGroupFunction.add(this.menuCountFunction);
             this.menu.add(this.menuGroupFunction);
 
-            this.menuSumFunction.addActionListener(new ActionListener() {
+            this.menuSumFunction.addActionListener(e -> {
+			    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
+			    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.SUM);
+			});
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
-                    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.SUM);
-                }
-            });
+            this.menuAvgFunction.addActionListener(e -> {
+			    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
+			    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.AVG);
+			});
 
-            this.menuAvgFunction.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
-                    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.AVG);
-                }
-            });
-
-            this.menuMaxFunction.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
-                    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.MAX);
-                }
-            });
-            this.menuMinFunction.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
-                    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.MIN);
-                }
-            });
-            this.menuCountFunction.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
-                    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.COUNT);
-                }
-            });
+            this.menuMaxFunction.addActionListener(e -> {
+			    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
+			    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.MAX);
+			});
+            this.menuMinFunction.addActionListener(e -> {
+			    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
+			    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.MIN);
+			});
+            this.menuCountFunction.addActionListener(e -> {
+			    int col = Table.this.table.convertColumnIndexToModel(Table.this.colPress);
+			    ((TableSorter) Table.this.table.getModel()).setGroupedColumnFunction(col, TableSorter.COUNT);
+			});
             String ungroupText = ApplicationManager.getTranslation(Table.UNGROUP_COLUMN_es_ES, this.resourcesFile);
             this.menuDeleteGroup = new JMenuItem(ungroupText);
             this.menuDeleteGroup.setIcon(ImageManager.getIcon(ImageManager.DELETE_GROUP));
 
-            this.menuDeleteGroup.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.deleteGroup();
-                }
-            });
+            this.menuDeleteGroup.addActionListener(e -> Table.this.deleteGroup());
 
             this.menu.add(this.menuDeleteGroup);
             this.menu.addSeparator();
@@ -7857,14 +7673,7 @@ public class Table extends JRootPane
         }
 
         this.menu.add(this.menuPrintSelection);
-        this.menuPrintSelection.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Print only selected data
-                Table.this.printSelection();
-            }
-        });
+        this.menuPrintSelection.addActionListener(e -> Table.this.printSelection());
 
         String sCopySelectionText = Table.COPY_SELECTION_es_ES;
         try {
@@ -7880,13 +7689,7 @@ public class Table extends JRootPane
             this.menuCopySelection.setIcon(copyIcon);
         }
         this.menu.add(this.menuCopySelection);
-        this.menuCopySelection.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.copySelection();
-            }
-        });
+        this.menuCopySelection.addActionListener(e -> Table.this.copySelection());
 
         String cellCopyText = Table.COPY_CELL_es_ES;
         try {
@@ -7903,13 +7706,7 @@ public class Table extends JRootPane
             this.menuCopyCell.setIcon(copyCellIcon);
         }
         this.menu.add(this.menuCopyCell);
-        this.menuCopyCell.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.copyCell();
-            }
-        });
+        this.menuCopyCell.addActionListener(e -> Table.this.copyCell());
 
         if (this.buttonRefresh != null) {
             String sRefreshText = Table.REFRESH_es_ES;
@@ -7927,13 +7724,7 @@ public class Table extends JRootPane
             }
             this.menu.addSeparator();
             this.menu.add(this.menuRefresh);
-            this.menuRefresh.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.refreshEDT(true);
-                }
-            });
+            this.menuRefresh.addActionListener(e -> Table.this.refreshEDT(true));
         }
 
         if (this.pageFetcher != null) {
@@ -7945,14 +7736,10 @@ public class Table extends JRootPane
             }
 
             this.menu.add(this.menuPageableEnabled);
-            this.menuPageableEnabled.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.pageFetcher.setPageableEnabled(true);
-                    Table.this.refreshEDT(true);
-                }
-            });
+            this.menuPageableEnabled.addActionListener(e -> {
+			    Table.this.pageFetcher.setPageableEnabled(true);
+			    Table.this.refreshEDT(true);
+			});
         }
 
         if (this.showControls) {
@@ -7971,13 +7758,7 @@ public class Table extends JRootPane
             }
             this.menu.addSeparator();
             this.menu.add(this.menuShowHideControls);
-            this.menuShowHideControls.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.toggleControls();
-                }
-            });
+            this.menuShowHideControls.addActionListener(e -> Table.this.toggleControls());
         }
 
         if (this.allowOpenInNewWindow) {
@@ -7990,18 +7771,14 @@ public class Table extends JRootPane
             if (openNewWindowIcon != null) {
                 this.menuOpenInNewWindow.setIcon(openNewWindowIcon);
             }
-            this.menuOpenInNewWindow.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int[] selectedRows = Table.this.getSelectedRows();
-                    if (selectedRows.length > 5) {
-                        Table.this.parentForm.message(Table.M_SELECTION_LESS_THAN_5_ROWS, Form.WARNING_MESSAGE);
-                        return;
-                    }
-                    Table.this.openInNewWindow(selectedRows);
-                }
-            });
+            this.menuOpenInNewWindow.addActionListener(e -> {
+			    int[] selectedRows = Table.this.getSelectedRows();
+			    if (selectedRows.length > 5) {
+			        Table.this.parentForm.message(Table.M_SELECTION_LESS_THAN_5_ROWS, Form.WARNING_MESSAGE);
+			        return;
+			    }
+			    Table.this.openInNewWindow(selectedRows);
+			});
         }
     }
 
@@ -8019,7 +7796,7 @@ public class Table extends JRootPane
         this.getTableSorter().addTotalRowOperation(operation);
     }
 
-    public Vector getTotalRowOperation() {
+    public List<Object> getTotalRowOperation() {
         return this.getTableSorter().getTotalRowOperation();
     }
 
@@ -8045,8 +7822,8 @@ public class Table extends JRootPane
         // If the visible windows in cache plus the additional rows number is
         // greater than 5 then hide some of them
         int visibles = 0;
-        for (int i = 0; i < this.windowCache.length; i++) {
-            if (this.windowCache[i].isVisible()) {
+        for (TableFrame element : this.windowCache) {
+            if (element.isVisible()) {
                 visibles++;
             }
         }
@@ -8068,7 +7845,7 @@ public class Table extends JRootPane
             if (!this.windowCache[i].isVisible()) {
                 if (form instanceof FormExt) {
                     form.getInteractionManager().setQueryInsertMode();
-                    EntityResult res = new EntityResult();
+                    EntityResult res = new EntityResultMapImpl();
                     res.addRecord(this.getRowKeys(modelSelectedRows[shown]));
                     form.updateDataFields(res);
                     form.getInteractionManager().setUpdateMode();
@@ -8099,8 +7876,7 @@ public class Table extends JRootPane
                     ApplicationManager.getTranslation(this.detailFormTitleKey, this.resourcesFile), form);
             // Set the parentkeys
             if (this.parentkeys != null) {
-                for (int j = 0; j < this.parentkeys.size(); j++) {
-                    Object currentParent = this.parentkeys.get(j);
+                for (Object currentParent : this.parentkeys) {
                     Object parentValue = this.parentForm.getDataFieldValue(currentParent.toString());
                     if (parentValue != null) {
                         form.setDataFieldValue(currentParent, parentValue);
@@ -8114,7 +7890,7 @@ public class Table extends JRootPane
             }
             if (form instanceof FormExt) {
                 form.getInteractionManager().setQueryInsertMode();
-                EntityResult res = new EntityResult();
+                EntityResult res = new EntityResultMapImpl();
                 res.addRecord(this.getRowKeys(modelSelectedRows[i]));
                 form.updateDataFields(res);
                 form.getInteractionManager().setUpdateMode();
@@ -8247,8 +8023,8 @@ public class Table extends JRootPane
                     final String description = enumDescriptions.nextElement().toString();
                     ChartInfo info = chartInforRepository.getChartInfo(description);
                     boolean bFound = false;
-                    for (int i = 0; i < this.menuChartItems.size(); i++) {
-                        if (((JMenuItem) this.menuChartItems.get(i)).getName().equals(description)) {
+                    for (Object element : this.menuChartItems) {
+                        if (((JMenuItem) element).getName().equals(description)) {
                             bFound = true;
                             break;
                         }
@@ -8290,24 +8066,18 @@ public class Table extends JRootPane
                     if (chartIcon != null) {
                         item.setIcon(chartIcon);
                     }
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            Table.this.showChart(description);
-                        }
-                    });
+                    item.addActionListener(e -> Table.this.showChart(description));
                     this.menu.add(item);
                     this.menuChartItems.add(item);
                 }
             }
             if (this.isEmpty()) {
-                for (int i = 0; i < this.menuChartItems.size(); i++) {
-                    ((JMenuItem) this.menuChartItems.get(i)).setEnabled(false);
+                for (Object element : this.menuChartItems) {
+                    ((JMenuItem) element).setEnabled(false);
                 }
             } else {
-                for (int i = 0; i < this.menuChartItems.size(); i++) {
-                    ((JMenuItem) this.menuChartItems.get(i)).setEnabled(true);
+                for (Object element : this.menuChartItems) {
+                    ((JMenuItem) element).setEnabled(true);
                 }
             }
         }
@@ -8503,8 +8273,8 @@ public class Table extends JRootPane
     protected void translateGroupedFunctions() {
         Hashtable operations = this.getTableSorter().getOperations();
         List listOperations = new ArrayList(operations.keySet());
-        for (int i = 0; i < listOperations.size(); i++) {
-            GroupOperation operation = (GroupOperation) operations.get(listOperations.get(i));
+        for (Object listOperation : listOperations) {
+            GroupOperation operation = (GroupOperation) operations.get(listOperation);
             // operations with id=0,1,2,3,4 are reserved for AVG, COUNT, MIN...
             if (operation.getOperationId() > 4) {
                 JMenuItem item = operation.getItem();
@@ -8679,14 +8449,14 @@ public class Table extends JRootPane
     protected EntityResult deleteEntityRow(int rowIndex) throws Exception {
         if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
             this.getTableSorter().clearInsertingRow(this.getParentKeyValues());
-            return new EntityResult();
+            return new EntityResultMapImpl();
         } else if (this.dataBaseRemove) {
             EntityReferenceLocator referenceLocator = this.parentForm.getFormManager().getReferenceLocator();
             Entity ent = referenceLocator.getEntityReference(this.getEntityName());
-            Hashtable kv = this.getParentKeyValues();
-            Vector vKeys = this.getKeys();
-            for (int i = 0; i < vKeys.size(); i++) {
-                kv.put(vKeys.get(i), this.getRowKey(rowIndex, vKeys.get(i).toString()));
+            Map<Object, Object> kv = this.getParentKeyValues();
+            List<Object> vKeys = this.getKeys();
+            for (Object vKey : vKeys) {
+                kv.put(vKey, this.getRowKey(rowIndex, vKey.toString()));
             }
             EntityResult eR = ent.delete(kv, referenceLocator.getSessionId());
             if ((eR.getCode() == EntityResult.OPERATION_SUCCESSFUL)
@@ -8702,7 +8472,7 @@ public class Table extends JRootPane
             }
             return eR;
         }
-        return new EntityResult();
+        return new EntityResultMapImpl();
     }
 
     /**
@@ -8774,15 +8544,15 @@ public class Table extends JRootPane
      * Adds a new row with data
      *
      * @see TableSorter#addRow
-     * @param rowData a {@link #Hashtable} containing the data to add
+     * @param rowData a {@link #Map} containing the data to add
      */
-    public void addRow(Hashtable rowData) {
+    public void addRow(Map<Object, Object> rowData) {
         this.checkRefreshThread();
         TableSorter ts = (TableSorter) this.table.getModel();
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
             ((EJTable) this.table).getCellEditor().stopCellEditing();
         }
-        if (this.sumRowTable != null && ts.getRowCount() == 0) {
+        if ((this.sumRowTable != null) && (ts.getRowCount() == 0)) {
             this.tablePanel.revalidate();
         }
         ts.addRow(rowData);
@@ -8802,7 +8572,7 @@ public class Table extends JRootPane
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
             ((EJTable) this.table).getCellEditor().stopCellEditing();
         }
-        if (this.sumRowTable != null && ts.getRowCount() == 0) {
+        if ((this.sumRowTable != null) && (ts.getRowCount() == 0)) {
             this.tablePanel.revalidate();
         }
         ts.addRow(row, rowData);
@@ -8859,15 +8629,13 @@ public class Table extends JRootPane
             Hashtable kv = this.getParentKeyValues();
             Vector vKeys = this.getKeys();
             BasicExpression bexp = null;
-            EntityResult mapIndexKey = new EntityResult();
+            EntityResult mapIndexKey = new EntityResultMapImpl();
 
-            for (int j = 0; j < viewRowIndexes.length; j++) {
+            for (int objectRowIndex : viewRowIndexes) {
                 Hashtable indexKeysHash = new Hashtable();
-                int objectRowIndex = viewRowIndexes[j];
                 indexKeysHash.put(indexKeyString, objectRowIndex);
                 BasicExpression bexpIndex = null;
-                for (int i = 0; i < vKeys.size(); i++) {
-                    Object oKey = vKeys.get(i);
+                for (Object oKey : vKeys) {
                     Object rowKeyValue = this.getRowKey(objectRowIndex, oKey.toString());
                     indexKeysHash.put(oKey, rowKeyValue);
                     if (bexpIndex != null) {
@@ -8903,9 +8671,9 @@ public class Table extends JRootPane
 
                 List<Integer> deleteIndex = new ArrayList<Integer>();
                 for (int i = 0; i < mapIndexKey.calculateRecordNumber(); i++) {
-                    Hashtable<String, Integer> actualIndexRecord = mapIndexKey.getRecordValues(i);
+                    Map<String, Integer> actualIndexRecord = mapIndexKey.getRecordValues(i);
                     int actualIndexRow = actualIndexRecord.remove(indexKeyString);
-                    Hashtable rowData = res.getRecordValues(res.getRecordIndex(actualIndexRecord));
+                    Map<?,?> rowData = res.getRecordValues(res.getRecordIndex(actualIndexRecord));
                     if (rowData != null) {
                         this.updateRowData(rowData, actualIndexRecord);
                     } else {
@@ -8948,8 +8716,7 @@ public class Table extends JRootPane
             Hashtable kv = this.getParentKeyValues();
             // Put the row keys
             Vector vKeys = this.getKeys();
-            for (int i = 0; i < vKeys.size(); i++) {
-                Object oKey = vKeys.get(i);
+            for (Object oKey : vKeys) {
                 if ((oldkv != null) && oldkv.containsKey(oKey)) {
                     kv.put(oKey, oldkv.get(oKey));
                 } else {
@@ -8968,8 +8735,7 @@ public class Table extends JRootPane
                 // Update row data
                 Hashtable hRowData = res.getRecordValues(0);
                 Hashtable newkv = new Hashtable();
-                for (int i = 0; i < vKeys.size(); i++) {
-                    Object oKey = vKeys.get(i);
+                for (Object oKey : vKeys) {
                     newkv.put(oKey, this.getRowKey(viewRowIndex, oKey.toString()));
                 }
                 this.updateRowData(hRowData, newkv);
@@ -9017,14 +8783,10 @@ public class Table extends JRootPane
             this.refreshInEDT(true);
         } else {
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Table.this.hideInformationPanel();
-                        Table.this.refreshInEDT(true);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> {
+				    Table.this.hideInformationPanel();
+				    Table.this.refreshInEDT(true);
+				});
             } catch (Exception e) {
                 Table.logger.trace(null, e);
             }
@@ -9047,14 +8809,10 @@ public class Table extends JRootPane
             this.refreshEDT(autoSizeColumns);
         } else {
             try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Table.this.hideInformationPanel();
-                        Table.this.refreshEDT(autoSizeColumns);
-                    }
-                });
+                SwingUtilities.invokeAndWait(() -> {
+				    Table.this.hideInformationPanel();
+				    Table.this.refreshEDT(autoSizeColumns);
+				});
             } catch (Exception e) {
                 Table.logger.trace(null, e);
             }
@@ -9385,7 +9143,7 @@ public class Table extends JRootPane
      * class: <code>scrollpane</code>.
      *
      */
-    protected JScrollPane createSumRowJScrollPane(Hashtable params) {
+    protected JScrollPane createSumRowJScrollPane(Map<Object, Object> params) {
         JScrollPane sumRowScrollPane = new JScrollPane(this.sumRowTable) {
 
             @Override
@@ -9469,7 +9227,7 @@ public class Table extends JRootPane
      *
      * @since 5.2080EN
      */
-    protected void createBlockedScrollPane(Hashtable params) {
+    protected void createBlockedScrollPane(Map<Object, Object> params) {
         this.blockedScrollPane = new JScrollPane(this.blockedTable) {
             @Override
             protected JViewport createViewport() {
@@ -9482,7 +9240,7 @@ public class Table extends JRootPane
                                 Dimension origin = Table.this.scrollPane.getViewport().getSize();
                                 d.height = origin.height;
                             } catch (Exception ex) {
-                                logger.trace("Error getting size of viewport", ex);
+                                Table.logger.trace("Error getting size of viewport", ex);
                             }
                         }
                         return d;
@@ -9497,7 +9255,7 @@ public class Table extends JRootPane
                                 d.height = dP.height;
                             }
                         } catch (Exception ex) {
-                            logger.trace("Error getting size of viewport", ex);
+                            Table.logger.trace("Error getting size of viewport", ex);
                         }
                         return d;
                     }
@@ -9526,7 +9284,7 @@ public class Table extends JRootPane
 
     public static class WrapperBoundedRangeModel implements BoundedRangeModel {
 
-        private BoundedRangeModel source;
+        private final BoundedRangeModel source;
 
         public WrapperBoundedRangeModel(BoundedRangeModel source) {
             this.source = source;
@@ -9605,7 +9363,7 @@ public class Table extends JRootPane
      * class: <code>scrollpane</code>.
      *
      */
-    protected JScrollPane createSumRowBlockedScrollPane(Hashtable params) {
+    protected JScrollPane createSumRowBlockedScrollPane(Map<Object, Object> params) {
         JScrollPane sumRowBlockedScrollPane = new JScrollPane(this.sumRowBlockedTable) {
 
             @Override
@@ -9657,16 +9415,12 @@ public class Table extends JRootPane
         ExtendedTableModel model = this.createExtendedTableModel();
         TableSorter sorter = this.createTableSorter(model);
         sorter.setFitHeadSize(this.autoFixHead);
-        sorter.setSizeColumnListener(new TableSorter.ColumnSizeListener() {
-
-            @Override
-            public void columnToFitSize(ColumnSizeEvent e) {
-                int col = e.col;
-                if (col >= 0) {
-                    Table.this.fitColumnSize(Table.this.getJTable().convertColumnIndexToView(col));
-                }
-            }
-        });
+        sorter.setSizeColumnListener(e -> {
+		    int col = e.col;
+		    if (col >= 0) {
+		        Table.this.fitColumnSize(Table.this.getJTable().convertColumnIndexToView(col));
+		    }
+		});
 
         EJTable eJTable = this.createEJTable(sorter, this.visibleColumns);
         this.enabled = eJTable.isEnabled();
@@ -9744,7 +9498,7 @@ public class Table extends JRootPane
      *
      * @since 5.2080EN
      */
-    protected void createJScrollPane(Hashtable params) {
+    protected void createJScrollPane(Map<Object, Object> params) {
         this.scrollPane = new JScrollPane(this.table) {
 
             @Override
@@ -9773,7 +9527,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected EJTable createEJTable(TableSorter sorter, Vector visibleColumns) {
+    protected EJTable createEJTable(TableSorter sorter, List<Object> visibleColumns) {
         return new EJTable(this, sorter, this.visibleColumns);
     }
 
@@ -9980,13 +9734,7 @@ public class Table extends JRootPane
      */
     protected void installScrollListener() {
         final JScrollBar scrollBar = this.scrollPane.getVerticalScrollBar();
-        scrollBar.addAdjustmentListener(new AdjustmentListener() {
-
-            @Override
-            public void adjustmentValueChanged(AdjustmentEvent e) {
-                Table.this.setScrollTooltipText();
-            }
-        });
+        scrollBar.addAdjustmentListener(e -> Table.this.setScrollTooltipText());
 
         scrollBar.addMouseMotionListener(new MouseMotionAdapter() {
 
@@ -10307,7 +10055,7 @@ public class Table extends JRootPane
 
     /**
      * This method configure appearance of quickfilter box.
-     * @param params the <code> Hashtable</code> with parameters
+     * @param params the <code> Map</code> with parameters
      *
      *        <p>
      *        The attributes allowed are:
@@ -10355,7 +10103,7 @@ public class Table extends JRootPane
      *
      *        </Table>
      */
-    protected void configureQuickFilter(Hashtable params) {
+    protected void configureQuickFilter(Map<Object, Object> params) {
         if (this.quickFilterText != null) {
             this.quickFilterText
                 .setFont(ParseUtils.getFont((String) params.get("quickfilterfont"), this.quickFilterText.getFont()));
@@ -10371,7 +10119,7 @@ public class Table extends JRootPane
      * This method configure appearance of table buttons: border, opacity, ... Finally, this method also
      * calls to {@link #changeButtonIcon(JButton, String, boolean, boolean, MouseListener)} for each
      * table button.
-     * @param params the <code> Hashtable</code> with parameters
+     * @param params the <code>Map</code> with parameters
      *
      *        <p>
      *        The attributes allowed are:
@@ -10532,22 +10280,22 @@ public class Table extends JRootPane
      *
      *        </table>
      */
-    protected void configureButtons(Hashtable params) {
+    protected void configureButtons(Map<Object, Object> params) {
         this.borderbuttons = ParseUtils.getBoolean((String) params.get("borderbuttons"), true);
         this.opaquebuttons = ParseUtils.getBoolean((String) params.get("opaquebuttons"), true);
         if (ParseUtils.getBoolean((String) params.get("highlightbuttons"), false)) {
             this.listenerHighlightButtons = new MouseAdapter() {
 
                 @Override
-                public void mouseEntered(MouseEvent e) {
-                    ((AbstractButton) e.getSource()).setOpaque(true);
-                    ((AbstractButton) e.getSource()).setContentAreaFilled(true);
+                public void mouseEntered(MouseEvent event) {
+                    ((AbstractButton) event.getSource()).setOpaque(true);
+                    ((AbstractButton) event.getSource()).setContentAreaFilled(true);
                 }
 
                 @Override
-                public void mouseExited(MouseEvent e) {
-                    ((AbstractButton) e.getSource()).setOpaque(false);
-                    ((AbstractButton) e.getSource()).setContentAreaFilled(false);
+                public void mouseExited(MouseEvent event) {
+                    ((AbstractButton) event.getSource()).setOpaque(false);
+                    ((AbstractButton) event.getSource()).setContentAreaFilled(false);
                 }
             };
         }
@@ -10690,106 +10438,101 @@ public class Table extends JRootPane
                 this.buttonDelete.setText("Delete");
             }
             this.setTableComponentEnabled(Table.BUTTON_DELETE, false);
-            this.buttonDelete.addActionListener(new ActionListener() {
+            this.buttonDelete.addActionListener(actionEvent -> {
+			    Table.this.checkRefreshThread();
+			    if (Table.this.isGrouped()) {
+			        Table.this.parentForm.message(Table.M_CANT_DELETE_TABLE_IS_GROUPED, Form.WARNING_MESSAGE);
+			        return;
+			    }
 
-                @Override
-                public void actionPerformed(ActionEvent actionEvent) {
-                    Table.this.checkRefreshThread();
-                    if (Table.this.isGrouped()) {
-                        Table.this.parentForm.message(Table.M_CANT_DELETE_TABLE_IS_GROUPED, Form.WARNING_MESSAGE);
-                        return;
-                    }
+			    final int[] selectedRows = Table.this.getSelectedRows();
+			    // Ascendent sort
+			    if (selectedRows.length > 0) {
+			        int option = Table.this.parentForm.message(Table.M_WOULD_YOU_LIKE_TO_DELETE_ROWS,
+			                Form.QUESTION_MESSAGE);
+			        if (option == Form.YES) {
+			            if (selectedRows.length == 1) {
+			                for (int iSelectedRow : selectedRows) {
+			                    try {
+			                        EntityResult res = Table.this.deleteEntityRow(iSelectedRow);
+			                        if (res.getCode() == EntityResult.OPERATION_SUCCESSFUL) {
+			                            Table.this.deleteRow(iSelectedRow);
+			                        } else {
+			                            Table.this.parentForm.message(res.getMessage(), Form.ERROR_MESSAGE);
+			                        }
+			                    } catch (Exception ex) {
+			                        Table.logger.error(null, ex);
+			                        Table.this.parentForm.message(ex.getMessage(), Form.ERROR_MESSAGE, ex);
+			                    }
+			                }
+			            } else {
+			                ExtendedOperationThread op = new ExtendedOperationThread("DeleteOperation") {
 
-                    final int[] selectedRows = Table.this.getSelectedRows();
-                    // Ascendent sort
-                    if (selectedRows.length > 0) {
-                        int option = Table.this.parentForm.message(Table.M_WOULD_YOU_LIKE_TO_DELETE_ROWS,
-                                Form.QUESTION_MESSAGE);
-                        if (option == Form.YES) {
-                            if (selectedRows.length == 1) {
-                                for (int i = 0; i < selectedRows.length; i++) {
-                                    int iSelectedRow = selectedRows[i];
-                                    try {
-                                        EntityResult res = Table.this.deleteEntityRow(iSelectedRow);
-                                        if (res.getCode() == EntityResult.OPERATION_SUCCESSFUL) {
-                                            Table.this.deleteRow(iSelectedRow);
-                                        } else {
-                                            Table.this.parentForm.message(res.getMessage(), Form.ERROR_MESSAGE);
-                                        }
-                                    } catch (Exception ex) {
-                                        Table.logger.error(null, ex);
-                                        Table.this.parentForm.message(ex.getMessage(), Form.ERROR_MESSAGE, ex);
-                                    }
-                                }
-                            } else {
-                                ExtendedOperationThread op = new ExtendedOperationThread("DeleteOperation") {
+			                    @Override
+			                    public void run() {
+			                        this.hasStarted = true;
+			                        this.progressDivisions = selectedRows.length;
+			                        Thread.yield();
+			                        String sCancelText = ApplicationManager.getTranslation("CanceledOperation",
+			                                Table.this.resourcesFile);
+			                        Thread.yield();
 
-                                    @Override
-                                    public void run() {
-                                        this.hasStarted = true;
-                                        this.progressDivisions = selectedRows.length;
-                                        Thread.yield();
-                                        String sCancelText = ApplicationManager.getTranslation("CanceledOperation",
-                                                Table.this.resourcesFile);
-                                        Thread.yield();
+			                        String deleteText = Table.DELETED_ROW;
+			                        Thread.yield();
+			                        deleteText = ApplicationManager.getTranslation(Table.DELETED_ROW,
+			                                Table.this.resourcesFile);
+			                        Thread.yield();
+			                        String sErrorDeletingText = ApplicationManager
+			                            .getTranslation("ErrorDeletingRow", Table.this.resourcesFile);
+			                        Thread.yield();
+			                        Vector vRemovedRowsIndex = new Vector();
+			                        long t = System.currentTimeMillis();
+			                        for (int i = 0; i < selectedRows.length; i++) {
+			                            int iSelectedRow = selectedRows[i];
+			                            try {
+			                                if (this.isCancelled()) {
+			                                    this.status = sCancelText;
+			                                    Thread.sleep(1000);
+			                                    break;
+			                                }
+			                                Thread.yield();
+			                                EntityResult res = Table.this.deleteEntityRow(iSelectedRow);
+			                                if (res.getCode() == EntityResult.OPERATION_SUCCESSFUL) {
+			                                    vRemovedRowsIndex.add(new Integer(iSelectedRow));
+			                                    this.status = deleteText + " " + iSelectedRow;
+			                                } else {
+			                                    this.status = sErrorDeletingText + " " + iSelectedRow + " "
+			                                            + res.getMessage();
 
-                                        String deleteText = Table.DELETED_ROW;
-                                        Thread.yield();
-                                        deleteText = ApplicationManager.getTranslation(Table.DELETED_ROW,
-                                                Table.this.resourcesFile);
-                                        Thread.yield();
-                                        String sErrorDeletingText = ApplicationManager
-                                            .getTranslation("ErrorDeletingRow", Table.this.resourcesFile);
-                                        Thread.yield();
-                                        Vector vRemovedRowsIndex = new Vector();
-                                        long t = System.currentTimeMillis();
-                                        for (int i = 0; i < selectedRows.length; i++) {
-                                            int iSelectedRow = selectedRows[i];
-                                            try {
-                                                if (this.isCancelled()) {
-                                                    this.status = sCancelText;
-                                                    Thread.sleep(1000);
-                                                    break;
-                                                }
-                                                Thread.yield();
-                                                EntityResult res = Table.this.deleteEntityRow(iSelectedRow);
-                                                if (res.getCode() == EntityResult.OPERATION_SUCCESSFUL) {
-                                                    vRemovedRowsIndex.add(new Integer(iSelectedRow));
-                                                    this.status = deleteText + " " + iSelectedRow;
-                                                } else {
-                                                    this.status = sErrorDeletingText + " " + iSelectedRow + " "
-                                                            + res.getMessage();
-
-                                                }
-                                            } catch (Exception ex) {
-                                                Table.logger.trace(null, ex);
-                                                this.status = sErrorDeletingText + " " + iSelectedRow + " "
-                                                        + ex.getMessage();
-                                            }
-                                            this.currentPosition++;
-                                            long t2 = System.currentTimeMillis();
-                                            this.estimatedTimeLeft = ((int) (t2 - t) / (i + 1))
-                                                    * (selectedRows.length - (i + 1));
-                                        }
-                                        // Update the table
-                                        int[] index = new int[vRemovedRowsIndex.size()];
-                                        for (int i = 0; i < vRemovedRowsIndex.size(); i++) {
-                                            index[i] = ((Integer) vRemovedRowsIndex.get(i)).intValue();
-                                        }
-                                        Table.this.deleteRows(index);
-                                    }
-                                };
-                                Window w = SwingUtilities.getWindowAncestor(Table.this);
-                                if (w instanceof Frame) {
-                                    ApplicationManager.proccessOperation((Frame) w, op, 0);
-                                } else {
-                                    ApplicationManager.proccessOperation((Dialog) w, op, 0);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+			                                }
+			                            } catch (Exception ex) {
+			                                Table.logger.trace(null, ex);
+			                                this.status = sErrorDeletingText + " " + iSelectedRow + " "
+			                                        + ex.getMessage();
+			                            }
+			                            this.currentPosition++;
+			                            long t2 = System.currentTimeMillis();
+			                            this.estimatedTimeLeft = ((int) (t2 - t) / (i + 1))
+			                                    * (selectedRows.length - (i + 1));
+			                        }
+			                        // Update the table
+			                        int[] index = new int[vRemovedRowsIndex.size()];
+			                        for (int i = 0; i < vRemovedRowsIndex.size(); i++) {
+			                            index[i] = ((Integer) vRemovedRowsIndex.get(i)).intValue();
+			                        }
+			                        Table.this.deleteRows(index);
+			                    }
+			                };
+			                Window w = SwingUtilities.getWindowAncestor(Table.this);
+			                if (w instanceof Frame) {
+			                    ApplicationManager.proccessOperation((Frame) w, op, 0);
+			                } else {
+			                    ApplicationManager.proccessOperation((Dialog) w, op, 0);
+			                }
+			            }
+			        }
+			    }
+			});
         }
     }
 
@@ -10804,24 +10547,20 @@ public class Table extends JRootPane
                 this.buttonRefresh.setText("Refresh");
             }
             this.setTableComponentEnabled(Table.BUTTON_REFRESH, true);
-            this.buttonRefresh.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        if (Table.this.parentForm != null) {
-                            Table.this.parentForm.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        }
-                        Table.this.refreshEDT(true);
-                    } catch (Exception ex) {
-                        Table.logger.trace(null, ex);
-                    } finally {
-                        if (Table.this.parentForm != null) {
-                            Table.this.parentForm.setCursor(Cursor.getDefaultCursor());
-                        }
-                    }
-                }
-            });
+            this.buttonRefresh.addActionListener(e -> {
+			    try {
+			        if (Table.this.parentForm != null) {
+			            Table.this.parentForm.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			        }
+			        Table.this.refreshEDT(true);
+			    } catch (Exception ex) {
+			        Table.logger.trace(null, ex);
+			    } finally {
+			        if (Table.this.parentForm != null) {
+			            Table.this.parentForm.setCursor(Cursor.getDefaultCursor());
+			        }
+			    }
+			});
         }
     }
 
@@ -10838,39 +10577,35 @@ public class Table extends JRootPane
             this.buttonHTMLExport.setText("HTML");
         }
         // Button listener
-        this.buttonHTMLExport.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent evento) {
-                // Create an HTML document, but before show the option
-                // to set
-                // a title
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new HTMLFileFilter());
-                int option = fileChooser.showSaveDialog(Table.this.parentFrame);
-                if (option == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        File selectedFile = fileChooser.getSelectedFile();
-                        String selectedFileString = selectedFile.getPath();
-                        if (!selectedFileString.substring(selectedFileString.length() - 4, selectedFileString.length())
-                            .equalsIgnoreCase(".htm")) {
-                            selectedFile = new File(selectedFileString + ".htm");
-                        }
-                        FileWriter fw = new FileWriter(selectedFile);
-                        String htmlStringValue = Table.this.getHTMLString();
-                        fw.write(htmlStringValue, 0, htmlStringValue.length());
-                        fw.flush();
-                        fw.close();
-                    } catch (Exception e) {
-                        Table.logger.error("Exception trying to save the file. ", e);
-                        if (e instanceof SecurityException) {
-                            Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
-                                    "table.security_error_message");
-                        }
-                    }
-                }
-            }
-        });
+        this.buttonHTMLExport.addActionListener(evento -> {
+		    // Create an HTML document, but before show the option
+		    // to set
+		    // a title
+		    JFileChooser fileChooser = new JFileChooser();
+		    fileChooser.setFileFilter(new HTMLFileFilter());
+		    int option = fileChooser.showSaveDialog(Table.this.parentFrame);
+		    if (option == JFileChooser.APPROVE_OPTION) {
+		        try {
+		            File selectedFile = fileChooser.getSelectedFile();
+		            String selectedFileString = selectedFile.getPath();
+		            if (!selectedFileString.substring(selectedFileString.length() - 4, selectedFileString.length())
+		                .equalsIgnoreCase(".htm")) {
+		                selectedFile = new File(selectedFileString + ".htm");
+		            }
+		            FileWriter fw = new FileWriter(selectedFile);
+		            String htmlStringValue = Table.this.getHTMLString();
+		            fw.write(htmlStringValue, 0, htmlStringValue.length());
+		            fw.flush();
+		            fw.close();
+		        } catch (Exception e) {
+		            Table.logger.error("Exception trying to save the file. ", e);
+		            if (e instanceof SecurityException) {
+		                Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
+		                        "table.security_error_message");
+		            }
+		        }
+		    }
+		});
     }
 
     protected void installCopyListener() {
@@ -10887,38 +10622,30 @@ public class Table extends JRootPane
         }
 
         // Buttons listeners
-        this.buttonCopy.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                Cursor c = Table.this.getCursor();
-                try {
-                    Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    final StringSelection sSelection = new StringSelection(Table.this.getExcelString());
-                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sSelection, sSelection);
-                } catch (Exception e) {
-                    if (e instanceof SecurityException) {
-                        Table.logger.error("Exception setting clipboard contents", e);
-                        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-
-                            @Override
-                            public Object run() {
-                                JTextField textDataField = new JTextField();
-                                textDataField.setText(Table.this.getExcelString());
-                                textDataField.selectAll();
-                                textDataField.copy();
-                                Table.logger.debug("Copied to clipboard");
-                                return null;
-                            }
-                        });
-                        Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
-                                "table.security_error_message");
-                    }
-                } finally {
-                    Table.this.setCursor(c);
-                }
-            }
-        });
+        this.buttonCopy.addActionListener(event -> {
+		    Cursor c = Table.this.getCursor();
+		    try {
+		        Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		        final StringSelection sSelection = new StringSelection(Table.this.getExcelString());
+		        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sSelection, sSelection);
+		    } catch (Exception e) {
+		        if (e instanceof SecurityException) {
+		            Table.logger.error("Exception setting clipboard contents", e);
+		            java.security.AccessController.doPrivileged((PrivilegedAction) () -> {
+					    JTextField textDataField = new JTextField();
+					    textDataField.setText(Table.this.getExcelString());
+					    textDataField.selectAll();
+					    textDataField.copy();
+					    Table.logger.debug("Copied to clipboard");
+					    return null;
+					});
+		            Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
+		                    "table.security_error_message");
+		        }
+		    } finally {
+		        Table.this.setCursor(c);
+		    }
+		});
     }
 
     protected void installExcelExportListener() {
@@ -10933,152 +10660,148 @@ public class Table extends JRootPane
             this.buttonExcelExport.setText("Export to Excel");
         }
 
-        this.buttonExcelExport.addActionListener(new ActionListener() {
+        this.buttonExcelExport.addActionListener(event -> {
+		    JFileChooser selFile = new JFileChooser();
 
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                JFileChooser selFile = new JFileChooser();
+		    String[] exts = { "xls" };
+		    String[] extsXLSX = { "xlsx" };
+		    javax.swing.filechooser.FileFilter ffText = new TxtFileFilter();
+		    javax.swing.filechooser.FileFilter ffExcel = FileUtils.getExtensionFileFilter("Excel 97-2003 (*.xls)",
+		            exts);
+		    javax.swing.filechooser.FileFilter ffXLSXExcel = FileUtils
+		        .getExtensionFileFilter("Excel 2007-2010 (*.xlsx)", extsXLSX);
 
-                String[] exts = { "xls" };
-                String[] extsXLSX = { "xlsx" };
-                javax.swing.filechooser.FileFilter ffText = new TxtFileFilter();
-                javax.swing.filechooser.FileFilter ffExcel = FileUtils.getExtensionFileFilter("Excel 97-2003 (*.xls)",
-                        exts);
-                javax.swing.filechooser.FileFilter ffXLSXExcel = FileUtils
-                    .getExtensionFileFilter("Excel 2007-2010 (*.xlsx)", extsXLSX);
+		    selFile.addChoosableFileFilter(ffText);
+		    selFile.addChoosableFileFilter(ffExcel);
+		    selFile.setFileFilter(ffExcel);
+		    if (XLSExporterFactory.isAvailableXLSX()) {
 
-                selFile.addChoosableFileFilter(ffText);
-                selFile.addChoosableFileFilter(ffExcel);
-                selFile.setFileFilter(ffExcel);
-                if (XLSExporterFactory.isAvailableXLSX()) {
+		        selFile.addChoosableFileFilter(ffXLSXExcel);
+		        selFile.setFileFilter(ffXLSXExcel);
+		    }
 
-                    selFile.addChoosableFileFilter(ffXLSXExcel);
-                    selFile.setFileFilter(ffXLSXExcel);
-                }
+		    // In java7, all-files filter always appears at first,
+		    // we must force to set xls extension
+		    // since 5.2078EN-0.4
 
-                // In java7, all-files filter always appears at first,
-                // we must force to set xls extension
-                // since 5.2078EN-0.4
+		    int iChoice = selFile.showSaveDialog(Table.this.parentFrame);
+		    if (iChoice == JFileChooser.APPROVE_OPTION) {
+		        try {
+		            boolean bXLSX = false;
+		            File selectedFile = selFile.getSelectedFile();
+		            String selectedFileString = selectedFile.getPath();
+		            javax.swing.filechooser.FileFilter ff = selFile.getFileFilter();
+		            if ((ff == ffExcel) || selectedFileString.endsWith(".xlsx") || (ff == ffXLSXExcel)) {
+		                if (selectedFileString.endsWith(".xlsx")) {
+		                    if (XLSExporterFactory.isAvailableXLSX()) {
+		                        bXLSX = true;
+		                    } else {
+		                        MessageDialog.showMessage(ApplicationManager.getApplication().getFrame(),
+		                                "table.xlsx_extension_not_supported",
+		                                XLSExporterFactory.getErrorMessage(), JOptionPane.WARNING_MESSAGE,
+		                                Table.this.resourcesFile);
+		                        selectedFileString = selectedFileString.substring(0,
+		                                selectedFileString.length() - 5);
+		                    }
+		                }
 
-                int iChoice = selFile.showSaveDialog(Table.this.parentFrame);
-                if (iChoice == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        boolean bXLSX = false;
-                        File selectedFile = selFile.getSelectedFile();
-                        String selectedFileString = selectedFile.getPath();
-                        javax.swing.filechooser.FileFilter ff = selFile.getFileFilter();
-                        if ((ff == ffExcel) || selectedFileString.endsWith(".xlsx") || (ff == ffXLSXExcel)) {
-                            if (selectedFileString.endsWith(".xlsx")) {
-                                if (XLSExporterFactory.isAvailableXLSX()) {
-                                    bXLSX = true;
-                                } else {
-                                    MessageDialog.showMessage(ApplicationManager.getApplication().getFrame(),
-                                            "table.xlsx_extension_not_supported",
-                                            XLSExporterFactory.getErrorMessage(), JOptionPane.WARNING_MESSAGE,
-                                            Table.this.resourcesFile);
-                                    selectedFileString = selectedFileString.substring(0,
-                                            selectedFileString.length() - 5);
-                                }
-                            }
+		                if (!selectedFileString.endsWith(".xls") && !selectedFileString.endsWith(".xlsx")
+		                        && (ff == ffXLSXExcel)) {
+		                    bXLSX = true;
+		                    selectedFile = new File(selectedFileString + ".xlsx");
+		                } else if (!selectedFileString.endsWith(".xls") && !selectedFileString.endsWith(".xlsx")) {
+		                    selectedFile = new File(selectedFileString + ".xls");
+		                }
+		                // If selection is xls then save a temporal
+		                // file and
+		                // convert
+		                final File finalFile = selectedFile;
+		                final boolean xlsx = bXLSX;
+		                try {
+		                    Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		                    Window w = SwingUtilities.getWindowAncestor(Table.this);
+		                    OperationThread op = new OperationThread() {
 
-                            if (!selectedFileString.endsWith(".xls") && !selectedFileString.endsWith(".xlsx")
-                                    && (ff == ffXLSXExcel)) {
-                                bXLSX = true;
-                                selectedFile = new File(selectedFileString + ".xlsx");
-                            } else if (!selectedFileString.endsWith(".xls") && !selectedFileString.endsWith(".xlsx")) {
-                                selectedFile = new File(selectedFileString + ".xls");
-                            }
-                            // If selection is xls then save a temporal
-                            // file and
-                            // convert
-                            final File finalFile = selectedFile;
-                            final boolean xlsx = bXLSX;
-                            try {
-                                Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                                Window w = SwingUtilities.getWindowAncestor(Table.this);
-                                OperationThread op = new OperationThread() {
+		                        @Override
+		                        public void run() {
+		                            this.hasStarted = true;
+		                            this.status = "";
+		                            try {
+		                                if (Table.this.resourcesFile != null) {
+		                                    this.status = Table.this.resourcesFile
+		                                        .getString("table.generating_xls_file");
+		                                } else {
+		                                    this.status = "Generating XLS file";
+		                                }
+		                            } catch (Exception e) {
+		                                Table.logger.error("Generting XLS file", e);
+		                                this.status = "Generting XLS file";
+		                            }
+		                            try {
+		                                // Create the excel file
+		                                EntityResult res = Table.this.getValueToExport(true, true, true);
+		                                XLSExporter exporter = XLSExporterFactory
+		                                    .instanceXLSExporter(Table.XLS_EXPORT_CLASS);
+		                                List orderColumns = res.getOrderColumns();
+		                                Hashtable renderers = Table.this.getAllColumnRenderer();
+		                                for (Object current : orderColumns) {
+		                                    if (current instanceof Table.KeyObject) {
+		                                        KeyObject currentKO = (KeyObject) current;
+		                                        if (renderers.containsKey(currentKO.getKey())) {
+		                                            renderers.put(currentKO.toString(),
+		                                                    renderers.get(currentKO.getKey()));
+		                                        }
+		                                    }
+		                                }
+		                                exporter.createXLS(res, finalFile, null, renderers, res.getOrderColumns(),
+		                                        true, xlsx, true);
+		                            } catch (Exception e) {
+		                                Table.logger.error(null, e);
+		                                MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
+		                                        "table.error_generating_xls_file");
+		                            } finally {
+		                                this.hasFinished = true;
+		                            }
+		                        }
+		                    };
 
-                                    @Override
-                                    public void run() {
-                                        this.hasStarted = true;
-                                        this.status = "";
-                                        try {
-                                            if (Table.this.resourcesFile != null) {
-                                                this.status = Table.this.resourcesFile
-                                                    .getString("table.generating_xls_file");
-                                            } else {
-                                                this.status = "Generating XLS file";
-                                            }
-                                        } catch (Exception e) {
-                                            Table.logger.error("Generting XLS file", e);
-                                            this.status = "Generting XLS file";
-                                        }
-                                        try {
-                                            // Create the excel file
-                                            EntityResult res = Table.this.getValueToExport(true, true, true);
-                                            XLSExporter exporter = XLSExporterFactory
-                                                .instanceXLSExporter(Table.XLS_EXPORT_CLASS);
-                                            List orderColumns = res.getOrderColumns();
-                                            Hashtable renderers = Table.this.getAllColumnRenderer();
-                                            for (Object current : orderColumns) {
-                                                if (current instanceof Table.KeyObject) {
-                                                    KeyObject currentKO = (KeyObject) current;
-                                                    if (renderers.containsKey(currentKO.getKey())) {
-                                                        renderers.put(currentKO.toString(),
-                                                                renderers.get(currentKO.getKey()));
-                                                    }
-                                                }
-                                            }
-                                            exporter.createXLS(res, finalFile, null, renderers, res.getOrderColumns(),
-                                                    true, xlsx, true);
-                                        } catch (Exception e) {
-                                            Table.logger.error(null, e);
-                                            MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                                                    "table.error_generating_xls_file");
-                                        } finally {
-                                            this.hasFinished = true;
-                                        }
-                                    }
-                                };
+		                    if (w instanceof Dialog) {
+		                        ApplicationManager.proccessOperation((Dialog) w, op, 500);
+		                    } else {
+		                        ApplicationManager.proccessOperation((Frame) w, op, 500);
+		                    }
 
-                                if (w instanceof Dialog) {
-                                    ApplicationManager.proccessOperation((Dialog) w, op, 500);
-                                } else {
-                                    ApplicationManager.proccessOperation((Frame) w, op, 500);
-                                }
-
-                            } catch (Exception e) {
-                                Table.logger.error(null, e);
-                                MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                                        "table.error_generating_xls_file");
-                            } finally {
-                                Table.this.setCursor(Cursor.getDefaultCursor());
-                            }
-                        } else {
-                            // If selection is text file then save it
-                            if (!selectedFileString
-                                .substring(selectedFileString.length() - 4, selectedFileString.length())
-                                .equalsIgnoreCase(".txt")) {
-                                selectedFile = new File(selectedFileString + ".txt");
-                            }
-                            FileWriter fw = new FileWriter(selectedFile);
-                            String cadenaExcel = Table.this.getExcelString();
-                            fw.write(cadenaExcel, 0, cadenaExcel.length());
-                            fw.flush();
-                            fw.close();
-                        }
-                    } catch (Exception e) {
-                        Table.logger.error("Exception trying to save the file ", e);
-                        if (e instanceof SecurityException) {
-                            Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
-                                    "table.security_error_message");
-                        } else {
-                            Table.this.parentForm.message("M_XLS_EXPORT_ERROR", Form.WARNING_MESSAGE, e);
-                        }
-                    }
-                }
-            }
-        });
+		                } catch (Exception e1) {
+		                    Table.logger.error(null, e1);
+		                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
+		                            "table.error_generating_xls_file");
+		                } finally {
+		                    Table.this.setCursor(Cursor.getDefaultCursor());
+		                }
+		            } else {
+		                // If selection is text file then save it
+		                if (!selectedFileString
+		                    .substring(selectedFileString.length() - 4, selectedFileString.length())
+		                    .equalsIgnoreCase(".txt")) {
+		                    selectedFile = new File(selectedFileString + ".txt");
+		                }
+		                FileWriter fw = new FileWriter(selectedFile);
+		                String cadenaExcel = Table.this.getExcelString();
+		                fw.write(cadenaExcel, 0, cadenaExcel.length());
+		                fw.flush();
+		                fw.close();
+		            }
+		        } catch (Exception e2) {
+		            Table.logger.error("Exception trying to save the file ", e2);
+		            if (e2 instanceof SecurityException) {
+		                Table.this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE,
+		                        "table.security_error_message");
+		            } else {
+		                Table.this.parentForm.message("M_XLS_EXPORT_ERROR", Form.WARNING_MESSAGE, e2);
+		            }
+		        }
+		    }
+		});
 
     }
 
@@ -11159,13 +10882,7 @@ public class Table extends JRootPane
                     this.buttonPrint.setIcon(printIcon);
                 }
 
-                this.buttonPrint.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent evento) {
-                        Table.this.print();
-                    }
-                });
+                this.buttonPrint.addActionListener(evento -> Table.this.print());
 
                 // Controls panel
                 this.controlsPanel.add(this.groupTableButton);
@@ -11201,14 +10918,7 @@ public class Table extends JRootPane
                     }
                     this.controlsPanel.add(this.buttonSaveFilterOrderSetup);
 
-                    this.buttonSaveFilterOrderSetup.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            // Save order and filter configuration
-                            Table.this.configureFilterOrder(e);
-                        }
-                    });
+                    this.buttonSaveFilterOrderSetup.addActionListener(e -> Table.this.configureFilterOrder(e));
                 }
 
                 if (this.allowDelete) {
@@ -11529,9 +11239,9 @@ public class Table extends JRootPane
                 IDetailForm detailForm = this.createTabbedDetailForm();
                 detailForm.setQueryInsertMode();
                 if (this.attributesToFix != null) {
-                    for (int i = 0; i < this.attributesToFix.size(); i++) {
-                        detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(this.attributesToFix.get(i)),
-                                this.parentForm.getDataFieldValue(this.attributesToFix.get(i)));
+                    for (String element : this.attributesToFix) {
+                        detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(element),
+                                this.parentForm.getDataFieldValue(element));
                     }
                 }
                 Hashtable hFilterKeys = this.getParentKeyValues();
@@ -11585,9 +11295,9 @@ public class Table extends JRootPane
                 detailForm.setKeys(new Hashtable(0), 0);
 
                 if (this.attributesToFix != null) {
-                    for (int i = 0; i < this.attributesToFix.size(); i++) {
-                        detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(this.attributesToFix.get(i)),
-                                this.parentForm.getDataFieldValue(this.attributesToFix.get(i)));
+                    for (String element : this.attributesToFix) {
+                        detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(element),
+                                this.parentForm.getDataFieldValue(element));
                     }
                 }
 
@@ -11775,7233 +11485,7069 @@ public class Table extends JRootPane
 
     /**
      * Returns a vector with the names of the columns that have filters applied in the table view.
-     * @return the names of the filtered columns
-     */
-    public Vector getFilterColumn() {
-        return ((TableSorter) this.table.getModel()).getFilteredColumns();
-    }
-
-    /**
-     * Returns the sorting mode corresponding to the first sorted column
-     * @return true if the first sorted column is ascending. If no ordenation applied or in case that
-     *         there is a sorting applied and this is descendant, the return will be false.
-     */
-    public boolean getAscending() {
-        return ((TableSorter) this.table.getModel()).isAscending();
-    }
-
-    /**
-     * Sorts the table based on the column values. Previous sorting is removed.
-     * @param column the column that will be used for sorting
-     * @param ascendant true if the sorting will start with the smallest values, false otherwise
-     */
-    public void sortBy(String column, boolean ascendant) {
-        if (column == null) {
-            return;
-        }
-        TableColumn tc = this.table.getColumn(column);
-        if (tc != null) {
-            int modelIndex = tc.getModelIndex();
-            ((TableSorter) this.table.getModel()).resetOrder();
-            ((TableSorter) this.table.getModel()).sortByColumn(modelIndex, ascendant);
-        }
-    }
-
-    /**
-     * Sorts the table based on the column values. Previous sorting is mantained.
-     * @param column the column that will be used for sorting
-     * @param ascendant true if the sorting will start with the smallest values, false otherwise
-     */
-    public void sortByWithoutReset(String column, boolean ascendant) {
-        if (column == null) {
-            return;
-        }
-        TableColumn tc = this.table.getColumn(column);
-        if (tc != null) {
-            int modelIndex = tc.getModelIndex();
-            ((TableSorter) this.table.getModel()).sortByColumn(modelIndex, ascendant);
-        }
-    }
-
-    /**
-     * Sets the preferred width for all columns.
-     * @return the width set for each column, in pixels, order by the column order in the table
-     */
-    protected int[] setPreferredTableColumnWidths() {
-        return this.setPreferredTableColumnWidths(this.table.getRowCount());
-    }
-
-    /**
-     * Returns the preferred width for the column passed as param.
-     * @param modelColumnIndex the index of the column
-     * @param maxRowNumber the max number of rows to check
-     * @return
-     */
-    protected int getPreferredColumnWidth(int modelColumnIndex, int maxRowNumber) {
-        int width = 0;
-        String sName = this.table.getColumnName(modelColumnIndex);
-
-        TableColumn tableColumn = this.table.getColumn(sName);
-        if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
-            width = tableColumn.getPreferredWidth();
-            return width;
-        }
-        if (!this.isVisibleColumn(sName)) {
-            tableColumn.setMinWidth(0);
-            tableColumn.setMaxWidth(0);
-            tableColumn.setWidth(0);
-            width = 0;
-            return width;
-        } else {
-            tableColumn.setMinWidth(10);
-            tableColumn.setMaxWidth(10000);
-        }
-        // If there is no data then initialize the columns with using the header
-        try {
-            // JRE 1.2 does not contain the function
-            // TableCellRenderer.getDefaultRenderer()
-
-            JTableHeader header = this.table.getTableHeader();
-            TableCellRenderer headerRenderer = header.getDefaultRenderer();
-            Object oHeaderValue = tableColumn.getHeaderValue();
-            Component hederRendererComponent = headerRenderer.getTableCellRendererComponent(this.table, oHeaderValue,
-                    false, false, 0, 1);
-            int headerPreferredWidth = hederRendererComponent.getPreferredSize().width;
-            if (hederRendererComponent instanceof JLabel) {
-                FontMetrics metrics = ((JLabel) hederRendererComponent)
-                    .getFontMetrics(((JLabel) hederRendererComponent).getFont());
-                if (oHeaderValue != null) {
-                    headerPreferredWidth = metrics.stringWidth(oHeaderValue.toString());
-                }
-            } else if (hederRendererComponent instanceof JTextComponent) {
-                FontMetrics fontMetrics = ((JTextComponent) hederRendererComponent)
-                    .getFontMetrics(((JTextComponent) hederRendererComponent).getFont());
-                if (oHeaderValue != null) {
-                    headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString() + 6);
-                }
-            } else {
-                headerPreferredWidth = hederRendererComponent.getPreferredSize().width;
-            }
-            width = headerPreferredWidth + 4;
-        } catch (Exception e) {
-            Table.logger.error("Exception initiating table column width. JRE 1.3 or above is required: ", e);
-            width = tableColumn.getPreferredWidth();
-        }
-
-        TableCellRenderer renderer = this.table.getDefaultRenderer(this.table.getColumnClass(modelColumnIndex));
-        TableCellRenderer cellRenderer2 = this.table.getColumnModel().getColumn(modelColumnIndex).getCellRenderer();
-        if (cellRenderer2 != null) {
-            renderer = cellRenderer2;
-        }
-
-        for (int j = 0; j < Math.min(this.table.getRowCount(), maxRowNumber); j++) {
-            Object oValue = this.table.getValueAt(j, modelColumnIndex);
-            Component rendererComponent = renderer.getTableCellRendererComponent(this.table, oValue, false, false, 0,
-                    0);
-            int preferredWidth = rendererComponent.getPreferredSize().width;
-            if (rendererComponent instanceof JComponent) {
-                preferredWidth = preferredWidth - ((JComponent) rendererComponent).getInsets().left
-                        - ((JComponent) rendererComponent).getInsets().right;
-            }
-            if (rendererComponent instanceof JTextField) {
-                FontMetrics fontMetrics = ((JTextField) rendererComponent)
-                    .getFontMetrics(((JTextField) rendererComponent).getFont());
-                preferredWidth = fontMetrics.stringWidth(((JTextField) rendererComponent).getText()) + 4;
-            } else if (rendererComponent instanceof JLabel) {
-                FontMetrics fontMetrics = ((JLabel) rendererComponent)
-                    .getFontMetrics(((JLabel) rendererComponent).getFont());
-                try {
-                    String text = ((JLabel) rendererComponent).getText();
-                    if (text == null) {
-                        text = "";
-                    }
-                    preferredWidth = fontMetrics.stringWidth(text) + 4;
-                } catch (Exception eM) {
-                    Table.logger.trace(null, eM);
-                }
-            }
-            width = Math.max(preferredWidth + 5, width);
-
-        }
-        return width;
-    }
-
-    /**
-     * Sets the preferred width for the columns in the table, up to the maximum number of rows.
-     * @param maxRows max number of rows to check
-     * @return the width set for each column, in pixels, order by the column order in the table
-     */
-    protected int[] setPreferredTableColumnWidths(int maxRows) {
-        // Calculate the minimun table width to ensure that values are visible
-        this.setRowNumberColumnVisible(this.visibleRowNumberColumn);
-        int tableWidth = this.table.getParent().getWidth();
-        int columnsWidth = 0;
-        int nColsMaxTableWidth = 0;
-        int[] widths = new int[this.table.getColumnCount()];
-        int[] colsWidthMaxTableWidth = new int[this.table.getColumnCount()];
-        try {
-            for (int i = 0; i < this.table.getColumnCount(); i++) {
-                String sName = this.table.getColumnName(i);
-                TableColumn tableColumn = this.table.getColumn(sName);
-                widths[i] = this.getPreferredColumnWidth(i, maxRows);
-                if (widths[i] > tableWidth) {
-                    colsWidthMaxTableWidth[i] = widths[i];
-                    nColsMaxTableWidth++;
-                } else {
-                    columnsWidth += widths[i];
-                }
-
-                tableColumn.setWidth(widths[i]);
-                tableColumn.setPreferredWidth(widths[i]);
-            }
-            int available = tableWidth - columnsWidth;
-            if ((available > 0) && (nColsMaxTableWidth > 0)) {
-                int single = available / nColsMaxTableWidth;
-                for (int i = 0; i < widths.length; i++) {
-                    if (colsWidthMaxTableWidth[i] > 0) {
-                        String sName = this.table.getColumnName(i);
-                        TableColumn tableColumn = this.table.getColumn(sName);
-                        tableColumn.setWidth(single);
-                        tableColumn.setPreferredWidth(single);
-                        widths[i] = single;
-                    }
-                }
-            }
-        } catch (OutOfMemoryError errorMem) {
-            Table.logger.error("Memory Error", errorMem);
-            for (int i = 0; i < this.table.getColumnCount(); i++) {
-                String sName = this.table.getColumnName(i);
-                TableColumn tableColumn = this.table.getColumn(sName);
-                widths[i] = tableColumn.getPreferredWidth();
-            }
-            throw errorMem;
-        }
-        return widths;
-    }
-
-    public boolean isRowNumberColumnVisible() {
-        return this.visibleRowNumberColumn;
-    }
-
-    /**
-     * Sets whether or not the row number column is visible.
-     * @param visible true if the row number column should be visible, false otherwise
-     */
-    public void setRowNumberColumnVisible(boolean visible) {
-
-        if (this.dynamicTable && visible && (this.getJTable().getRowCount() == 0)) {
-            // In a dynamic table only show the column with numbers if there are
-            // some data
-            this.setRowNumberColumnVisible(false);
-            return;
-        }
-
-        this.visibleRowNumberColumn = visible;
-        if (visible) {
-            TableColumn rowNumbersColumn = this.blockedTable.getColumn(ExtendedTableModel.ROW_NUMBERS_COLUMN);
-            TableCellRenderer renderer = this.blockedTable.getDefaultRenderer(Integer.class);
-            Component rendererComponnt = renderer.getTableCellRendererComponent(this.table,
-                    new Integer(this.blockedTable.getRowCount()), false, false, 0, 0);
-            int preferredWidth = rendererComponnt.getPreferredSize().width;
-            if (rendererComponnt instanceof JTextField) {
-                FontMetrics fontMetrics = ((JTextField) rendererComponnt)
-                    .getFontMetrics(((JTextField) rendererComponnt).getFont());
-                preferredWidth = fontMetrics.stringWidth(((JTextField) rendererComponnt).getText()) + 4;
-            }
-            if (rendererComponnt instanceof JLabel) {
-                FontMetrics fontMetrics = ((JLabel) rendererComponnt)
-                    .getFontMetrics(((JLabel) rendererComponnt).getFont());
-                try {
-                    String text = ((JLabel) rendererComponnt).getText();
-                    if (text == null) {
-                        text = "";
-                    }
-                    preferredWidth = fontMetrics.stringWidth(text) + 4;
-                    preferredWidth = preferredWidth < 15 ? 15 : preferredWidth;
-                } catch (Exception eM) {
-                    Table.logger.trace(null, eM);
-                }
-            }
-            rowNumbersColumn.setMaxWidth(preferredWidth + 8);
-            rowNumbersColumn.setWidth(preferredWidth + 6);
-            rowNumbersColumn.setPreferredWidth(preferredWidth + 6);
-            rowNumbersColumn.setMinWidth(0);
-            // rowNumbersColumn.setResizable(true);
-        } else {
-            TableColumn rowNumbersColumn = this.blockedTable.getColumn(ExtendedTableModel.ROW_NUMBERS_COLUMN);
-            rowNumbersColumn.setMaxWidth(0);
-            rowNumbersColumn.setMinWidth(0);
-            rowNumbersColumn.setWidth(0);
-            rowNumbersColumn.setPreferredWidth(0);
-            rowNumbersColumn.setResizable(false);
-        }
-        this.mainSplit.setDividerLocation(this.blockedTable.getColumnModel().getTotalColumnWidth());
-        this.fixBlockedVisibility();
-    }
-
-    /**
-     * Sets the current column width to the preferred column width for the columns past as parameter
-     * @param visibleColumns a vector containing the column names
-     * @return
-     */
-    protected int[] setPreferredTableColumnWidths(Vector visibleColumns) {
-        return this.setPreferredTableColumnWidths(visibleColumns, null);
-    }
-
-    /**
-     * Sets the current column width to the preferred column width for the columns past as parameter
-     * @param visibleColumns a vector containing the column names
-     * @param progressBar a progress bar to show the process
-     * @return
-     */
-    protected int[] setPreferredTableColumnWidths(Vector visibleColumns, final JProgressBar progressBar) {
-        // Calculate the minimun table width to ensure that values are visible
-
-        Table.logger.trace("Table: setting columns preferred width: Memory used: {} kbytes",
-                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0);
-        long t = System.currentTimeMillis();
-
-        this.setRowNumberColumnVisible(this.visibleRowNumberColumn);
-        int[] widths = new int[this.table.getColumnCount()];
-        try {
-            int columnNumber = this.table.getColumnCount();
-            if (progressBar != null) {
-                progressBar.setMaximum(this.table.getRowCount() * visibleColumns.size());
-            }
-            int lastPainted = 0;
-            int aux = 0;
-            int paintIncrement = Math.max(1, (int) ((this.table.getRowCount() * columnNumber) / 10.0));
-            JTableHeader header = this.table.getTableHeader();
-            TableCellRenderer rendererCabecera = null;
-            try {
-                rendererCabecera = header.getDefaultRenderer();
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-            }
-
-            for (int i = 0; i < columnNumber; i++) {
-                String sName = this.table.getColumnName(i);
-                TableColumn tableColumn = this.table.getColumn(sName);
-                if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
-                    widths[i] = tableColumn.getPreferredWidth();
-                    continue;
-                }
-                if ((!this.isVisibleColumn(sName)) || ((visibleColumns != null) && !visibleColumns.contains(sName))) {
-                    tableColumn.setMinWidth(0);
-                    tableColumn.setMaxWidth(0);
-                    tableColumn.setWidth(0);
-                    widths[i] = 0;
-                    continue;
-                } else {
-                    tableColumn.setMinWidth(10);
-                    tableColumn.setMaxWidth(10000);
-                }
-                // Without data use the header to initialize the columns width
-                try {
-                    Object oHeaderValue = tableColumn.getHeaderValue();
-                    Component rendererHeaderComponent = rendererCabecera.getTableCellRendererComponent(this.table,
-                            oHeaderValue, false, false, 0, 1);
-                    int headerPreferredWidth = 0;
-                    if (rendererHeaderComponent instanceof JLabel) {
-                        FontMetrics fontMetrics = ((JLabel) rendererHeaderComponent)
-                            .getFontMetrics(((JLabel) rendererHeaderComponent).getFont());
-                        if (oHeaderValue != null) {
-                            headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString()) + 4;
-                        }
-                    } else if (rendererHeaderComponent instanceof JTextComponent) {
-                        FontMetrics fontMetrics = ((JTextComponent) rendererHeaderComponent)
-                            .getFontMetrics(((JTextComponent) rendererHeaderComponent).getFont());
-                        if (oHeaderValue != null) {
-                            headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString() + 6);
-                        }
-                    } else {
-                        headerPreferredWidth = rendererHeaderComponent.getPreferredSize().width;
-                    }
-                    widths[i] = headerPreferredWidth;
-                } catch (Exception e) {
-                    Table.logger.error("Exception initiating table column width. JRE 1.3 or above is required", e);
-                    widths[i] = tableColumn.getPreferredWidth();
-                }
-
-                TableCellRenderer renderer = this.table.getDefaultRenderer(this.table.getColumnClass(i));
-                TableCellRenderer cellRenderer2 = this.table.getColumnModel().getColumn(i).getCellRenderer();
-                if (cellRenderer2 != null) {
-                    renderer = cellRenderer2;
-                }
-                cellRenderer2 = null;
-                FontMetrics fontMetrics = null;
-                int preferredWidth = 0;
-                Component componenteRender = null;
-                Object oValue = null;
-                long tIniCol = System.currentTimeMillis();
-                for (int j = 0; j < this.table.getRowCount(); j++) {
-                    oValue = this.table.getValueAt(j, i);
-                    componenteRender = renderer.getTableCellRendererComponent(null, oValue, false, false, 0, 0);
-                    if (componenteRender instanceof JTextField) {
-                        if (fontMetrics == null) {
-                            fontMetrics = ((JTextField) componenteRender)
-                                .getFontMetrics(((JTextField) componenteRender).getFont());
-                        }
-                        preferredWidth = fontMetrics.stringWidth(((JTextField) componenteRender).getText()) + 4;
-                    } else if (componenteRender instanceof JLabel) {
-                        if (fontMetrics == null) {
-                            fontMetrics = ((JLabel) componenteRender)
-                                .getFontMetrics(((JLabel) componenteRender).getFont());
-                        }
-                        try {
-                            String text = ((JLabel) componenteRender).getText();
-                            if (text == null) {
-                                text = "";
-                            }
-                            preferredWidth = fontMetrics.stringWidth(text) + 4;
-                        } catch (Exception eM) {
-                            Table.logger.trace(null, eM);
-                        }
-                    } else if (componenteRender instanceof JComponent) {
-                        preferredWidth = componenteRender.getPreferredSize().width;
-                        preferredWidth = preferredWidth - ((JComponent) componenteRender).getInsets().left
-                                - ((JComponent) componenteRender).getInsets().right;
-                    } else {
-                        preferredWidth = componenteRender.getPreferredSize().width;
-                    }
-
-                    widths[i] = Math.max(preferredWidth + 5, widths[i]);
-
-                    if (progressBar != null) {
-
-                        aux++;
-                        if ((aux - lastPainted) > paintIncrement) {
-                            progressBar.setValue(aux);
-                            if (SwingUtilities.isEventDispatchThread()) {
-                                progressBar.paintImmediately(0, 0, progressBar.getWidth(), progressBar.getHeight());
-                            } else {
-                                SwingUtilities.invokeLater(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        progressBar.paintImmediately(0, 0, progressBar.getWidth(),
-                                                progressBar.getHeight());
-                                    }
-                                });
-                            }
-                            lastPainted = aux;
-
-                        }
-                    }
-
-                }
-
-                Table.logger.trace("Table:  columns preferred width set time: {} for {} rows: {}",
-                        tableColumn.getHeaderValue(), this.table.getRowCount(),
-                        System.currentTimeMillis() - tIniCol);
-
-                Table.logger.debug("Table: set columns preferred width: {}. Memory use: {} kbytes",
-                        tableColumn.getHeaderValue(),
-                        (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0);
-                // System.gc();
-                tableColumn.setWidth(widths[i]);
-                tableColumn.setPreferredWidth(widths[i]);
-
-            }
-        } catch (OutOfMemoryError errorMem) {
-            Table.logger.error("Memory error", errorMem);
-            throw errorMem;
-        }
-
-        Table.logger.trace("Table: columns preferred width set time: {} rows : {}", this.table.getRowCount(),
-                System.currentTimeMillis() - t);
-
-        if ((this.table != null) && (this.table.getModel() instanceof TableSorter)) {
-            ((TableSorter) this.table.getModel()).setPreferredHeadSize();
-        }
-        return widths;
-    }
-
-    /**
-     * Starts the table printing process. No dialogs are shown.
-     * @param title
-     */
-    public void printSilent(String title) {
-        this.checkRefreshThread();
-        PrintingSetupWindow vPrintConfiguration = null;
-        try {
-            Window w = SwingUtilities.getWindowAncestor(Table.this);
-            if (w instanceof Dialog) {
-                if (vPrintConfiguration == null) {
-                    vPrintConfiguration = new PrintingSetupWindow((Dialog) w, Table.this);
-                }
-                vPrintConfiguration.setResourceBundle(this.resourcesFile);
-                vPrintConfiguration.printDefault(title);
-            } else {
-                if (vPrintConfiguration == null) {
-                    vPrintConfiguration = new PrintingSetupWindow(Table.this.parentFrame, Table.this);
-                }
-                vPrintConfiguration.setResourceBundle(this.resourcesFile);
-                vPrintConfiguration.printDefault(title);
-            }
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-            this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
-        } catch (OutOfMemoryError error) {
-            Table.logger.error("Memory Error", error);
-            vPrintConfiguration.setVisible(false);
-            vPrintConfiguration.dispose();
-            vPrintConfiguration = null;
-        }
-    }
-
-    /**
-     * Starts the print table dialog.
-     */
-    public void print() {
-        this.checkRefreshThread();
-        PrintingSetupWindow vPrintConfiguration = null;
-        try {
-            Window w = SwingUtilities.getWindowAncestor(Table.this);
-            if (w instanceof Dialog) {
-                if (vPrintConfiguration == null) {
-                    vPrintConfiguration = new PrintingSetupWindow((Dialog) w, Table.this);
-                }
-                vPrintConfiguration.setResourceBundle(this.resourcesFile);
-                vPrintConfiguration.setVisible(true);
-            } else {
-                if (vPrintConfiguration == null) {
-                    vPrintConfiguration = new PrintingSetupWindow(Table.this.parentFrame, Table.this);
-                }
-                vPrintConfiguration.setResourceBundle(this.resourcesFile);
-                vPrintConfiguration.setVisible(true);
-            }
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-            this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
-        } catch (OutOfMemoryError error) {
-            Table.logger.error("Memory Error", error);
-            vPrintConfiguration.setVisible(false);
-            vPrintConfiguration.dispose();
-            vPrintConfiguration = null;
-        }
-    }
-
-    /**
-     * Copies the selected data in the table GUI to the system clipboard.
-     */
-    protected void copySelection() {
-        try {
-            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            if (this.table.getSelectedRowCount() == 0) {
-                return;
-            }
-            int[] selectedRows = this.table.getSelectedRows();
-            final StringSelection sselection = new StringSelection(this.getExcelString(selectedRows));
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sselection, sselection);
-        } catch (Exception e) {
-            Table.logger.debug("Exception establishing contents to Clipboard.", e);
-            this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE, e);
-        } finally {
-            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }
-
-    /**
-     * Returns the grouping for the column over which was pressed the mouse to select the deletion.
-     */
-    protected void deleteGroup() {
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            sorter.resetGroup();
-            this.enableInsert();
-        }
-    }
-
-    /**
-     * Groups the selected column by the defined type. Types are defined in the TableSorter class, and
-     * can be at least:
-     * <ul>
-     * <li>YEAR</li>
-     * <li>YEAR_MONTH</li>
-     * <li>YEAR_MONTH_DAY</li>
-     * <li>QUARTER_YEAR</li>
-     * <li>QUARTER</li>
-     * <li>MONTH</li>
-     * </ul>
-     * @param type the grouping type; see {@link TableSorter}
-     */
-    protected void insertGroup(int type) {
-        if (this.table.isEditing()) {
-            this.table.editingStopped(new ChangeEvent(this.table));
-        }
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            int column = this.table.convertColumnIndexToModel(this.colPress);
-            sorter.group(column, type);
-            this.disableInsert();
-        }
-    }
-
-    /**
-     * Groups the selected column in the table by year.
-     */
-    protected void insertGroup() {
-        if (this.table.isEditing()) {
-            this.table.editingStopped(new ChangeEvent(this.table));
-        }
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            int column = this.table.convertColumnIndexToModel(this.colPress);
-            sorter.group(column);
-            this.disableInsert();
-            if (this.buttonDelete != null) {
-                this.setTableComponentEnabled(Table.BUTTON_DELETE, false);
-            }
-        }
-    }
-
-    /**
-     * Popup menu method that gets the value in the cell over which the menu was displayed, gets that
-     * value, and filters the table applying that value as filter value. The column that will be
-     * filtered in the corresponding the cell.
-     */
-    protected void insertFilterByValue() {
-        if ((this.rowPress < 0) || (this.colPress < 0)) {
-            return;
-        }
-        if (this.table.isEditing()) {
-            this.table.editingStopped(new ChangeEvent(this.table));
-        }
-
-        int row = this.rowPress;
-        int col = Table.this.table.convertColumnIndexToModel(this.colPress);
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            Object value = sorter.getValueAt(row, col);
-            Class columnClass = sorter.getColumnClass(col);
-
-            if (this.getJTable().getCellRenderer(0, this.colPress) instanceof ComboReferenceCellRenderer) {
-                value = ((ComboReferenceCellRenderer) this.getJTable().getCellRenderer(0, this.colPress))
-                    .getCodeDescription(value);
-                columnClass = String.class;
-            }
-
-            if (value == null) {
-                SimpleFilter simple = new SimpleFilter(value);
-                sorter.applyFilter(col, simple);
-            } else {
-                if (Number.class.isAssignableFrom(columnClass)) {
-                    Filter filter = new Filter(Filter.EQUAL, new Object[] { value });
-                    sorter.applyFilter(col, filter);
-                } else if (java.util.Date.class.isAssignableFrom(columnClass)) {
-                    Filter filter = new Filter(Filter.EQUAL, new Object[] { value });
-                    sorter.applyFilter(col, filter);
-                } else {
-                    SimpleFilter simple = new SimpleFilter(value);
-                    sorter.applyFilter(col, simple);
-                }
-            }
-        }
-    }
-
-    /**
-     * Shows the FilterDialog.
-     *
-     * @see FilterDialog
-     */
-    protected void insertFilter() {
-        if (this.filterWindow == null) {
-            Window w = SwingUtilities.getWindowAncestor(this.table);
-            if (w instanceof Dialog) {
-                this.filterWindow = new FilterDialog((Dialog) w, this);
-            } else {
-                this.filterWindow = new FilterDialog((Frame) w, this);
-            }
-        }
-
-        this.filterWindow.setResourceBundle(this.resourcesFile);
-        this.filterWindow.setComponentLocale(this.locale);
-
-        if (!(this.table.getTableHeader().getDefaultRenderer() instanceof SortTableCellRenderer)) {
-            SortTableCellRenderer rend = new SortTableCellRenderer(this.table);
-            // rend.setMaxLinesNumber(SortTableCellRenderer.MAX_VALUE_HEAD_RENDERER_LINES);
-            this.table.getTableHeader().setDefaultRenderer(rend);
-            Table.logger.info("--");
-        } else {
-        }
-        this.table.getTableHeader().repaint();
-        Table.logger.debug("Table: Showing filter window");
-        this.filterWindow.show(this.eventPress);
-    }
-
-    /**
-     * Deletes all the filters that are being applied to the table.
-     */
-    protected void deleteFilter() {
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            // int column = table.convertColumnIndexToModel(this.colPress);
-            if (sorter.lastFilterOr()) {
-                this.quickFilterText.setText("");
-            } else {
-                sorter.resetFilter();
-            }
-        }
-    }
-
-    /**
-     * Popup menu method. Deletes all the filters that are being applied to the column over which the
-     * right click menu was invoked.
-     */
-    protected void deleteColumnFilter() {
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            TableSorter sorter = (TableSorter) model;
-            // TODO the following line can be removed
-            int column = this.table.convertColumnIndexToModel(this.colPress);
-            sorter.resetFilter(column);
-        }
-    }
-
-    /**
-     * Opens the printing dialog to print the information contained in the selected rows.
-     */
-    protected void printSelection() {
-        try {
-            Hashtable hSelectedData = Table.this.getSelectedRowData();
-            if (this.tAux == null) {
-                this.tAux = new Table(Table.this.getParameters());
-                this.tAux.setParentForm(this.parentForm);
-            }
-            this.tAux.setResourceBundle(this.getResourceBundle());
-            this.tAux.setValue(hSelectedData);
-            this.checkRefreshThread();
-            PrintingSetupWindow vPrintConfigurationSelection = null;
-            try {
-                Window w = SwingUtilities.getWindowAncestor(Table.this);
-                if (w instanceof Dialog) {
-                    if (vPrintConfigurationSelection == null) {
-                        vPrintConfigurationSelection = new PrintingSetupWindow((Dialog) w, Table.this.tAux);
-                    }
-                    vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
-                    vPrintConfigurationSelection.setVisible(true);
-
-                } else if (w instanceof Frame) {
-                    if (vPrintConfigurationSelection == null) {
-                        vPrintConfigurationSelection = new PrintingSetupWindow((Frame) w, Table.this.tAux);
-                    }
-                    vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
-                    vPrintConfigurationSelection.setVisible(true);
-
-                } else {
-                    if (vPrintConfigurationSelection == null) {
-                        vPrintConfigurationSelection = new PrintingSetupWindow(Table.this.parentFrame, Table.this.tAux);
-                    }
-                    vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
-                    vPrintConfigurationSelection.setVisible(true);
-                }
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-                this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
-            }
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-            this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
-        }
-
-        this.tAux.deleteData();
-    }
-
-    /**
-     * Copies to the clipboard the information contained by the cell over which the mouse right click
-     * opened the popup menu.
-     */
-    protected void copyCell() {
-        Object datosSel = this.getCellValueAsString(this.rowPress, this.colPress);
-        // Object datosSel = this.table.getValueAt(rowPress, colPress);
-        try {
-            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            final StringSelection sselection = new StringSelection(datosSel.toString());
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sselection, sselection);
-        } catch (Exception e) {
-            Table.logger.debug("Exception setting Clipboard content.", e);
-            this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE, e);
-        } finally {
-            Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }
-
-    /**
-     * Sets the height that will have the rendered images into the table.
-     * @param pixels the height in pixels for the image renderers
-     * @see ImageCellRenderer
-     */
-    public void setImageRendererHeight(int pixels) {
-        Hashtable pImage = new Hashtable();
-        pImage.put("height", Integer.toString(pixels));
-        this.table.setDefaultRenderer(BytesBlock.class, new ImageCellRenderer(pImage));
-        this.table.repaint();
-    }
-
-    /**
-     * Configures the pageable table.
-     * @param pageSize
-     */
-    protected void configurePageable(int pageSize) {
-        this.pageFetcher = new PageFetcher(this, pageSize);
-    }
-
-    /**
-     * Returns the total amount of records shown in the table. In case that the table is filtered or
-     * grouped, returns the total amount of records after performing those operations.
-     * <p>
-     * In any case the sum column will not be considered.
-     * @return the total number of records shown in the table
-     */
-    public int getCurrentRowCount() {
-        TableModel model = this.table.getModel();
-        return ((TableSorter) model).getCurrentRowCount();
-    }
-
-    /**
-     * Returns the total amount of records in the table. Sum row is not included. In case that the table
-     * is filtered or grouped, the result will not be modified.
-     * @return the total amount of records in the table
-     */
-    public int getRealRecordsNumber() {
-        TableModel model = this.table.getModel();
-        return ((TableSorter) model).getRealRecordNumber();
-    }
-
-    /**
-     * Returns a {@link #Hashtable} in which the keys are the field names configured as table parent
-     * keys (using the names in the table entity if they are different that the form fields), and the
-     * values are the values those fields have in the table's parent form.
-     * @return all the parent keys values
-     * @see #getParentKeyValues(boolean)
-     */
-    @Override
-    public Hashtable getParentKeyValues() {
-        return this.getParentKeyValues(true);
-    }
-
-    @Override
-    public Vector getParentKeyList() {
-        if (this.parentkeys != null) {
-            Vector temp = new Vector();
-            temp.addAll(this.parentkeys);
-            return temp;
-        }
-        return null;
-    }
-
-    @Override
-    public boolean hasParentKeys() {
-        if ((this.parentkeys == null) || this.parentkeys.isEmpty()) {
-            return false;
-        }
-        return true;
-
-    }
-
-    /**
-     * Returns a {@link #Hashtable} in which the keys are the field names configured as table parent
-     * keys, and the values are the values those fields have in the table's parent form.
-     * @param applyEquivalences If this parameter is true then the names used as keys in the result are
-     *        the names of the parent keys in the table entity. If false, then the names are the names
-     *        of the fields in the parent form
-     * @return
-     */
-    public Hashtable getParentKeyValues(boolean applyEquivalences) {
-
-        Hashtable kv = new Hashtable();
-        if (this.parentkeys != null) {
-            for (int i = 0; i < this.parentkeys.size(); i++) {
-                Object v = this.parentForm.getDataFieldValue(this.parentkeys.get(i).toString());
-                if (v != null) {
-                    Object pkName = this.parentkeys.get(i);
-                    if (applyEquivalences) {
-                        pkName = this.getParentkeyEquivalentValue(pkName);
-                    }
-                    kv.put(pkName, v);
-                } else {
-                    Table.logger.debug(
-                            "Table: Parentkey {} is null. It won't be included in the query.Check the xml file in which the table is defined to ensure that the field has a value",
-                            this.parentkeys.get(i));
-                    if (Table.logger.isTraceEnabled()) {
-                        MessageDialog.showErrorMessage(this.parentFrame, "DEBUG: Table: Parentkey "
-                                + this.parentkeys.get(i) + " is null. It won't be included in the query. "
-                                + "Check the xml file in which the table is defined to ensure that the field has a value");
-                    }
-                }
-            }
-        }
-        return kv;
-    }
-
-    /**
-     * Sets whether the control buttons pannel will be enabled or not.
-     * @param enabled true if the table header should enable
-     */
-    protected void setControlButtonsEnabled(boolean enabled) {
-        if (this.showControls) {
-            this.setTableComponentEnabled(Table.BUTTON_COPY, enabled);
-            this.setTableComponentEnabled(Table.BUTTON_EXCEL_EXPORT, enabled);
-            this.setTableComponentEnabled(Table.BUTTON_HTML_EXPORT, enabled);
-            this.setTableComponentEnabled(Table.BUTTON_PRINTING, enabled);
-            this.setTableComponentEnabled(Table.BUTTON_PIVOTTABLE, enabled);
-            this.setTableComponentEnabled(Table.BUTTON_CHART, enabled);
-
-            this.setTableComponentEnabled(Table.BUTTON_REPORT, enabled);
-
-            this.setTableComponentEnabled(Table.BUTTON_DEFAULT_CHART, enabled && this.defaultChartsEnabled);
-            if (!this.defaultChartsEnabled) {
-                this.setTableComponentVisible(Table.BUTTON_DEFAULT_CHART, false);
-            }
-
-            if (this.dynamicTable) {
-                this.setTableComponentEnabled(Table.BUTTON_VISIBLE_COLS_SETUP, enabled);
-            }
-
-            boolean enableOperationButtons = this.getOperationColumns().size() > 0;
-            this.setTableComponentEnabled(Table.BUTTON_CALCULATED_COL, enableOperationButtons && enabled);
-            this.setTableComponentEnabled(Table.BUTTON_SUM_ROW_SETUP, enableOperationButtons && enabled);
-        }
-    }
-
-    /**
-     * Configures the buttons tip.
-     */
-    protected void setButtonTips() {
-        if (this.buttonVisibleColsSetup != null) {
-            this.buttonVisibleColsSetup.setToolTipText(Table.TIP_VISIBLES_COLS_SETUP);
-        }
-
-        if (this.buttonSumRowSetup != null) {
-            this.buttonSumRowSetup.setToolTipText(Table.TIP_SUMROW_SETUP);
-        }
-
-        if (this.buttonSaveFilterOrderSetup != null) {
-            this.buttonSaveFilterOrderSetup.setToolTipText(Table.TIP_FILTER_ORDEN_CONF);
-        }
-
-        if (this.buttonPrint != null) {
-            this.buttonPrint.setToolTipText(Table.TIP_PRINTING);
-            if (this.buttonPrint instanceof TableButton) {
-                ((TableButton) this.buttonPrint).setDefaultToolTipText(Table.TIP_PRINTING_es_ES);
-            }
-        }
-
-        if (this.buttonDefaultChart != null) {
-            this.buttonDefaultChart.setToolTipText(Table.TIP_CHART_MENU);
-            this.buttonDefaultChart.setDefaultToolTipText(Table.TIP_CHART_MENU_es_ES);
-        }
-
-        if (this.buttonCopy != null) {
-            this.buttonCopy.setToolTipText(Table.TIP_CLIPBOARD_COPY);
-            if (this.buttonCopy instanceof TableButton) {
-                ((TableButton) this.buttonCopy).setDefaultToolTipText(Table.TIP_CLIPBOARD_COPY_es_ES);
-            }
-        }
-
-        if (this.buttonExcelExport != null) {
-            this.buttonExcelExport.setToolTipText(Table.TIP_EXCEL_EXPORT);
-            if (this.buttonExcelExport instanceof TableButton) {
-                ((TableButton) this.buttonExcelExport).setDefaultToolTipText(Table.TIP_EXCEL_EXPORT_es_ES);
-            }
-        }
-
-        if (this.buttonHTMLExport != null) {
-            this.buttonHTMLExport.setToolTipText(Table.TIP_HTML_EXPORT);
-            if (this.buttonHTMLExport instanceof TableButton) {
-                ((TableButton) this.buttonHTMLExport).setDefaultToolTipText(Table.TIP_HTML_EXPORT_es_ES);
-            }
-        }
-
-        if (this.buttonPlus2 != null) {
-            this.buttonPlus2.setToolTipText(Table.TIP_INSERT_BUTTON);
-            if (this.buttonPlus2 instanceof TableButton) {
-                ((TableButton) this.buttonPlus2).setDefaultToolTipText(Table.TIP_INSERT_BUTTON_es_ES);
-            }
-        }
-
-        if (this.buttonPlus != null) {
-            this.buttonPlus.setToolTipText(Table.TIP_INSERT_BUTTON);
-            if (this.buttonPlus instanceof TableButton) {
-                ((TableButton) this.buttonPlus).setDefaultToolTipText(Table.TIP_INSERT_BUTTON_es_ES);
-            }
-        }
-
-        if (this.buttonReports != null) {
-            this.buttonReports.setToolTipText(Table.TIP_REPORT_PRINTING);
-            this.buttonReports.setDefaultToolTipText(Table.TIP_REPORT_PRINTING_es_ES);
-        }
-
-        if (this.buttonPivotTable != null) {
-            this.buttonPivotTable.setToolTipText(Table.TIP_PIVOT_TABLE);
-            this.buttonPivotTable.setDefaultToolTipText(Table.TIP_PIVOT_TABLE_es_ES);
-        }
-
-        if (this.buttonCalculatedColumns != null) {
-            this.buttonCalculatedColumns.setToolTipText(Table.TIP_CALCULATED_COLUMNS);
-            if (this.buttonCalculatedColumns instanceof TableButton) {
-                ((TableButton) this.buttonCalculatedColumns).setDefaultToolTipText(Table.TIP_CALCULATED_COLUMNS);
-            }
-        }
-
-        if (this.groupTableButton != null) {
-            this.groupTableButton.setToolTipText(Table.TIP_GROUP_TABLE_BUTTON);
-            this.groupTableButton.setDefaultToolTipText(Table.TIP_GROUP_TABLE_BUTTON);
-        }
-
-        // adding the buttons
-        for (int i = 0; i < this.addButtons.size(); i++) {
-            Object o = this.addButtons.get(i);
-            if (o instanceof Internationalization) {
-                ((Internationalization) o).setResourceBundle(this.resourcesFile);
-            }
-        }
-
-        for (int i = 0; i < this.addComponents.size(); i++) {
-            Object o = this.addComponents.get(i);
-            if (o instanceof Internationalization) {
-                ((Internationalization) o).setResourceBundle(this.resourcesFile);
-            }
-        }
-
-    }
-
-    /**
-     * Returns the sum of all the values for the specified column.
-     * @param col the column to sum
-     * @return the sum of the values of the record for the column
-     */
-    public Number getSumColumn(Object col) {
-        this.checkRefreshThread();
-        if ((this.table == null) || (this.table.getModel() == null)) {
-            return new Double(0.0);
-        }
-        return ((TableSorter) this.table.getModel()).getColumnSum(col);
-    }
-
-    /**
-     * Returns the DetailForm configured for this table. The detail form is the form in which the
-     * records can be shown in detail by double clicking the rows in the grid. It is used as well to
-     * perform insert operations from the tables, by clicking the insert button in the top right corner
-     * of the table.
-     * @return the detail form, or null if no form has been specified
-     */
-    public DetailForm getDetailForm() {
-        if (this.formName != null) {
-            if (this.detailForm == null) {
-                this.createDetailForm();
-                this.detailForm.setKeys(new Hashtable(0), 0);
-
-                this.detailForm.resetParentkeys(this.parentkeys);
-                Hashtable hOtherKeys = new Hashtable();
-                for (int i = 0; i < this.parentkeys.size(); i++) {
-                    Object vParentKey = Table.this.parentForm
-                        .getDataFieldValueFromFormCache(this.parentkeys.get(i).toString());
-                    if (Table.logger.isDebugEnabled() && (vParentKey == null)) {
-                        MessageDialog.showErrorMessage(this.parentFrame, "DEBUG: Table: parentkey "
-                                + this.parentkeys.get(i)
-                                + " is NULL. It won't be included in the query. Check the xml that contains the table configuration and ensure that the parentkey has value there.");
-                    }
-                    if (vParentKey != null) {
-                        hOtherKeys.put(this.parentkeys.get(i), vParentKey);
-                    }
-                }
-                this.detailForm.setParentKeyValues(hOtherKeys);
-            }
-            return this.detailForm;
-        } else {
-            Table.logger.debug("This table does not have detail form");
-            return null;
-        }
-    }
-
-    /**
-     * Sets the preferred size to the specified column.
-     * @param column the column to set the size
-     */
-    public void fitColumnSize(int column) {
-        String sName = this.table.getColumnName(column);
-        TableColumn tableColumn = null;
-        if (column <= this.getBlockedColumnIndex()) {
-            tableColumn = this.blockedTable.getColumn(sName);
-        } else {
-            tableColumn = this.table.getColumn(sName);
-        }
-
-        this.table.getColumn(sName);
-        if (tableColumn == null) {
-            return;
-        }
-
-        int iPreferredWidth = this.getPreferredColumnWidth(column, this.table.getRowCount());
-
-        if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
-            tableColumn.setWidth(iPreferredWidth);
-            tableColumn.setPreferredWidth(iPreferredWidth);
-        } else {
-            tableColumn.setMaxWidth(this.table.getWidth());
-            tableColumn.setMinWidth(0);
-            tableColumn.setWidth(iPreferredWidth);
-            tableColumn.setPreferredWidth(iPreferredWidth + 5);
-        }
-    }
-
-    /**
-     * Sets all the table texts in the table popup menu.
-     */
-    protected void setTextsMenu() {
-        // TODO this code must be extracted to reduce the number of lines used
-        // because it is a repetion of the same code
-        String sText = ApplicationManager.getTranslation(Table.detailKey, this.resourcesFile);
-        this.menuDetail.setText(sText);
-
-        sText = ApplicationManager.getTranslation(Table.insertKey, this.resourcesFile);
-        this.menuInsert.setText(sText);
-
-        sText = ApplicationManager.getTranslation(Table.resetOrderKey, this.resourcesFile);
-        this.menuResetOrder.setText(sText);
-
-        sText = Table.PRINTING_SELECTION_es_ES;
-        try {
-            if (this.resourcesFile != null) {
-                sText = this.resourcesFile.getString(Table.PRINTING_SELECTION);
-            }
-        } catch (Exception e) {
-            Table.logger.error("PRINTING_SELECTION Error", e);
-        }
-        this.menuPrintSelection.setText(sText);
-
-        sText = Table.COPY_CELL_es_ES;
-        try {
-            if (this.resourcesFile != null) {
-                sText = this.resourcesFile.getString(Table.COPY_CELL);
-            }
-        } catch (Exception e) {
-            Table.logger.error("COPY_CELL Error", e);
-        }
-
-        this.menuCopyCell.setText(sText);
-
-        if (this.menuOpenInNewWindow != null) {
-            this.menuOpenInNewWindow
-                .setText(ApplicationManager.getTranslation(Table.openInNewWindowKey, this.resourcesFile));
-        }
-
-        sText = Table.COPY_SELECTION_es_ES;
-        try {
-            if (this.resourcesFile != null) {
-                sText = this.resourcesFile.getString(Table.COPY_SELECTION);
-            }
-        } catch (Exception e) {
-            Table.logger.error("COPY_SELECTION", e);
-        }
-
-        this.menuCopySelection.setText(sText);
-
-        if (this.menuRefresh != null) {
-            this.menuRefresh.setText(ApplicationManager.getTranslation(Table.REFRESH, this.resourcesFile));
-        }
-
-        if (this.menuPageableEnabled != null) {
-            this.menuPageableEnabled.setText(ApplicationManager.getTranslation(Table.PAGEABLE, this.resourcesFile));
-        }
-
-        if (this.menuOpenInNewWindow != null) {
-            this.menuOpenInNewWindow
-                .setText(ApplicationManager.getTranslation(Table.openInNewWindowKey, this.resourcesFile));
-        }
-
-        if (this.menuShowHideControls != null) {
-            this.menuShowHideControls
-                .setText(ApplicationManager.getTranslation(Table.SHOW_HIDE_CONTROLS, this.resourcesFile));
-        }
-
-    }
-
-    /**
-     * Returns the information contained in the selected rows in a {@link #Hashtable}. The
-     * {@link #Hashtable} keys are the table attributes, and the values are {@link #Vector} with the row
-     * values.
-     * @return the information contained by the selected rows, and null when there is no selection
-     */
-    public Hashtable getSelectedRowData() {
-        if (this.table.getSelectedRowCount() == 0) {
-            return null;
-        }
-        // Return a new hastable with the data
-        int[] selectedRows = this.table.getSelectedRows();
-        Vector attributes = this.getAttributeList();
-        Hashtable hData = new Hashtable();
-        for (int i = 0; i < selectedRows.length; i++) {
-            int row = selectedRows[i];
-            Hashtable hRowData = this.getRowData(row);
-            if (hRowData == null) {
-                continue;
-            }
-            for (int j = 0; j < attributes.size(); j++) {
-                Object oKey = attributes.get(j);
-                Object oValue = hRowData.get(oKey);
-                Vector v = (Vector) hData.get(oKey);
-                if (v == null) {
-                    Vector vAux = new Vector();
-                    vAux.add(0, oValue);
-                    hData.put(oKey, vAux);
-                } else {
-                    v.add(i, oValue);
-                }
-            }
-        }
-        return hData;
-    }
-
-    /**
-     * Checks the component visibility. Depending on the client permissions, the table can be shown or
-     * not. This method checks that permission to hide the table when necessary.
-     * @return true in case the table can not be visible, false if it can
-     */
-    protected boolean checkVisiblePermission() {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            if (this.visiblePermission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    this.visiblePermission = new FormPermission(this.parentForm.getArchiveName(), "visible",
-                            this.entity, true);
-                }
-            }
-            try {
-                // Check to show
-                if (this.visiblePermission != null) {
-                    manager.checkPermission(this.visiblePermission);
-                }
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("Visible permission:", e);
-                } else {
-                    Table.logger.trace("Visible permission:", e);
-                }
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks if the table must be disabled. Depending on the client permissions, the table can be
-     * enabled or not. This method checks that permission to disable or enable the table when necessary.
-     * @return true in case the table can not be enabled, false if it can
-     */
-    protected boolean checkEnabledPermission() {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            if (this.enabledPermission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    this.enabledPermission = new FormPermission(this.parentForm.getArchiveName(), "enabled",
-                            this.entity, true);
-                }
-            }
-            try {
-                if (this.enabledPermission != null) {
-                    manager.checkPermission(this.enabledPermission);
-                }
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("Enabled Permission:", e);
-                } else {
-                    Table.logger.trace("Enabled Permission:", e);
-                }
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks if the table can perform insertions. Depending on the client permissions, the table can
-     * have the insertions restricted. This method checks that permission to disable or enable the
-     * inserting from the table feature.
-     * @return true in case the table can insert, false if it cannot
-     */
-    protected boolean checkInsertPermission() {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            if (this.insertPermission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    this.insertPermission = new FormPermission(this.parentForm.getArchiveName(), "insert", this.entity,
-                            true);
-                }
-            }
-            try {
-                if (this.insertPermission != null) {
-                    manager.checkPermission(this.insertPermission);
-                }
-
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("Insert permission:", e);
-                } else {
-                    Table.logger.trace("Insert permission:", e);
-                }
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks if the table can perform queries. Depending on the client permissions, the table can have
-     * the queries restricted. This method checks that permission to disable or enable querying.
-     * @return true in case the table can query, false if it cannot
-     */
-    protected boolean checkQueryPermission() {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            if (this.queryPermission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    this.queryPermission = new FormPermission(this.parentForm.getArchiveName(), "query", this.entity,
-                            true);
-                }
-            }
-            try {
-                if (this.queryPermission != null) {
-                    manager.checkPermission(this.queryPermission);
-                }
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("Query permission:", e);
-                } else {
-                    Table.logger.trace("Query permission:", e);
-                }
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks whether the component with this <code>key</code> has been restricted by the permission
-     * <code>type</code> . If this method returns true the table component will not be restricted by
-     * this permission <code>type</code>. <br>
-     * For example, if the a call to this method with the type "visible" returns true, then the
-     * component is visible.
-     * @param key the key of the table component to be restricted
-     * @param type the type of permission to be checked
-     * @return false the component are restricted
-     */
-    protected boolean checkComponentTablePermission(Object key, String type) {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            TableFormPermission permission = this.tableComponentPermission.get((String) key, type);
-            if (permission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    permission = new TableFormPermission(this.parentForm.getArchiveName(), (String) key, this.entity,
-                            true, null, type);
-                    this.tableComponentPermission.addTableFormPermission((String) key, type, permission);
-                }
-            }
-            try {
-                if (permission != null) {
-                    manager.checkPermission(permission);
-                }
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("TableComponentPermission:", e);
-                } else {
-                    Table.logger.trace("TableComponentPermission:", e);
-                }
-                return false;
-            }
-
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks whether the column with this <code>columnName</code> has been restricted by the permission
-     * <code>type</code> . If this method returns true the table column will not be restricted by this
-     * permission <code>type</code>. <br>
-     * For example, if the a call to this method with the type "visible" returns true, then column is
-     * able to be visible according to permission (another program condition could be hide it).
-     * @param key the key of the table component to be restricted
-     * @param type the type of permission to be checked
-     * @return false the component are restricted
-     *
-     *
-     * @since 5.2077EN-0.2
-     */
-    protected boolean checkColumnTablePermission(Object key, String type) {
-        ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-        if (manager != null) {
-            TableFormPermission permission = this.tableColumnPermission.get((String) key, type);
-            if (permission == null) {
-                if ((this.entity != null) && (this.parentForm != null)) {
-                    permission = new TableFormPermission(this.parentForm.getArchiveName(), "column", this.entity, true,
-                            null, type, key.toString());
-                    this.tableColumnPermission.addTableFormPermission((String) key, type, permission);
-                }
-            }
-            try {
-                if (permission != null) {
-                    manager.checkPermission(permission);
-                }
-                this.restricted = false;
-                return true;
-            } catch (Exception e) {
-                this.restricted = true;
-                if (e instanceof NullPointerException) {
-                    Table.logger.error("ColumnTablePermission:", e);
-                } else {
-                    Table.logger.trace("ColumnTablePermission:", e);
-                }
-                return false;
-            }
-
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Sets the table visible. Client permissions are checked.
-     *
-     * @see checkVisiblePermission
-     */
-    @Override
-    public void setVisible(boolean vis) {
-        if (vis) {
-            boolean permission = this.checkVisiblePermission();
-            if (!permission) {
-                return;
-            }
-        }
-        super.setVisible(vis);
-        this.controlsPanel.setVisible(this.controlsVisible);
-    }
-
-    /**
-     * Some table functionalities and behaviours can be controled using client security, so the same
-     * table can be different depending on the user profile.
-     * <p>
-     * This method sets the client permission for the table, according to the client permissions XML
-     * profile. This is, checks whether the table can be visible or not, as well as whether the table is
-     * enabled or not.
-     * <p>
-     * The method checks some other permissions such as the query permission and the insert permission,
-     * which can allow insertions from the table.
-     *
-     * @see #initTableComponentPermissions
-     * @see #initTableColumnPermissions()
-     */
-    @Override
-    public void initPermissions() {
-        if (ApplicationManager.getClientSecurityManager() != null) {
-            ClientSecurityManager.registerSecuredElement(this);
-        }
-        boolean pVisible = this.checkVisiblePermission();
-        if (!pVisible) {
-            this.setVisible(false);
-        }
-
-        boolean pEnabled = this.checkEnabledPermission();
-        if (!pEnabled) {
-            this.setEnabled(false);
-        }
-
-        this.checkQueryPermission();
-
-        this.initTableComponentPermissions();
-        this.initTableColumnPermissions();
-
-        boolean pInsert = this.checkInsertPermission();
-        if (!pInsert) {
-            this.setTableComponentEnabled(Table.BUTTON_PLUS, false);
-            this.setTableComponentVisible(Table.BUTTON_PLUS, false);
-            if (this.buttonPlus != null) {
-                this.buttonPlus.setEnabled(false);
-                this.buttonPlus.setVisible(false);
-            }
-        }
-    }
-
-    /**
-     * Applies client permissions to the components in the controlsPanel.
-     * <p>
-     * The table functionalities, accessible through the controlsPanel buttons, can be controlled using
-     * client permission. This implies that those buttons can be disabled or hidden using the client
-     * permission XML.
-     *
-     * @see #checkComponentTablePermission
-     */
-    public void initTableComponentPermissions() {
-        if (this.controlsPanel != null) {
-            for (int i = 0; i < this.controlsPanel.getComponentCount(); i++) {
-                Component c = this.controlsPanel.getComponent(i);
-                if (c instanceof TableComponent) {
-                    TableComponent cT = (TableComponent) c;
-                    Object o = cT.getKey();
-                    if (o != null) {
-                        boolean v = this.checkComponentTablePermission(o, "visible");
-                        if (!v) {
-                            c.setVisible(false);
-                        } else {
-                            c.setVisible(true);
-                        }
-
-                        boolean e = this.checkComponentTablePermission(o, "enabled");
-                        if (!e) {
-                            c.setEnabled(false);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Applies client permissions to the table columns.
-     * <p>
-     * The table columns can be controlled using client permission. This implies those columns can be
-     * hidden using the client permission XML. e.g. for hiding a column named BALANCE: <br>
-     * <b> <code> &lt;column attr="BALANCE" restricted="yes" type="visible"/&gt</code> </b>
-     *
-     * @see #checkComponentTablePermission
-     *
-     * @since 5.2077EN-0.2
-     */
-    public void initTableColumnPermissions() {
-        if (this.getJTable().getColumnModel() != null) {
-            TableColumnModel columnModel = this.getJTable().getColumnModel();
-            for (int i = 0; i < columnModel.getColumnCount(); i++) {
-                Object o = columnModel.getColumn(i).getIdentifier();
-                if (o != null) {
-                    boolean v = this.checkColumnTablePermission(o, "visible");
-                    if (!v) {
-                        columnModel.getColumn(i).setWidth(0);
-                        columnModel.getColumn(i).setMaxWidth(0);
-                        columnModel.getColumn(i).setMinWidth(0);
-                    }
-
-                    v = this.checkColumnTablePermission(o, "enabled");
-                    if (!v) {
-                        this.setEditableColumn((String) o, false, false);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Sets whether a tip informing about the record number when pressing the table scroll must be shown
-     * or not.
-     * @param enable true if the tip should be enabled, false otherwise
-     */
-    public void setScrollTipEnabled(boolean enable) {
-        this.tipScrollEnabled = enable;
-    }
-
-    /**
-     * Toggles the control panel visibility.
-     */
-    public void toggleControls() {
-        if (this.showControls) {
-            this.controlsVisible = !this.controlsPanel.isVisible();
-            this.controlsPanel.setVisible(this.controlsVisible);
-            if (this.quickFilterText != null) {
-                this.quickFilterText.setVisible(this.controlsVisible || this.quickFilterVisible);
-            }
-            if (this.menuShowHideControls != null) {
-                this.menuShowHideControls.setSelected(this.controlsVisible);
-            }
-            this.saveVisibleControlsConfiguration();
-        }
-    }
-
-    /**
-     * Sets whether or not the table controls are visible.
-     * @param visible true if the table controls should be visible, false otherwise
-     */
-    public void setControlsVisible(boolean visible) {
-        this.setControlsVisible(visible, false);
-    }
-
-    /**
-     * Sets whether or not the table controls are visible.
-     * @param vis true if the table controls should be visible, false otherwise
-     * @param savePreferences if true, the visibility set will be stored as application preference
-     */
-    public void setControlsVisible(boolean vis, boolean savePreferences) {
-        if (this.showControls) {
-            this.controlsVisible = vis;
-            this.controlsPanel.setVisible(vis);
-            if (this.quickFilterText != null) {
-                this.quickFilterText.setVisible(this.controlsVisible || this.quickFilterVisible);
-            }
-            if (this.menuShowHideControls != null) {
-                this.menuShowHideControls.setSelected(vis);
-            }
-            if (savePreferences) {
-                this.saveVisibleControlsConfiguration();
-            }
-        } else if (this.menuShowHideControls != null) {
-            this.menuShowHideControls.setSelected(false);
-        }
-    }
-
-    /**
-     * Is call when a preference changes, because the table is registered as a preference change
-     * listener.
-     * <p>
-     * @param prefEvent the event with the preference changes
-     */
-    @Override
-    public void preferenceChanged(PreferenceEvent prefEvent) {
-        String pref = prefEvent.getPreference();
-        if (pref.equals(BasicApplicationPreferences.SHOW_TABLE_CONTROLS)) {
-            String sValue = prefEvent.getValue();
-            if (sValue != null) {
-                boolean controlesVisibles = ApplicationManager.parseStringValue(sValue);
-                this.setControlsVisible(controlesVisibles);
-            }
-        } else if (pref.equals(BasicApplicationPreferences.TABLE_EVEN_ROWS_COLOR)) {
-            String sValue = prefEvent.getValue();
-            if (sValue != null) {
-                try {
-                    Color c = ColorConstants.parseColor(sValue);
-                    if (CellRenderer.getEvenRowBackgroundColor() != c) {
-                        CellRenderer.setEvenRowBackgroundColor(c);
-                    }
-                    this.repaint();
-                } catch (Exception ex) {
-                    Table.logger.error(null, ex);
-                }
-            }
-        } else if (pref.equals(BasicApplicationPreferences.SHOW_TABLE_NUM_ROW)) {
-            String sValue = prefEvent.getValue();
-            if (sValue != null) {
-                boolean rowNumber = ApplicationManager.parseStringValue(sValue);
-                this.setRowNumberColumnVisible(rowNumber);
-            }
-        }
-    }
-
-    protected String userPrefs = null;
-
-    /**
-     * Returns the user name.
-     * @return the user name
-     */
-    protected String getUser() {
-        if (this.locator instanceof ClientReferenceLocator) {
-            return ((ClientReferenceLocator) this.locator).getUser();
-        } else {
-            return this.userPrefs;
-        }
-    }
-
-    protected void initCalculedColPreferences(ApplicationPreferences aPrefs, String user) {
-        String calcColsPref = aPrefs.getPreference(user, this.getCalculatedColumnsConfPreferenceKey());
-        if (calcColsPref != null) {
-            // configure the current calculated columns
-
-            // Parse the calculated columns stored in preferences
-            Vector calculatedColsUserConf = ApplicationManager.getTokensAt(calcColsPref, ";");
-            Vector calcColNames = new Vector(calculatedColsUserConf.size());
-            Vector expressions = new Vector(calculatedColsUserConf.size());
-            Vector renderKey = new Vector(calculatedColsUserConf.size());
-            for (int i = 0; i < calculatedColsUserConf.size(); i++) {
-                Vector tokensAt = ApplicationManager.getTokensAt((String) calculatedColsUserConf.get(i), ":");
-                if (tokensAt.size() >= 2) {
-                    calcColNames.add(tokensAt.get(0));
-                    expressions.add(tokensAt.get(1));
-                }
-
-                if (tokensAt.size() == 3) {
-                    renderKey.add(tokensAt.get(2));
-                } else {
-                    renderKey.add(Table.DEFAULT_CELL_RENDERER);
-                }
-            }
-
-            this.configureCalculatedCols(calcColNames, expressions, renderKey, false);
-        }
-    }
-
-    protected void initVisibleColumnsPreferences(ApplicationPreferences aPrefs, String user) {
-        String tvc = aPrefs.getPreference(user, this.getVisibleColumnsPreferenceKey());
-        if (tvc != null) {
-            Vector cols = ApplicationManager.getTokensAt(tvc, ";");
-            this.setVisibleColumns(cols);
-        } else if ((this.defaultVisibleColumns != null) && (this.defaultVisibleColumns.size() >= 0)) {
-            this.setVisibleColumns(this.defaultVisibleColumns);
-        }
-    }
-
-    protected void initPanelControlPreferences(ApplicationPreferences aPrefs, String user) {
-        String tpc = aPrefs.getPreference(user, this.getControlPanelPreferenceKey());
-        if (tpc != null) {
-            this.controlsPanel.setButtonPosition(tpc);
-        } else {
-            this.controlsPanel.setButtonPosition(this.controlButtonLayout);
-        }
-
-    }
-
-    /**
-     * Sets the table preferences.
-     * <p>
-     * Tables can remember their state between application execution. For instance things like visible
-     * columns, column size and order, and, in general, all the parameters that can be modified and
-     * changed but the user can be reset by calling this method.
-     */
-    @Override
-    public void initPreferences(ApplicationPreferences aPrefs, String user) {
-        boolean paginable = false;
-        try {
-            if ((this.getPageFetcher() != null) && this.getPageFetcher().isPageableEnabled()) {
-                paginable = true;
-                this.getPageFetcher().setPageableEnabled(false);
-            }
-            if (aPrefs == null) {
-                return;
-            }
-            this.userPrefs = user;
-            String sc = aPrefs.getPreference(user, BasicApplicationPreferences.SHOW_TABLE_CONTROLS);
-            if (sc != null) {
-                boolean prefControlsVisible = ApplicationManager.parseStringValue(sc);
-                if (this.controlsVisible) {
-                    this.setControlsVisible(prefControlsVisible);
-                }
-            }
-            String snr = aPrefs.getPreference(user, BasicApplicationPreferences.SHOW_TABLE_NUM_ROW);
-            if (snr != null) {
-                boolean bRowNumberColumnVisible = ApplicationManager.parseStringValue(snr);
-                this.setRowNumberColumnVisible(bRowNumberColumnVisible);
-                this.initColumnsWidth();
-            }
-
-            this.initCalculedColPreferences(aPrefs, user);
-
-            this.initVisibleColumnsPreferences(aPrefs, user);
-
-            this.initPanelControlPreferences(aPrefs, user);
-
-            this.initFilterOrderPreferences(aPrefs, user);
-
-            try {
-                // Background
-                String pref = aPrefs.getPreference(user, BasicApplicationPreferences.TABLE_EVEN_ROWS_COLOR);
-                if (pref != null) {
-                    Color c = ColorConstants.parseColor(pref);
-                    if (CellRenderer.getEvenRowBackgroundColor() != c) {
-                        CellRenderer.setEvenRowBackgroundColor(c);
-                        this.repaint();
-                    }
-                }
-            } catch (Exception ex) {
-                Table.logger.error("Table event rows color:", ex);
-            }
-
-            try {
-                String pref = aPrefs.getPreference(user, this.getVisibleControlsPreferenceKey());
-                if (pref != null) {
-                    boolean vis = ApplicationManager.parseStringValue(pref);
-                    this.setControlsVisible(vis);
-                }
-            } catch (Exception ex) {
-                Table.logger.error("VisibleControlsPreference:", ex);
-            }
-            this.applyOperations();
-        } finally {
-            if (this.getPageFetcher() != null) {
-                this.getPageFetcher().setPageableEnabled(paginable);
-            }
-        }
-    }
-
-    protected void initFilterOrderPreferences(ApplicationPreferences aPrefs, String user) {
-        // Apply filter and order configuration
-        String sf = aPrefs.getPreference(user, this.getFilterOrderConfPreferenceKey(null));
-        if (sf != null) {
-            // Disable the filter
-            Vector cols = ApplicationManager.getTokensAt(sf, ";");
-            if (cols.size() >= 2) {
-                String col = (String) cols.get(0);
-                String asc = (String) cols.get(1);
-                try {
-                    if (!"null".equals(col)) {
-                        if (col.indexOf(":") >= 0) {
-                            Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-                            Vector ascends = ApplicationManager.getTokensAt(asc, ":");
-                            if (otherCols.size() != ascends.size()) {
-                                Table.logger.info("Error in preference: {} -> {} has a different size from {}", sf,
-                                        otherCols, ascends);
-                            } else {
-                                this.resetOrder();
-                                for (int i = 0; i < otherCols.size(); i++) {
-                                    String c = (String) otherCols.get(i);
-                                    String a = (String) ascends.get(i);
-                                    boolean ascb = ApplicationManager.parseStringValue(a, false);
-                                    this.sortByWithoutReset(c, ascb);
-                                }
-                            }
-                        } else {
-                            boolean ascb = ApplicationManager.parseStringValue(asc, false);
-                            this.sortBy(col, ascb);
-                        }
-                    } else {
-                        this.resetOrder();
-                    }
-                    if (cols.size() >= 3) {
-
-                        String f = (String) cols.get(2);
-                        int index = 3;
-
-                        if (!f.startsWith("BASE64")) {
-                            // Load position and column width
-                            if (!"null".equals(f)) {
-                                this.applyColumnPositonAndPreferences(f);
-                                this.prefWidthAndPosApply = true;
-                            }
-                            f = (String) cols.get(3);
-                            index = 4;
-                        }
-                        if (cols.size() > index) {
-                            for (int i = index; i < cols.size(); i++) {
-                                f = f + ";" + cols.get(i);
-                            }
-                        }
-                        byte[] bytes = null;
-                        if (f.startsWith("BASE64")) {
-                            f = f.substring("BASE64".length());
-                        }
-
-                        bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
-                        ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
-                        ObjectInputStream in = new ObjectInputStream(bIn);
-                        Object o = in.readObject();
-                        if (o instanceof Hashtable) {
-                            // To avoid serialization problems
-                            Hashtable hNews = new Hashtable();
-                            Hashtable g = (Hashtable) o;
-                            Enumeration enumKeys = g.keys();
-                            while (enumKeys.hasMoreElements()) {
-                                Object oKey = enumKeys.nextElement();
-                                Object oValue = g.get(oKey);
-                                if (oValue instanceof TableSorter.Filter) {
-                                    TableSorter.Filter v = (TableSorter.Filter) oValue;
-                                    Object[] oValues = v.values;
-                                    for (int i = 0; i < oValues.length; i++) {
-                                        if (oValues[i] instanceof FilterDate) {
-                                            oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
-                                        }
-                                    }
-                                }
-                                hNews.put(oKey, oValue);
-                            }
-                            this.defaultFilter = hNews;
-                            this.applyFilter(hNews);
-                        }
-                    }
-                } catch (Exception e) {
-                    Table.logger.error("Error reading preference " + this.getFilterOrderConfPreferenceKey(null), e);
-                    aPrefs.setPreference(user, this.getFilterOrderConfPreferenceKey(null), null);
-                }
-            }
-        }
-    }
-
-    protected void configureCalculatedCols(List calcColNames, List expressions, List rendersKey,
-            boolean savePreferences) {
-        // First of all check the existing ones to update the expression or
-        // delete the column
-        Vector vCurrentCalcCols = this.getCalculatedColumns();
-        Vector vOriginalCaclCols = this.getOriginalCalculatedColumns();
-        for (int i = 0; i < vCurrentCalcCols.size(); i++) {
-            String currentColName = (String) vCurrentCalcCols.get(i);
-            int index = calcColNames.indexOf(currentColName);
-            if (index >= 0) {
-                if (this.modifiableCalculatedColumns || (vOriginalCaclCols == null)
-                        || !vOriginalCaclCols.contains(currentColName)) {
-                    String col = (String) calcColNames.get(index);
-                    String exp = (String) expressions.get(index);
-                    String renderKey = (String) rendersKey.get(index);
-                    this.getTableSorter().setCalculatedColumnExpression(col, exp);
-                    Hashtable allRender = this.getAllColumnRenderer();
-                    Hashtable allEditor = this.getAllColumnEditors();
-                    if (!Table.DEFAULT_CELL_RENDERER.equalsIgnoreCase(renderKey)) {
-                        allRender.put(col, Table.getRendererMap().get(renderKey));
-                    } else {
-                        allRender.remove(col);
-                        this.getJTable().getColumn(col).setCellRenderer(null);
-                    }
-                    StringBuilder builder = new StringBuilder();
-                    builder.append(exp);
-                    builder.append(":");
-                    builder.append(renderKey);
-                    this.calculedColumns.put(col, builder.toString());
-                    this.configureRenderEditor(allRender, allEditor);
-                }
-                calcColNames.remove(index);
-                expressions.remove(index);
-                rendersKey.remove(index);
-            } else {
-                if (this.modifiableCalculatedColumns || (vOriginalCaclCols == null)
-                        || !vOriginalCaclCols.contains(currentColName)) {
-                    this.deleteCalculatedColumn((String) vCurrentCalcCols.get(i));
-                }
-            }
-        }
-
-        // Now check the new calculated columns
-        for (int i = 0; i < calcColNames.size(); i++) {
-            this.addCalculatedColumn((String) calcColNames.get(i), (String) expressions.get(i),
-                    (String) rendersKey.get(i));
-        }
-
-        if (savePreferences) {
-            // Save the preferences
-            Application ap = this.parentForm.getFormManager().getApplication();
-            if (ap.getPreferences() != null) {
-                ap.getPreferences()
-                    .setPreference(this.getUser(), this.getCalculatedColumnsConfPreferenceKey(),
-                            this.getCalculatedColsPreferenceStringValue());
-                ap.getPreferences().savePreferences();
-            }
-        }
-        this.repaint();
-    }
-
-    protected String getCalculatedColsPreferenceStringValue() {
-        if (this.calculedColumns != null) {
-            Enumeration calcCols = this.calculedColumns.keys();
-            Vector value = new Vector(this.calculedColumns.size());
-            while (calcCols.hasMoreElements()) {
-                String col = (String) calcCols.nextElement();
-                String expression = (String) this.calculedColumns.get(col);
-                value.add(col + ":" + expression);
-            }
-            return ApplicationManager.vectorToStringSeparateBy(value, ";");
-        }
-        return null;
-    }
-
-    /**
-     * Establishes as visible columns the columns passed as parameter and shows the columns.
-     * @param visibleColumns a Vector containing the column names to show.
-     */
-    public void setVisibleColumns(Vector visibleColumns) {
-        this.setVisibleColumns(visibleColumns, true);
-    }
-
-    /**
-     * Establishes as visible columns the columns passed as parameter and shows the columns.
-     * @param visibleColumns a Vector containing the column names to show.
-     * @param autoSizeColumns if true, the column size will be adjusted to its new contents
-     */
-    public void setVisibleColumns(Vector visibleColumns, boolean autoSizeColumns) {
-        if (visibleColumns == null) {
-            throw new IllegalArgumentException("visiblecols can not be NULL");
-        }
-        this.visibleColumns = visibleColumns;
-
-        boolean bHideColumns = false;
-        for (int i = 0; i < this.originalVisibleColumns.size(); i++) {
-            if (!this.visibleColumns.contains(this.originalVisibleColumns.get(i))) {
-                bHideColumns = true;
-                break;
-            }
-        }
-        if (bHideColumns && (this.buttonVisibleColsSetup != null)) {
-            this.buttonVisibleColsSetup.setIcon(this.getButtonVisibleColsSetupIcon(true));
-        } else if (this.buttonVisibleColsSetup != null) {
-            this.buttonVisibleColsSetup.setIcon(this.getButtonVisibleColsSetupIcon(false));
-        }
-        this.setVisibleColumns();
-        if (autoSizeColumns) {
-            this.initColumnsWidth();
-        }
-    }
-
-    protected Icon getButtonVisibleColsSetupIcon(boolean renderer) {
-        if ((this.buttonIcons != null)
-                && this.buttonIcons.containsKey(((TableComponent) this.buttonVisibleColsSetup).getKey())) {
-            return (Icon) this.buttonIcons.get(((TableComponent) this.buttonVisibleColsSetup).getKey());
-        } else {
-            if (renderer) {
-                return ImageManager.getIcon(ImageManager.TABLE_CONF_VISIBLE_COLS_RED);
-            } else {
-                return ImageManager.getIcon(ImageManager.TABLE_CONF_VISIBLE_COLS);
-            }
-        }
-    }
-
-    /**
-     * Returns the client preferences key to store the visible columns.
-     * @return the client preferences key to store the visible columns
-     */
-    protected String getVisibleColumnsPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null ? BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + f.getArchiveName() + "_" + this.entity
-                : BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + this.entity;
-    }
-
-    /**
-     * Returns the client preferences key to store the button position.
-     * @return the client preferences key to store the button position.
-     */
-    protected String getControlPanelPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null
-                ? BasicApplicationPreferences.TABLE_CONTROL_PANEL + "_" + f.getArchiveName() + "_" + this.entity
-                : BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + this.entity;
-    }
-
-    /**
-     * Returns the client preferences key to store the visibility of the controls.
-     * @return the client preferences key to store the visibility of the controls
-     */
-    protected String getVisibleControlsPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null
-                ? BasicApplicationPreferences.SHOW_TABLE_CONTROLS + "_" + f.getArchiveName() + "_" + this.entity
-                : BasicApplicationPreferences.SHOW_TABLE_CONTROLS + "_" + this.entity;
-    }
-
-    /**
-     * Returns the client preferences key to store the filters for a determined column.
-     * @param columnName the column name
-     * @return the client preferences key to store the filters for a determined column.
-     */
-    protected String getFilterOrderConfPreferenceKey(String columnName) {
-        if (!this.dynamicPivotable) {
-            if ((columnName == null) || (columnName.length() == 0)) {
-                Form f = this.parentForm;
-                return f != null
-                        ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + f.getArchiveName() + "_"
-                                + this.entity
-                        : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + this.entity;
-            } else {
-                Form f = this.parentForm;
-                return f != null
-                        ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + f.getArchiveName() + "_"
-                                + this.entity + "_" + columnName
-                        : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + this.entity + "_" + columnName;
-            }
-        } else {
-            if ((columnName == null) || (columnName.length() == 0)) {
-                return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_DYNAMIC_PIVOT_TABLE + "_"
-                        + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
-            } else {
-                return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_DYNAMIC_PIVOT_TABLE + "_"
-                        + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity + columnName;
-            }
-        }
-    }
-
-    protected Object getOriginalForm(Object table) {
-
-        return null;
-    }
-
-    /**
-     * Returns the client preferences key to store the configuration of the sorting columns
-     * @return the client preferences key to store the configuration of the sorting columns
-     */
-    protected String getFilterOrderConfigurationPreferenceKey() {
-        if (!this.dynamicPivotable) {
-            Form f = this.parentForm;
-            return f != null
-                    ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS + "_" + f.getArchiveName() + "_"
-                            + this.entity
-                    : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS + "_" + this.entity;
-        } else {
-            return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS_DYNAMIC_PIVOT_TABLE + "_"
-                    + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
-        }
-    }
-
-    /**
-     * Returns the client preferences key to store the calculated columns configuration.
-     * @return the client preferences key to store the calculated columns configuration
-     */
-    protected String getCalculatedColumnsConfPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null
-                ? BasicApplicationPreferences.TABLE_CALCULATED_COLUMNS_CONFIGURATION + "_" + f.getArchiveName() + "_"
-                        + this.entity
-                : BasicApplicationPreferences.TABLE_CALCULATED_COLUMNS_CONFIGURATION + "_" + this.entity;
-    }
-
-    /**
-     * Returns the current visible columns.
-     * @return the current visible columns
-     */
-    public Vector getVisibleColumns() {
-        return (Vector) this.visibleColumns.clone();
-    }
-
-    public List<String> getQuickFilterColumns() {
-        if (this.quickFilterColumns != null) {
-            return this.quickFilterColumns;
-        }
-        return this.getVisibleColumns();
-    }
-
-    /**
-     * Returns the columns used to build reports.
-     * @return the columns used to build reports.
-     */
-    public Vector getReportColumns() {
-        return (Vector) this.reportCols.clone();
-    }
-
-    public void setReportColumns(Vector columns) {
-        if (this.reportCols == null) {
-            this.reportCols = new Vector();
-        }
-        this.reportCols.clear();
-        this.reportCols.addAll(columns);
-    }
-
-    /**
-     * Returns the visible columns specified in the XML table definition.
-     * @return a {@link #Vector} with the visible columns specified in the XML
-     */
-    public Vector getOriginallyVisibleColumns() {
-        return (Vector) this.originalVisibleColumns.clone();
-    }
-
-    /**
-     * Returns the sum row columns specified in the XML table definition.
-     * @return a {@link #Vector} with the sum row columns specified in the XML
-     */
-    public Vector getOriginalSumRowCols() {
-        if (this.columnsToSum == null) {
-            return new Vector();
-        }
-        return (Vector) this.columnsToSum.clone();
-    }
-
-    /**
-     * Returns a {@link #Vector} with the column names that have been set as visible columns in the XML,
-     * and that are visible in the table as well.
-     * @return he column names set as visible columns in the XML, and that are visible in the table as
-     *         well
-     */
-    public Vector getRealColumns() {
-        // TODO maybe is a good idea to chage this method's name
-        Vector cols = new Vector();
-        for (int i = 0; i < this.table.getColumnCount(); i++) {
-            String name = this.table.getColumnName(i);
-            if (this.originalVisibleColumns.contains(name)) {
-                cols.add(this.table.getColumnName(i));
-            }
-        }
-        return cols;
-    }
-
-    /**
-     * Returns the current visible columns managed by the table.
-     * @return the current visible columns managed by the table
-     */
-    public Vector getCurrentColumns() {
-        Vector cols = new Vector();
-        for (int i = 0; i < this.table.getColumnCount(); i++) {
-            String name = this.table.getColumnName(i);
-            if (this.visibleColumns.contains(name)) {
-                cols.add(this.table.getColumnName(i));
-            }
-        }
-        return cols;
-    }
-
-    public Vector getCalculatedColumns() {
-        if (this.calculedColumns != null) {
-            return new Vector(Arrays.asList(this.calculedColumns.keySet().toArray()));
-        }
-        return null;
-    }
-
-    public Vector getOriginalCalculatedColumns() {
-        return this.originalCalculatedColumns;
-    }
-
-    public boolean isModifiableCalculatedColumns() {
-        return this.modifiableCalculatedColumns;
-    }
-
-    static {
-        Table.checkChartEnabled();
-    }
-
-    /**
-     * Check whether or not the charting functionality is enabled for this table.
-     * @return true if charting is allowed, false otherwise
-     */
-    public static boolean isChartEnabled() {
-        return Table.CHART_ENABLED;
-    }
-
-    /**
-     * Checks if the charting classes are set into the classpath
-     */
-    protected static void checkChartEnabled() {
-        Table.logger.debug("Looking for charting classes...");
-        long t = System.currentTimeMillis();
-        try {
-            Class.forName("com.jrefinery.data.DefaultXYDataset");
-        } catch (Exception e) {
-            Table.logger.info("0.9.3 Charting classes not found");
-            Table.logger.debug(null, e);
-            Table.CHART_ENABLED = false;
-        }
-        Table.logger.trace("Check time: {}", System.currentTimeMillis() - t);
-        Table.CHART_ENABLED = ChartVersionControl.isChartEnabled();
-        Table.CHART_V1 = ChartVersionControl.isVersion_1_0();
-    }
-
-    /**
-     * Adds a button to the controls panel
-     * @param button the button to add to the panel
-     */
-    public void addButtonToControls(AbstractButton button) {
-        this.addButtonToControls(button, false);
-    }
-
-    public void addButtonToControls(AbstractButton button, boolean useDefaultConfiguration) {
-        if (useDefaultConfiguration) {
-            this.configureControlButton(button);
-        }
-        if ((button != null) && !this.addButtons.contains(button)) {
-            button.setMargin(new Insets(0, 0, 0, 0));
-            this.controlsPanel.add(button);
-            this.addButtons.add(button);
-        }
-
-        if ((button instanceof Internationalization) && (this.parentForm != null)) {
-            this.parentForm.addComponentsToInternationalizeList(button, true);
-        }
-        // since 5.3.13 check permissions after added
-        if (button instanceof TableComponent) {
-            TableComponent cT = (TableComponent) button;
-            Object o = cT.getKey();
-            if (o != null) {
-                boolean v = this.checkComponentTablePermission(o, "visible");
-                if (!v) {
-                    button.setVisible(false);
-                } else {
-                    button.setVisible(true);
-                }
-
-                boolean e = this.checkComponentTablePermission(o, "enabled");
-                if (!e) {
-                    button.setEnabled(false);
-                }
-            }
-        } else {
-            Table.logger.warn("{} button in table control does not implement TableComponent", button);
-        }
-    }
-
-    protected void configureControlButton(AbstractButton button) {
-        if (button != null) {
-            if (!this.borderbuttons) {
-                button.setBorder(BorderFactory.createEmptyBorder());
-            }
-            if (!this.opaquebuttons) {
-                button.setOpaque(false);
-                button.setContentAreaFilled(false);
-            }
-            if (this.listenerHighlightButtons != null) {
-                button.addMouseListener(this.listenerHighlightButtons);
-            }
-        }
-    }
-
-    protected QuickFieldText createQuickFilter() {
-        // since 5.2071EN-0.2
-        final JLabel label;
-        final JPopupMenu pageablePopUpMessage;
-        if (this.quickFilterLocal) {
-            label = new JLabel(Table.QUICK_FILTER_PAGEABLE_MESSAGE_KEY, ImageManager.getIcon(ImageManager.VIEW_DETAILS),
-                    SwingConstants.RIGHT);
-            pageablePopUpMessage = new JPopupMenu(label.getText()) {
-
-                @Override
-                public void show(Component c, int x, int y) {
-                    Dimension dScreen = Toolkit.getDefaultToolkit().getScreenSize();
-                    int height = this.getHeight() == 0 ? this.getPreferredSize().height : this.getHeight();
-                    int width = this.getWidth() == 0 ? this.getPreferredSize().width : this.getWidth();
-                    // Avoid that the menu disappears of the window
-                    try {
-                        Point p = c.getLocationOnScreen();
-                        x = Math.max(x - width, -p.x);
-                        if ((p.y + y + height) > dScreen.height) {
-                            y = Math.max(y - height, -p.y);
-                        }
-                    } catch (Exception e) {
-                        Table.logger.error(null, e);
-                    }
-                    super.show(c, x, y - height);
-                }
-            };
-            pageablePopUpMessage.addMouseListener(new MouseAdapter() {
-
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if ((e.getX() > ((label.getBounds().x + label.getBounds().width) - label.getIcon().getIconWidth()))
-                            && (e.getX() < (label.getBounds().x + label.getBounds().width))) {
-                        if ((e.getY() > label.getBounds().y)
-                                && (e.getY() < (label.getBounds().y + label.getBounds().height))) {
-                            Table.this.pageFetcher.downloadAll();
-                        }
-                    }
-                }
-            });
-            label.setHorizontalTextPosition(SwingConstants.LEFT);
-            pageablePopUpMessage.add(label);
-        } else {
-            label = null;
-            pageablePopUpMessage = null;
-        }
-
-        final QuickFieldText quickFilterText = new QuickFieldText();
-
-        quickFilterText.addFocusListener(new FocusListener() {
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                quickFilterText.repaint();
-                quickFilterText.getParent().repaint();
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                quickFilterText.repaint();
-                quickFilterText.getParent().repaint();
-            }
-        });
-
-        quickFilterText.getDocument().addDocumentListener(new DocumentListener() {
-
-            @Override
-            public void changedUpdate(DocumentEvent event) {
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent event) {
-                this.update(event);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent event) {
-                this.update(event);
-            }
-
-            protected void update(DocumentEvent e) {
-                try {
-                    if ((Table.this.pageFetcher != null) && Table.this.pageFetcher.isPageableEnabled()
-                            && (Table.this.pageFetcher.totalSize > Table.this.pageFetcher.pageSize)
-                            && Table.defaultQuickFilterWarningVisibility) {
-                        if (Table.this.quickFilterLocal) {
-                            label.setText(ApplicationManager.getTranslation(Table.QUICK_FILTER_PAGEABLE_MESSAGE_KEY,
-                                    Table.this.getResourceBundle()));
-                            pageablePopUpMessage.show(Table.this,
-                                    quickFilterText.getBounds().x + quickFilterText.getBounds().width,
-                                    quickFilterText.getBounds().y);
-                        }
-                        quickFilterText.requestFocus();
-                    }
-                    quickFilterText.executeFilter(e.getDocument().getText(0, e.getDocument().getLength()), Table.this);
-                } catch (BadLocationException ex) {
-                    Table.logger.error(null, ex);
-                }
-            }
-        });
-
-        quickFilterText.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (!Table.this.quickFilterLocal){
-                        if (Table.this.waitPanel!=null && Table.this.waitPanel.isVisible()){
-                            e.consume();
-                            return;
-                        }
-                }
-                super.keyTyped(e);
-            }
-        });
-
-        
-        return quickFilterText;
-    }
-
-    /**
-     * Removes a button from the controls panel
-     * @param button the button to remove
-     */
-    public void removeButtonFromControls(AbstractButton button) {
-        if (button != null) {
-            this.controlsPanel.remove(button);
-            this.addButtons.remove(button);
-        }
-    }
-
-    /**
-     * Adds a {@link #JComponent} to the controls panel
-     * @param component the component to be added
-     */
-    public void addComponentToControls(JComponent component) {
-        if ((component != null) && !this.addComponents.contains(component)) {
-            this.controlsPanel.add(component);
-            this.addComponents.add(component);
-            if ((component instanceof Internationalization) && (this.parentForm != null)) {
-                this.parentForm.addComponentsToInternationalizeList(component, true);
-            }
-        }
-
-    }
-
-    /**
-     * Removes a {@link #JComponent} from the controls panel.
-     * @param component the component to remove
-     */
-    public void removeComponentFromControls(JComponent component) {
-        if (component != null) {
-            this.controlsPanel.remove(component);
-            this.addComponents.remove(component);
-
-            if ((component instanceof Internationalization) && (this.parentForm != null)) {
-                this.parentForm.removeComponentsToInternationalizeList(component);
-            }
-        }
-    }
-
-    /**
-     * Updates row values in the table. The {@link #Hashtable} with the parameters contains both the
-     * keys that select the row and the values to be updated.
-     * @param rowData
-     * @see com.ontimize.gui.table.TableSorter#updateRowData
-     */
-    public void updateRowData(Hashtable rowData) {
-        this.checkRefreshThread();
-        TableSorter ts = (TableSorter) this.table.getModel();
-        ts.updateRowData(rowData, (Vector) this.getKeys().clone());
-        this.table.repaint();
-    }
-
-    public void updateRowData(Hashtable rowData, Hashtable newkv) {
-        this.checkRefreshThread();
-        TableSorter ts = (TableSorter) this.table.getModel();
-        ts.updateRowData(rowData, newkv);
-        this.table.repaint();
-    }
-
-    public void updateRowData(Hashtable rowData, List columns, Hashtable newkv) {
-        this.checkRefreshThread();
-        TableSorter ts = (TableSorter) this.table.getModel();
-        ts.updateRowData(rowData, columns, newkv);
-        this.table.repaint();
-    }
-
-    @Override
-    public String getHelpIdString() {
-        String sClassName = this.getClass().getName();
-        sClassName = sClassName.substring(sClassName.lastIndexOf(".") + 1);
-        return sClassName + "HelpId";
-    }
-
-    /**
-     * Sets the help id for this class in the {@link HelpUtilities}
-     *
-     * @see #getHelpIdString
-     */
-    @Override
-    public void installHelpId() {
-        try {
-            String helpId = this.getHelpIdString();
-            HelpUtilities.setHelpIdString(this, helpId);
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-            return;
-        }
-    }
-
-    protected boolean restricted = false;
-
-    /**
-     * Determines if the table is restricted, this is, has client permission restrictions.
-     * @return true if the table is restricted; otherwise, false
-     */
-    @Override
-    public boolean isRestricted() {
-        return this.restricted;
-    }
-
-    /**
-     * Configures the table to perform the operations in memory. In that case, the entity that will be
-     * use to perform the operations will be the one defined in the table configuration
-     * @param inMemory true if this component should perform operations in memory. false otherwise
-     * @see Table#init
-     */
-    public void setMemoryOperations(boolean inMemory) {
-        this.operationInMemory = inMemory;
-
-    }
-
-    /**
-     * Adds a {@link #TableRowHeader} to the table. The {@link #TableRowHeader} will be actually set in
-     * the {@link #scrollPane}.
-     * @param tableRowHeader the TableRowHeader
-     */
-    public void addTableRowHeader(TableRowHeader tableRowHeader) {
-        this.scrollPane.setRowHeaderView(tableRowHeader);
-    }
-
-    /**
-     * Applies a filter to the specified column. When the filter depends on a range, the array size must
-     * be at least 2. If values is null, a {@link SimpleFilter} will be set. In case that values has a
-     * String or a Boolean, a {@link SimpleFilter} will be applied, and in other case a {@link Filter}
-     * will be set.
-     * @param columnName the column in which the filter will be applied
-     * @param values the values to make the filter
-     * @param condition the condition to filter
-     */
-    public void applyFilter(String columnName, Object[] values, int condition) {
-        if (this.table.getModel() instanceof TableSorter) {
-            TableSorter ts = (TableSorter) this.table.getModel();
-            if (values.length == 0) {
-                return;
-            } else if (values[0] == null) {
-                TableSorter.SimpleFilter f = new TableSorter.SimpleFilter(null);
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
-            } else if ((values[0] instanceof String) || (values[0] instanceof Boolean)) {
-
-                TableSorter.SimpleFilter f = new TableSorter.SimpleFilter(values[0]);
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
-            } else {
-                TableSorter.Filter f = new TableSorter.Filter(condition, values);
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
-            }
-        }
-    }
-
-    /**
-     * Applies a filter to the specified column.
-     * @param columnName
-     * @param filter must be an instance of the classes {@link MultipleFilter}, {@link Filter} ,
-     *        {@link SimpleFilter} or {@link DateFilter}
-     */
-    public void applyFilter(String columnName, Object filter) {
-        if (this.table.getModel() instanceof TableSorter) {
-            TableSorter ts = (TableSorter) this.table.getModel();
-            if (filter == null) {
-                return;
-            }
-            if (filter instanceof TableSorter.SimpleFilter) {
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
-            } else if (filter instanceof TableSorter.Filter) {
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
-            } else if (filter instanceof TableSorter.MultipleFilter) {
-                ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
-            }
-        }
-    }
-
-    /**
-     * Applies filters to the current table.
-     *
-     * @see TableSorter#applyFilter(Hashtable)
-     * @see Filter
-     * @param filters is a Hashtable containing the filters. The key is the columns name and the value
-     *        must be an instance of the classes {@link MultipleFilter}, {@link Filter} ,
-     *        {@link SimpleFilter} , {@link DateFilter}
-     */
-    public void applyFilter(Hashtable filters) {
-
-        if (this.table.getModel() instanceof TableSorter) {
-            TableSorter ts = (TableSorter) this.table.getModel();
-            ts.applyFilter(filters);
-        }
-    }
-
-    /**
-     * Removes all the filters set to the table.
-     */
-    public void resetFilter() {
-        if (this.table.getModel() instanceof TableSorter) {
-            TableSorter ts = (TableSorter) this.table.getModel();
-            ts.resetFilter();
-        }
-    }
-
-    /**
-     * Removes the filter set to the specified column.
-     * @param column the column name
-     */
-    public void resetFilter(String column) {
-        if (this.table.getModel() instanceof TableSorter) {
-            TableSorter ts = (TableSorter) this.table.getModel();
-            ts.resetFilter(column);
-        }
-    }
-
-    /**
-     * Adds a column to the table.
-     * @param column the column name
-     */
-    public void addColumn(String column) {
-        this.addColumn(column, true);
-    }
-
-    public void addColumn(String[] columns) {
-        if ((columns != null) && (columns.length > 0)) {
-            for (int i = 0; i < columns.length; i++) {
-                if (i == (columns.length - 1)) {
-                    this.addColumn(columns[i], true);
-                } else {
-                    this.addColumn(columns[i], false);
-                }
-            }
-        }
-    }
-
-    protected void addColumn(String column, boolean fireEvent) {
-        if (!(this.attributes.contains(column)) && !this.calculedColumns.containsKey(column)) {
-            if (this.table.getModel() instanceof TableSorter) {
-
-                Table.logger.debug("Table: Adding column: {} previous column number = {} previous attributes: {}",
-                        column, this.table.getColumnCount(), this.attributes);
-
-                // This is needed to conserve all the renderes and editor after
-                // adding the column
-                Hashtable allRender = this.getAllColumnRenderer();
-                Hashtable allEditor = this.getAllColumnEditors();
-
-                TableSorter ts = (TableSorter) this.table.getModel();
-                this.attributes.add(column);
-                this.originalVisibleColumns.add(column);
-                this.visibleColumns.add(column);
-                this.reportCols.add(column);
-                ts.addColumn(column, fireEvent);
-                Table.logger.debug("Table: Column added: {} current column number= {}", column,
-                        this.table.getColumnCount());
-
-                this.configureRenderEditor(allRender, allEditor);
-                if (fireEvent) {
-                    this.setResourceBundle(this.resourcesFile);
-                }
-            }
-        } else {
-            Table.logger.warn("Table: The specified column already exists: {}", column);
-        }
-    }
-
-    /**
-     * Adds a calculated column to the table.
-     * @param column the column name
-     * @param expression the column expression, for example SomeColumnName*5
-     */
-    public void addCalculatedColumn(String columnName, String expression, String renderKey) {
-
-        TableSorter sorter = this.getTableSorter();
-        if ((!this.attributes.contains(columnName)) && !this.calculedColumns.containsKey(columnName)) {
-
-            // This is needed to conserve all the renderes and editor after
-            // adding the column
-            Hashtable allRender = this.getAllColumnRenderer();
-            Hashtable allEditor = this.getAllColumnEditors();
-
-            if (sorter != null) {
-                Table.logger.debug("Table: Adding calculated column: {} previous column number = {}", columnName,
-                        this.table.getColumnCount());
-                this.originalVisibleColumns.add(columnName);
-                this.visibleColumns.add(columnName);
-                this.calculedColumns.put(columnName, expression);
-                this.reportCols.add(columnName);
-
-                sorter.addCalculatedColumn(columnName, expression);
-                if ((renderKey != null) && !Table.DEFAULT_CELL_RENDERER.equalsIgnoreCase(renderKey)) {
-                    allRender.put(columnName, Table.getRendererMap().get(renderKey));
-                }
-
-                Table.logger.debug("Table: Column added: {} current column number= {}", columnName,
-                        this.table.getColumnCount());
-                this.configureRenderEditor(allRender, allEditor);
-                this.setResourceBundle(this.resourcesFile);
-
-            }
-        } else {
-            Table.logger.debug("Table: The specified column already exists: {}", columnName);
-        }
-    }
-
-    /**
-     * Creates a Hashtable with all the columns that have a renderer.<br>
-     * Hashtable key is the column name and value is the column renderer
-     * @return
-     */
-    protected Hashtable getAllColumnRenderer() {
-        int count = this.table.getColumnCount();
-        Hashtable renderers = new Hashtable();
-        for (int i = 0; i < count; i++) {
-            String cName = this.getColumnName(i);
-            TableCellRenderer rendererForColumn = this.getRendererForColumn(cName);
-            if (rendererForColumn != null) {
-                renderers.put(cName, rendererForColumn);
-            }
-        }
-        return renderers;
-    }
-
-    /**
-     * Creates a Hashtable with all the columns that have an editor.<br>
-     * Hashtable key is the column name and value is the column editor
-     * @return
-     */
-    protected Hashtable getAllColumnEditors() {
-        int count = this.table.getColumnCount();
-        Hashtable editors = new Hashtable();
-        for (int i = 0; i < count; i++) {
-            String cName = this.getColumnName(i);
-            TableCellEditor editorForColumn = this.getEditorForColumn(cName);
-            if (editorForColumn != null) {
-                editors.put(cName, editorForColumn);
-            }
-        }
-        return editors;
-    }
-
-    /**
-     * Configure the renderer and editor to the columns
-     * @param renderer Key is the column name and value is the renderer to set
-     * @param editor Key is the column name and value is the editor to set
-     */
-    protected void configureRenderEditor(Hashtable renderer, Hashtable editor) {
-        int count = this.table.getColumnCount();
-        for (int i = 0; i < count; i++) {
-            String cName = this.getColumnName(i);
-            if (renderer != null) {
-                Object object = renderer.get(cName);
-                if (object instanceof TableCellRenderer) {
-                    this.setRendererForColumn(cName, (TableCellRenderer) object);
-                }
-            }
-            if (editor != null) {
-                Object object = editor.get(cName);
-                if (object instanceof TableCellEditor) {
-                    this.setColumnEditor(cName, (TableCellEditor) object);
-                }
-            }
-        }
-    }
-
-    /**
-     * Deletes the specified column from the table.
-     * @param column the column name
-     */
-    public void deleteColumn(String column) {
-        this.deleteColumn(column, true);
-    }
-
-    public void deleteColumn(String[] columns) {
-        if ((columns != null) && (columns.length > 0)) {
-            for (int i = 0; i < columns.length; i++) {
-                if (i == (columns.length - 1)) {
-                    this.deleteColumn(columns[i], true);
-                } else {
-                    this.deleteColumn(columns[i], false);
-                }
-            }
-        }
-    }
-
-    protected void deleteColumn(String column, boolean fireEvent) {
-        if (this.attributes.contains(column)) {
-            if (this.table.getModel() instanceof TableSorter) {
-                Table.logger.debug("Table: Deleting column: {} previous column number = {} previous attributes: {}",
-                        column, this.table.getColumnCount(), this.attributes);
-                // This is needed to conserve all the renderes and editor after
-                // deleting the column
-                Hashtable allRenderers = new Hashtable();
-                Hashtable allEditors = new Hashtable();
-                if (fireEvent) {
-                    // Retrieve renderer and editor of columns before event
-                    for (Object cName : this.attributes) {
-                        TableCellRenderer rendererForColumn = this.getRendererForColumn(cName.toString());
-                        if (rendererForColumn != null) {
-                            allRenderers.put(cName, rendererForColumn);
-                        }
-
-                        TableCellEditor editorForColumn = this.getEditorForColumn(cName.toString());
-                        if (editorForColumn != null) {
-                            allEditors.put(cName, editorForColumn);
-                        }
-                    }
-                }
-
-                // Hashtable allRender = this.getAllColumnRenderer();
-                // Hashtable allEditor = this.getAllColumnEditors();
-                // allRender.remove(column);
-                // allEditor.remove(column);
-
-                TableSorter ts = (TableSorter) this.table.getModel();
-                this.attributes.remove(column);
-                this.visibleColumns.remove(column);
-                this.originalVisibleColumns.remove(column);
-                this.reportCols.remove(column);
-                try {
-                    this.table.getColumn(column).removePropertyChangeListener(this.columnWidthListener);
-                } catch (Exception ex) {
-                    Table.logger.trace(null, ex);
-                }
-                ts.deleteColumn(column, fireEvent);
-                Table.logger.debug("Table: Deleted column: {} current column number = {}", column,
-                        this.table.getColumnCount());
-                if (fireEvent) {
-                    this.configureRenderEditor(allRenderers, allEditors);
-                    this.setResourceBundle(this.resourcesFile);
-                }
-            }
-        }
-    }
-
-    /**
-     * Deletes the specified calculated column from the table.
-     * @param column the column name
-     */
-    public void deleteCalculatedColumn(String column) {
-        if ((this.calculedColumns != null) && this.calculedColumns.containsKey(column)) {
-            TableSorter sorter = this.getTableSorter();
-            if (sorter != null) {
-                Table.logger.debug("Table: Deleting calculated column: {} previous column number = {}", column,
-                        this.table.getColumnCount());
-
-                // This is needed to conserve all the renderes and editor after
-                // deleting the column
-                Hashtable allRender = this.getAllColumnRenderer();
-                Hashtable allEditor = this.getAllColumnEditors();
-                allRender.remove(column);
-                allEditor.remove(column);
-
-                this.calculedColumns.remove(column);
-                this.visibleColumns.remove(column);
-                this.originalVisibleColumns.remove(column);
-                this.reportCols.remove(column);
-
-                try {
-                    this.table.getColumn(column).removePropertyChangeListener(this.columnWidthListener);
-                } catch (Exception ex) {
-                    Table.logger.trace(null, ex);
-                }
-
-                sorter.deleteCalculatedColumn(column);
-                Table.logger.debug("Table: Deleted column: {} current column number= {}", column,
-                        this.table.getColumnCount());
-                this.configureRenderEditor(allRender, allEditor);
-                this.setResourceBundle(this.resourcesFile);
-            }
-        }
-    }
-
-    /**
-     * Sets the fixed attributes to the detail form. Thas is, make the detail form to have, in the
-     * fields configured as fixattr, the same values that are placed in the form in which the talbe is
-     * placed.
-     */
-    protected void setAttributesToFix() {
-        if ((this.detailForm != null) && (this.attributesToFix != null)) {
-            for (int i = 0; i < this.attributesToFix.size(); i++) {
-                this.detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(this.attributesToFix.get(i)),
-                        this.parentForm.getDataFieldValue(this.attributesToFix.get(i)));
-            }
-        }
-    }
-
-    public Integer getBlockedColumnIndex() {
-        if (this.blockedTable == null) {
-            return -1;
-        }
-        return this.blockedTable.getBlockedColumnIndex();
-    }
-
-    public void setBlockedColumnIndex(int column) {
-        BlockedTableModel model = (BlockedTableModel) this.blockedTable.getModel();
-        this.mainSplit.setDividerSize(4);
-        int index = this.blockedTable.getBlockedColumnIndex();
-
-        if (column > index) {
-            TableColumnModel tcModel = this.table.getColumnModel();
-            int size = 0;
-            for (int i = index + 1; i <= column; i++) {
-                size = size + tcModel.getColumn(i).getWidth();
-            }
-            this.mainSplit.setDividerLocation(this.mainSplit.getDividerLocation() + size);
-        } else if (column < index) {
-            TableColumnModel tcModel = this.blockedTable.getColumnModel();
-            int size = 0;
-            for (int i = 0; i <= column; i++) {
-                size = size + tcModel.getColumn(i).getWidth();
-            }
-            this.mainSplit.setDividerLocation(size);
-        } else {
-            // Remove blockedColumn;
-            this.mainSplit.setDividerSize(0);
-            this.mainSplit.setDividerLocation(this.blockedTable.getColumnModel().getColumn(0).getWidth());
-            column = 0;
-        }
-
-        this.fixBlockedVisibility();
-
-        this.blockedTable.setBlockedColumnIndex(column);
-        // this.doLayout();
-    }
-
-    protected void fixBlockedVisibility() {
-        this.blockedScrollPane.setVisible(this.mainSplit.getDividerLocation() > 0);
-        this.sumRowBlockedScrollPane.setVisible(this.mainSplit.getDividerLocation() > 0);
-    }
-
-    public boolean isBlockedEnabled() {
-        if (this.blockedCols) {
-            return this.scrollHorizontal;
-        }
-        return false;
-    }
-
-    /**
-     * Sets an horizontal scroll to the <code>Table</code>. This allows the <code>Table</code> to
-     * contain a big number of columns and display them.
-     * @param scrollH true to enable the scroll, false to disable it
-     */
-    protected void setHorizontalScroll(boolean scrollH) {
-        this.scrollHorizontal = scrollH;
-
-        if (this.scrollHorizontal) {
-            if (this.scrollPane != null) {
-                this.table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-                this.sumRowTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-
-                this.scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.scrollPane.revalidate();
-                this.sumRowScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-                this.sumRowScrollPane.revalidate();
-
-                this.blockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.blockedScrollPane.revalidate();
-
-                this.sumRowBlockedScrollPane
-                    .setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-                this.sumRowBlockedScrollPane.revalidate();
-            }
-        } else {
-            if (this.scrollPane != null) {
-                this.table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-                this.sumRowTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-
-                this.scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.sumRowScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.blockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.sumRowBlockedScrollPane
-                    .setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-                this.scrollPane.revalidate();
-                this.sumRowScrollPane.revalidate();
-                this.blockedScrollPane.revalidate();
-                this.sumRowBlockedScrollPane.revalidate();
-            }
-        }
-    }
-
-    /**
-     * Returns a vector containing the parent key names, this is, the names set in the XML to the
-     * attribute 'parentkeys'.
-     *
-     * @see #init
-     * @return the parent key names
-     */
-    public Vector getParentKeys() {
-        return this.getParentKeys(false);
-    }
-
-    public Vector getParentKeys(boolean applyEquivalences) {
-        Vector v = new Vector();
-        if (this.parentkeys != null) {
-            for (int i = 0; i < this.parentkeys.size(); i++) {
-                Object pkName = this.parentkeys.get(i);
-                if (applyEquivalences) {
-                    pkName = this.getParentkeyEquivalentValue(pkName);
-                }
-                v.add(pkName);
-            }
-        }
-        return v;
-    }
-
-    /**
-     * Get the name of the table column associated with the parent key field name
-     * @param parentkey
-     * @return
-     */
-    public Object getParentkeyEquivalentValue(Object parentkey) {
-        if ((this.hParentkeyEquivalences != null) && this.hParentkeyEquivalences.containsKey(parentkey)) {
-            return this.hParentkeyEquivalences.get(parentkey);
-        }
-        return parentkey;
-    }
-
-    /**
-     * Updates the value determined by the specified column and row in the Entity. If other data related
-     * to the row must be updates, can be passed as param.
-     * @param rowIndex the row indes
-     * @param viewColumnIndex the column index in the model
-     * @return the result of the update
-     * @throws Exception
-     * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
-     *             Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
-     */
-    @Deprecated
-    protected EntityResult updateTable(int rowIndex, int viewColumnIndex) throws Exception {
-        return this.updateTable(rowIndex, viewColumnIndex, null);
-    }
-
-    /**
-     * Updates the value determined by the specified column and row in the Entity. If other data related
-     * to the row must be updates, can be passed as param.
-     * @param rowIndex the row index
-     * @param viewColumnIndex the column index in the model
-     * @param otherData other data to be updated in that entity
-     * @return the result of the update
-     * @throws Exception
-     * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
-     */
-    @Deprecated
-    protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData) throws Exception {
-        if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
-            return new EntityResult();
-        }
-        return this.updateTable(rowIndex, viewColumnIndex, otherData, null);
-    }
-
-    /**
-     * Updates the value determined by the specified column and row in the Entity. If other data related
-     * to the row must be updates, can be passed as param.
-     * @param rowIndex the row index
-     * @param viewColumnIndex the column index in the model
-     * @param otherData other data to be updated in that entity
-     * @param previousData
-     * @return the result of the update
-     * @throws Exception
-     * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
-     */
-
-    @Deprecated
-    protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData, Object previousData)
-            throws Exception {
-        if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
-            return new EntityResult();
-        }
-
-        // TODO because the modelRowIndex is nonsense (is the same for the model
-        // and for the view) replace all rowIndex for rowIndex
-        if ((this.entity != null) && (this.entity.length() != 0)) {
-            Hashtable av = new Hashtable();
-            TableModel m = this.table.getModel();
-            Object col = m.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
-            Object oValue = m.getValueAt(rowIndex, this.table.convertColumnIndexToModel(viewColumnIndex));
-            if (oValue != null) {
-                av.put(col, oValue);
-            } else {
-                TableCellEditor cellEditor = this.table.getCellEditor(rowIndex, viewColumnIndex);
-                if ((cellEditor != null) && (cellEditor instanceof com.ontimize.gui.table.CellEditor)) {
-                    com.ontimize.gui.table.CellEditor cE = (com.ontimize.gui.table.CellEditor) cellEditor;
-                    av.put(col, new NullValue(cE.getSQLDataType()));
-                }
-            }
-            if (otherData != null) {
-                av.putAll(otherData);
-            }
-
-            // To include calculted values in the update operation
-            Hashtable calculatedRowData = this.getCalculatedRowData(rowIndex);
-            if (calculatedRowData != null) {
-                av.putAll(calculatedRowData);
-            }
-
-            Hashtable kv = new Hashtable();
-            // Keys and parentkeys
-            Vector vKeys = this.getKeys();
-            for (int i = 0; i < vKeys.size(); i++) {
-                Object atr = vKeys.get(i);
-                if (atr.equals(col)) {
-                    Object oKeyValue = previousData;
-                    if (oKeyValue != null) {
-                        kv.put(atr, oKeyValue);
-                    }
-                } else {
-                    // Object oKeyValue = table.getValueAt(rowIndex,
-                    // getColumnIndex((String) atr));
-                    Object oKeyValue = m.getValueAt(rowIndex, this.table.getColumn(atr).getModelIndex());
-                    if (oKeyValue != null) {
-                        kv.put(atr, oKeyValue);
-                    }
-                }
-            }
-            Vector vParentkeys = this.getParentKeys();
-            for (int i = 0; i < vParentkeys.size(); i++) {
-                Object atr = vParentkeys.get(i);
-                Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
-                if (oParentkeyValue != null) {
-                    kv.put(atr, oParentkeyValue);
-                }
-            }
-            Entity ent = this.locator.getEntityReference(this.getEntityName());
-            return ent.update(av, kv, this.locator.getSessionId());
-        } else {
-            return new EntityResult();
-        }
-    }
-
-    /**
-     * Updates the value determined by the specified column and row in the Entity. If other data related
-     * to the row must be updates, can be passed as param.
-     * @param keysValues the values of the keys
-     * @param viewColumnIndex the column index in the model
-     * @param tableCellEditor the editor
-     * @param otherData other data to be updated in that entity
-     * @param previousData
-     * @return the result of the update
-     * @throws Exception
-     */
-
-    protected EntityResult updateTable(Hashtable keysValues, int viewColumnIndex, TableCellEditor tableCellEditor,
-            Hashtable otherData, Object previousData) throws Exception {
-        if ((this.entity != null) && (this.entity.length() != 0)) {
-            Hashtable av = new Hashtable();
-            TableSorter model = (TableSorter) this.table.getModel();
-            Object col = model.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
-            Object newData = tableCellEditor.getCellEditorValue();
-            if (newData != null) {
-                av.put(col, newData);
-            } else {
-                if ((tableCellEditor != null) && (tableCellEditor instanceof com.ontimize.gui.table.CellEditor)) {
-                    com.ontimize.gui.table.CellEditor cE = (com.ontimize.gui.table.CellEditor) tableCellEditor;
-                    av.put(col, new NullValue(cE.getSQLDataType()));
-                }
-            }
-
-            if (otherData != null) {
-                av.putAll(otherData);
-            }
-
-            // To include calculted values in the update operation
-            Hashtable rowData = this.getRowDataForKeys(keysValues);
-
-            Vector calculatedColumns = model.getCalculatedColumnsName();
-            for (int i = 0; i < calculatedColumns.size(); i++) {
-                Object column = calculatedColumns.get(i);
-                if (rowData.containsKey(column)) {
-                    av.put(column, rowData.get(column));
-                }
-            }
-
-            Hashtable kv = (Hashtable) keysValues.clone();
-
-            // Keys and parentkeys
-            Vector vKeys = this.getKeys();
-            for (int i = 0; i < vKeys.size(); i++) {
-                Object atr = vKeys.get(i);
-                if (atr.equals(col)) {
-                    Object oKeyValue = previousData;
-                    if (oKeyValue != null) {
-                        kv.put(atr, oKeyValue);
-                    }
-                }
-            }
-            // Parentkeys with equivalences
-            Vector vParentkeys = this.getParentKeys();
-            for (int i = 0; i < vParentkeys.size(); i++) {
-                Object atr = vParentkeys.get(i);
-                Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
-                if (oParentkeyValue != null) {
-                    // since 5.2074EN-0.4
-                    // when equivalences, we must get equivalence value for
-                    // parentkey insteadof atr
-                    kv.put(this.getParentkeyEquivalentValue(atr), oParentkeyValue);
-                }
-            }
-            Entity ent = this.locator.getEntityReference(this.getEntityName());
-            return ent.update(av, kv, this.locator.getSessionId());
-        } else {
-            return new EntityResult();
-        }
-    }
-
-    /**
-     * The reference locator set for this table.
-     */
-    protected EntityReferenceLocator locator = null;
-
-    /**
-     * Sets a reference to the EntityReferenceLocator
-     * @param referenceLocator the {@link EntityReferenceLocator}
-     */
-    @Override
-    public void setReferenceLocator(EntityReferenceLocator referenceLocator) {
-        this.locator = referenceLocator;
-
-        // Configure the locator in all renderers and editors
-        this.configureComponentsLocator(this.getAllColumnRenderer(), this.locator);
-        this.configureComponentsLocator(this.getAllColumnEditors(), this.locator);
-
-    }
-
-    protected void configureComponentsLocator(Hashtable components, EntityReferenceLocator locator) {
-        if ((components != null) && (locator != null)) {
-            Iterator iterator = components.values().iterator();
-            while (iterator.hasNext()) {
-                Object element = iterator.next();
-                if (element instanceof ReferenceComponent) {
-                    ((ReferenceComponent) element).setReferenceLocator(locator);
-                }
-
-                if ((this.parentForm != null) && (element instanceof CachedComponent)) {
-                    CacheManager.getDefaultCacheManager(locator).addCachedComponent((CachedComponent) element);
-                    ((CachedComponent) element).setCacheManager(CacheManager.getDefaultCacheManager(locator));
-                }
-            }
-        }
-    }
-
-    protected void configureComponentsParentForm(Hashtable components, Form parentForm) {
-        if ((components != null) && (parentForm != null)) {
-            Iterator iterator = components.values().iterator();
-            while (iterator.hasNext()) {
-                Object element = iterator.next();
-                if (element instanceof AccessForm) {
-                    ((AccessForm) element).setParentForm(parentForm);
-                }
-
-                if ((this.locator != null) && (element instanceof CachedComponent)) {
-                    CacheManager.getDefaultCacheManager(this.locator).addCachedComponent((CachedComponent) element);
-                    ((CachedComponent) element).setCacheManager(CacheManager.getDefaultCacheManager(this.locator));
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns the detail form name.
-     * @return the detail form name
-     */
-    public String getFormName() {
-        return this.formName;
-    }
-
-    /**
-     * Returns the insert detail form name.
-     * @return the insert detail form name
-     */
-    public String getInsertFormName() {
-        return this.insertFormName;
-    }
-
-    /**
-     * Determines if the table is grouped.
-     * @return true if the table is grouped; otherwise, false
-     */
-    public boolean isGroup() {
-        return ((TableSorter) this.table.getModel()).isGrouped();
-    }
-
-    /**
-     * Removes the grouping applied to the table.
-     */
-    public void resetGroup() {
-        ((TableSorter) this.table.getModel()).resetGroup();
-        if (this.buttonDelete != null) {
-            this.setTableComponentEnabled(Table.BUTTON_DELETE, true);
-        }
-    }
-
-    /**
-     * Sets whether the default charting functionality is enabled or not. If <code>enabled</code> is
-     * true it is; if it is false it is not.
-     * @param enabled true if default charting is enabled
-     */
-    public void setDefaultChartsEnabled(boolean enabled) {
-        this.defaultChartsEnabled = enabled;
-        if (!Table.CHART_ENABLED) {
-            return;
-        }
-        if (this.buttonDefaultChart != null) {
-            if ((!this.isEmpty()) && (enabled)) {
-                this.buttonDefaultChart.setEnabled(enabled);
-            }
-            this.buttonDefaultChart.setVisible(enabled);
-        }
-    }
-
-    /**
-     * Creates, adds to the control panel, and creates the action listener related to the button that
-     * manages the configuration of the sum rows.
-     */
-    protected void installConfSumRowButton() {
-        this.buttonSumRowSetup = new TableButton();
-        if (this.buttonSumRowSetup instanceof TableComponent) {
-            ((TableComponent) this.buttonSumRowSetup).setKey(Table.BUTTON_SUM_ROW_SETUP);
-        }
-
-        ImageIcon calcIcon = ImageManager.getIcon(ImageManager.TABLE_SUMROWSETUP);
-        if (calcIcon != null) {
-            this.buttonSumRowSetup.setIcon(calcIcon);
-        } else {
-            this.buttonSumRowSetup.setText("SumConf");
-        }
-        this.buttonSumRowSetup.setEnabled(true);
-        this.buttonSumRowSetup.setMargin(new Insets(0, 0, 0, 0));
-        this.controlsPanel.add(this.buttonSumRowSetup);
-        this.buttonSumRowSetup.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Table.this.showConfSumRowDialog();
-            }
-        });
-    }
-
-    protected void showConfSumRowDialog() {
-        // If there is some cell in editing mode then finish the edition
-        this.table.removeEditor();
-
-        Window w = SwingUtilities.getWindowAncestor(Table.this);
-        if (this.sumRowSetupDialog == null) {
-            if (w instanceof Frame) {
-                this.sumRowSetupDialog = new SumRowSetupDialog((Frame) w, Table.this);
-            } else if (w instanceof Dialog) {
-                this.sumRowSetupDialog = new SumRowSetupDialog((Dialog) w, Table.this);
-            } else {
-                this.sumRowSetupDialog = new SumRowSetupDialog((Frame) null, Table.this);
-            }
-        }
-        this.sumRowSetupDialog.setColumn();
-        this.sumRowSetupDialog.setResourceBundle(this.resourcesFile);
-        this.sumRowSetupDialog.pack();
-        ApplicationManager.center(this.sumRowSetupDialog);
-        this.sumRowSetupDialog.setVisible(true);
-    }
-
-    /**
-     * @since 5.2079EN-0.1
-     * @return sumrowsetup dialog instance
-     */
-    public SumRowSetupDialog getSumRowSetupDialog() {
-        return this.sumRowSetupDialog;
-    }
-
-    /**
-     * Creates, adds to the control panel, and creates the action listener related to the button that
-     * manages the configuration of the visible columns.
-     */
-    protected void installConfVisibleColsButtons() {
-        this.buttonVisibleColsSetup = new TableButton();
-        if (this.buttonVisibleColsSetup instanceof TableComponent) {
-            ((TableComponent) this.buttonVisibleColsSetup).setKey(Table.BUTTON_VISIBLE_COLS_SETUP);
-        }
-        Icon confColsIcon = this.getButtonVisibleColsSetupIcon(false);
-        if (confColsIcon != null) {
-            this.buttonVisibleColsSetup.setIcon(confColsIcon);
-        } else {
-            this.buttonVisibleColsSetup.setText("ColsConf");
-        }
-        this.buttonVisibleColsSetup.setEnabled(false);
-        this.buttonVisibleColsSetup.setMargin(new Insets(0, 0, 0, 0));
-        this.controlsPanel.add(this.buttonVisibleColsSetup);
-        this.buttonVisibleColsSetup.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Window w = SwingUtilities.getWindowAncestor(Table.this);
-                if (Table.this.visibleColsSetupDialog == null) {
-                    if (w instanceof Frame) {
-                        Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Frame) w, Table.this);
-                    } else if (w instanceof Dialog) {
-                        Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Dialog) w, Table.this);
-                    } else {
-                        Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Frame) null, Table.this);
-                    }
-                }
-                Table.this.visibleColsSetupDialog.setColumn();
-                Table.this.visibleColsSetupDialog.setResourceBundle(Table.this.resourcesFile);
-                Table.this.visibleColsSetupDialog.pack();
-                ApplicationManager.center(Table.this.visibleColsSetupDialog);
-                Table.this.visibleColsSetupDialog.checkSelectPosition(-1);
-                Table.this.visibleColsSetupDialog.setVisible(true);
-            }
-        });
-        this.setVisibleColsConfigurationAllowed(this.allowSetupVisibleColumns);
-    }
-
-    /**
-     * Creates, adds to the control panel, and creates the action listener related to the button that
-     * open the charting window.
-     */
-    protected void installDefaultChartsButton() {
-        if (!Table.CHART_ENABLED) {
-            return;
-        }
-        this.buttonDefaultChart = new ChartButton(this);
-        this.buttonDefaultChart.setKey(Table.BUTTON_DEFAULT_CHART);
-        ImageIcon chartsIcon = ImageManager.getIcon(ImageManager.TABLE_DEFAULT_CHARTS);
-        if (chartsIcon != null) {
-            this.buttonDefaultChart.setIcon(chartsIcon);
-        } else {
-            this.buttonDefaultChart.setText("ChartsConf");
-        }
-
-        if (this.dynamicTable) {
-            // In a dynamic table it is not possible to save default chart
-            // configuration, so hide the option
-            this.buttonDefaultChart.getPreferredSize().width = this.buttonDefaultChart.getPreferredSize().width
-                    - this.buttonDefaultChart.getMenuButton().getPreferredSize().width;
-            this.buttonDefaultChart.getMenuButton().setVisible(false);
-
-            ((ChartButton) this.buttonDefaultChart).setLoadButtonVisible(false);
-            ((ChartButton) this.buttonDefaultChart).setSaveButtonVisible(false);
-        }
-
-        this.buttonDefaultChart.setEnabled(false);
-        this.buttonDefaultChart.setMargin(new Insets(0, 0, 0, 0));
-        this.controlsPanel.add(this.buttonDefaultChart);
-
-    }
-
-    /**
-     * Retuns the resources file used by the table.
-     * @return
-     */
-    public ResourceBundle getResourceBundle() {
-        return this.resourcesFile;
-    }
-
-    /**
-     * Sets whether or not the <code>DetailForm</code> of this component is enabled.
-     * @param enabled true if this component should be enabled, false otherwise
-     */
-    public void setEnabledDetail(boolean enabled) {
-        this.enabledDetail = enabled;
-    }
-
-    /**
-     * If the table has a detail form, the method returns true. False, in other case.
-     * @return true if the table has detail form
-     */
-    public boolean hasForm() {
-        return this.formName != null;
-    }
-
-    /**
-     * Determines if the detail form of the table is enable.
-     * @return true if the detail form is enable, false otherwise
-     */
-    public boolean getEnabledDetail() {
-        return this.enabledDetail;
-    }
-
-    /**
-     * Determines if the table is sorted.
-     * @return true if the table is sorted; otherwise, false
-     */
-    public boolean isSorted() {
-        return ((TableSorter) this.table.getModel()).isSorted();
-    }
-
-    /**
-     * Returns the view index of the first column that is sorted.
-     *
-     * @see TableSorter#getFirstSortedColumn
-     * @return the view index of the first column that is sorted, null when the table is not sorted
-     */
-    public int getViewOrderColumnIndex() {
-        if (!this.isSorted()) {
-            return -1;
-        }
-        return this.table.convertColumnIndexToView(((TableSorter) this.table.getModel()).getFirstSortedColumn());
-    }
-
-    /**
-     * Determines whether the first sorting applied to this table is ascending or not.
-     * @return true if the first column sorted has an ascending sorting; false otherwise
-     */
-    protected boolean isAscending() {
-        return ((TableSorter) this.table.getModel()).isAscending();
-    }
-
-    protected Vector editionListeners = new Vector(0, 3);
-
-    /**
-     * Notifies the edition listeners that the edition has been stopped.
-     * @param value the new value
-     * @param previousValue the old value
-     * @param rowIndex the row that has been changed
-     * @param viewColumnIndex the column that has been changed
-     */
-    protected void fireEditingStopped(Object value, Object previousValue, int rowIndex, int viewColumnIndex) {
-        if ((rowIndex < 0) || (viewColumnIndex < 0)) {
-            return;
-        }
-        Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
-        TableEditionEvent e = new TableEditionEvent(this, value, rowIndex, viewColumnIndex, id.toString(),
-                previousValue);
-        for (int i = 0; i < this.editionListeners.size(); i++) {
-            ((TableEditorListener) this.editionListeners.get(i)).editingStopped(e);
-        }
-    }
-
-    /**
-     * Notifies the edition listeners that the edition will stop.
-     * @param value the new value
-     * @param previousValue the old value
-     * @param rowIndex the row that has been changed
-     * @param viewColumnIndex the column that has been changed
-     * @throws com.ontimize.gui.table.EditingVetoException
-     */
-    protected void fireEditingWillStop(Object value, Object previousValue, int rowIndex, int viewColumnIndex)
-            throws com.ontimize.gui.table.EditingVetoException {
-        if ((rowIndex < 0) || (viewColumnIndex < 0)) {
-            return;
-        }
-        Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
-        TableEditionEvent e = new TableEditionEvent(this, value, rowIndex, viewColumnIndex, id.toString(),
-                previousValue);
-
-        for (int i = 0; i < this.editionListeners.size(); i++) {
-            ((TableEditorListener) this.editionListeners.get(i)).editingWillStop(e);
-        }
-    }
-
-    /**
-     * Notifies the edition listeners that the edition has been cancel.
-     * @param rowIndex the row that has been changed
-     * @param viewColumnIndex the column that has been changed
-     */
-    protected void fireEditingCancelled(int rowIndex, int viewColumnIndex) {
-        if ((rowIndex < 0) || (viewColumnIndex < 0)) {
-            return;
-        }
-        Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
-        TableEditionEvent e = new TableEditionEvent(this, null, rowIndex, viewColumnIndex, id.toString());
-
-        for (int i = 0; i < this.editionListeners.size(); i++) {
-            ((TableEditorListener) this.editionListeners.get(i)).editingCanceled(e);
-        }
-    }
-
-    /**
-     * Adds a {@link #TableEditorListener} to the table.
-     * @param listener
-     */
-    public void addTableEditorListener(TableEditorListener listener) {
-        if (listener != null) {
-            this.editionListeners.add(listener);
-        }
-    }
-
-    /**
-     * Removes a {@link #TableEditorListener} from the table.
-     * @param listener the listener to remove
-     */
-    public void removeTableEditorListener(TableEditorListener listener) {
-        if (listener != null) {
-            this.editionListeners.remove(listener);
-        }
-    }
-
-    /**
-     * Sets all the editable columns determined by the <code>Table</code> definition.
-     *
-     * @see #setEditableColumn(String , boolean )
-     */
-    private void setEditableColumns() {
-        for (int i = 0; i < this.editableColumns.size(); i++) {
-            boolean bUpdateEntity = this.editableColumnsUpdateEntity.contains(this.editableColumns.get(i));
-            this.setEditableColumn((String) this.editableColumns.get(i), bUpdateEntity);
-        }
-    }
-
-    public List getEditableColumns() {
-        return this.editableColumns;
-    }
-
-    /**
-     * Sets whether the table header will adjusts its size automatically.
-     * @param autoFixHead true if the table header should auto adjust
-     */
-    public void setAutoFixHead(boolean autoFixHead) {
-        this.autoFixHead = autoFixHead;
-        if ((this.table != null) && (this.table.getModel() instanceof TableSorter)) {
-            ((TableSorter) this.table.getModel()).setFitHeadSize(this.autoFixHead);
-        }
-    }
-
-    /**
-     * Sets whether or not the visible columns can be configured by the user.
-     * @param allowConfiguration true if the visible columns configuration should be enabled, false
-     *        otherwise
-     */
-    public void setVisibleColsConfigurationAllowed(boolean allowConfiguration) {
-        this.allowSetupVisibleColumns = allowConfiguration;
-        if (this.buttonVisibleColsSetup != null) {
-            this.buttonVisibleColsSetup.setVisible(allowConfiguration);
-        }
-        if (this.buttonVisibleColsSetup != null) {
-            this.buttonVisibleColsSetup.setEnabled(allowConfiguration);
-        }
-    }
-
-    protected CellRenderer.CellRendererColorManager cellRendererColorManager = null;
-
-    /**
-     * Sets the color manager for all the {@link CellRenderer} contained by the table.
-     * @param colorManager the new color manager
-     */
-    public void setCellRendererColorManager(CellRenderer.CellRendererColorManager colorManager) {
-        this.cellRendererColorManager = colorManager;
-        Vector cols = this.getAttributeList();
-        for (int i = 0; i < cols.size(); i++) {
-            TableColumn tc = this.getJTable().getColumn(cols.get(i));
-            if (tc != null) {
-                TableCellRenderer rend = tc.getCellRenderer();
-                if (rend instanceof CellRenderer) {
-                    ((CellRenderer) rend).setCellRendererColorManager(colorManager);
-                } else if (rend instanceof ComboReferenceCellRenderer) {
-                    ((ComboReferenceCellRenderer) rend).setCellRendererColorManager(colorManager);
-                }
-            }
-        }
-        TableCellRenderer[] rends = this.getDefaultRenderers();
-        for (int i = 0; i < rends.length; i++) {
-            if (rends[i] instanceof CellRenderer) {
-                ((CellRenderer) rends[i]).setCellRendererColorManager(colorManager);
-            }
-        }
-    }
-
-    protected CellRenderer.CellRendererFontManager cellRendererFontManager = null;
-
-    /**
-     * Sets the font manager for all the {@link CellRenderer} contained by the table.
-     * @param fontManager
-     */
-    public void setCellRendererFontManager(CellRenderer.CellRendererFontManager fontManager) {
-        this.cellRendererFontManager = fontManager;
-        Vector cols = this.getAttributeList();
-        for (int i = 0; i < cols.size(); i++) {
-            TableColumn tc = this.getJTable().getColumn(cols.get(i));
-            if (tc != null) {
-                TableCellRenderer rend = tc.getCellRenderer();
-                if (rend instanceof CellRenderer) {
-                    ((CellRenderer) rend).setCellRendererFontManager(fontManager);
-                }
-            }
-        }
-        TableCellRenderer[] rends = this.getDefaultRenderers();
-        for (int i = 0; i < rends.length; i++) {
-            if (rends[i] instanceof CellRenderer) {
-                ((CellRenderer) rends[i]).setCellRendererFontManager(fontManager);
-            }
-        }
-    }
-
-    /**
-     * Deletes the specified sorting and the filtering preference.
-     * @param confName the name given to the configuration when saved
-     */
-    protected void deteleFilterOrderConfiguration(String confName) {
-
-        String sPreferenceKey = this.getFilterOrderConfPreferenceKey(confName);
-        // If name is not null then save the preference
-        String sKey = this.getFilterOrderConfigurationPreferenceKey();
-        Application ap = ApplicationManager.getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-        if ((prefs != null) && (confName != null)) {
-            prefs.setPreference(this.getUser(), sPreferenceKey, null);
-            String pref = prefs.getPreference(this.getUser(), sKey);
-            if (pref != null) {
-                Vector tokens = ApplicationManager.getTokensAt(pref, ";");
-                if (tokens.contains(confName)) {
-                    tokens.remove(confName);
-                    String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
-                    ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
-                    ap.getPreferences().savePreferences();
-                }
-            }
-        }
-    }
-
-    /**
-     * Saves the table filter configuration.
-     * @param confName the name given to the configuration
-     */
-    protected void saveOrderFilterConfiguration(String confName) {
-        this.saveFilterOrderConfiguration(confName, false);
-    }
-
-    /**
-     * Saves the table filter configuration with a name, and optionally the column position and widths.
-     * @param confName the name given to the configuration;
-     * @param savePositionAndWidth if true, column position and width will be saved
-     */
-    protected void saveFilterOrderConfiguration(String confName, boolean savePositionAndWidth) {
-        if (this.dynamicTable && !this.dynamicPivotable) {
-            // Dynamic tables have not preferences of order and filters
-            return;
-        }
-
-        TableSorter ts = (TableSorter) this.table.getModel();
-        String[] colOrd = this.getOrderColumns();
-        boolean[] asce = this.getAscendents();
-        Hashtable hFilter = ts.getFilters();
-        // since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
-        if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
-            hFilter = new Hashtable();
-        }
-        Hashtable hFilter2 = new Hashtable();
-        Enumeration enumKeys = hFilter.keys();
-        while (enumKeys.hasMoreElements()) {
-            Object oKey = enumKeys.nextElement();
-            Object oValue = hFilter.get(oKey);
-            if (oValue instanceof TableSorter.Filter) {
-                TableSorter.Filter v = (TableSorter.Filter) oValue;
-                Object[] oValues = v.values;
-                for (int i = 0; i < oValues.length; i++) {
-                    if (oValues[i] instanceof java.util.Date) {
-                        oValues[i] = new FilterDate(((java.util.Date) oValues[i]).getTime());
-                    }
-                }
-            }
-            hFilter2.put(oKey, oValue);
-        }
-        if (confName == null) {
-            this.defaultFilter = hFilter;
-        }
-
-        String sValue = null;
-        String sPreferenceKey = this.getFilterOrderConfPreferenceKey(confName);
-        String col = null;
-        String sAscent = null;
-        if ((colOrd != null) && (colOrd.length > 0)) {
-            col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
-            Vector aux = new Vector();
-            for (int i = 0; i < asce.length; i++) {
-                if (asce[i]) {
-                    aux.add(Boolean.TRUE);
-                } else {
-                    aux.add(Boolean.FALSE);
-                }
-            }
-            sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
-        }
-        sValue = col + ";" + sAscent;
-
-        if (savePositionAndWidth) {
-            sValue = sValue + ";" + this.createColumnPositionAndWidthPreference();
-        } else {
-            sValue = sValue + ";" + null;
-        }
-
-        if (hFilter != null) {
-            try {
-                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                ObjectOutputStream out = new ObjectOutputStream(bOut);
-                out.writeObject(hFilter2);
-                out.flush();
-                String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
-                out.close();
-                sValue = sValue + ";" + s;
-                Application ap = ApplicationManager.getApplication();
-                if (ap.getPreferences() != null) {
-                    ap.getPreferences().setPreference(this.getUser(), sPreferenceKey, sValue);
-                    ap.getPreferences().savePreferences();
-                }
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-            }
-        } else {
-            if (this.parentForm != null) {
-                Application ap = ApplicationManager.getApplication();
-                if (ap.getPreferences() != null) {
-                    ap.getPreferences().setPreference(this.getUser(), sPreferenceKey, sValue);
-                    ap.getPreferences().savePreferences();
-                }
-            }
-        }
-
-        // If name is not null then save the preference
-        String sKey = this.getFilterOrderConfigurationPreferenceKey();
-        Application ap = ApplicationManager.getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-        if ((prefs != null) && (confName != null)) {
-            String pref = prefs.getPreference(this.getUser(), sKey);
-            if (pref != null) {
-                Vector tokens = ApplicationManager.getTokensAt(pref, ";");
-                if (!tokens.contains(confName)) {
-                    tokens.add(confName);
-                    String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
-                    ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
-                    ap.getPreferences().savePreferences();
-                }
-            } else {
-                String sNew = confName;
-                ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
-                ap.getPreferences().savePreferences();
-            }
-        }
-    }
-
-    /**
-     * Get the value of the table preference, optionally with the position and with of the columns
-     * @param savePositionAndWidth if true, column position and width will added to value
-     */
-    protected String getValueFilterOrderConfiguration(boolean savePositionAndWidth) {
-        String sValue = null;
-        if (this.dynamicTable && !this.dynamicPivotable) {
-            // Dynamic tables have not preferences of order and filters
-            return sValue;
-        }
-
-        TableSorter ts = (TableSorter) this.table.getModel();
-        String[] colOrd = this.getOrderColumns();
-        boolean[] asce = this.getAscendents();
-        Hashtable hFilter = ts.getFilters();
-        // since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
-        if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
-            hFilter = new Hashtable();
-        }
-        Hashtable hFilter2 = new Hashtable();
-        Enumeration enumKeys = hFilter.keys();
-        while (enumKeys.hasMoreElements()) {
-            Object oKey = enumKeys.nextElement();
-            Object oValue = hFilter.get(oKey);
-            if (oValue instanceof TableSorter.Filter) {
-                TableSorter.Filter v = (TableSorter.Filter) oValue;
-                Object[] oValues = v.values;
-                for (int i = 0; i < oValues.length; i++) {
-                    if (oValues[i] instanceof java.util.Date) {
-                        oValues[i] = new FilterDate(((java.util.Date) oValues[i]).getTime());
-                    }
-                }
-            }
-            hFilter2.put(oKey, oValue);
-        }
-
-        String col = null;
-        String sAscent = null;
-        if ((colOrd != null) && (colOrd.length > 0)) {
-            col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
-            Vector aux = new Vector();
-            for (int i = 0; i < asce.length; i++) {
-                if (asce[i]) {
-                    aux.add(Boolean.TRUE);
-                } else {
-                    aux.add(Boolean.FALSE);
-                }
-            }
-            sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
-        }
-        sValue = col + ";" + sAscent;
-
-        if (savePositionAndWidth) {
-            sValue = sValue + ";" + this.createColumnPositionAndWidthPreference();
-        } else {
-            sValue = sValue + ";" + null;
-        }
-
-        if (hFilter != null) {
-
-            try {
-                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                ObjectOutputStream out;
-                out = new ObjectOutputStream(bOut);
-                out.writeObject(hFilter2);
-                out.flush();
-                String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
-                out.close();
-                sValue = sValue + ";" + s;
-                return sValue;
-            } catch (IOException e) {
-                Table.logger.error("Error retrieving filter data. ", e);
-                return sValue;
-            }
-
-        } else {
-            return sValue;
-        }
-    }
-
-    protected ExtendedJPopupMenu menuOrderFilterSetup = null;
-
-    protected ActionListener sortFilterOrderItemListener = null;
-
-    protected ActionListener orderFilterSetupDeleteItemsListener = null;
-
-    protected ActionListener addShareFilterSetupItemsListener = null;
-
-    protected ActionListener obtainShareElementMessageItemListener = null;
-
-    protected ActionListener stopSharingElementItemListener = null;
-
-    protected ActionListener removeTargetSharedElementItemListener = null;
-
-    protected ActionListener editSharingElementItemListenes = null;
-
-    protected ActionListener addTargetToSharedElementItemListener = null;
-
-    protected ActionListener loadFilterSharedElementItemListener = null;
-
-    protected JMenuItem menuDefaultOrderSetup = new JMenuItem("table.load_default_configuration");
-
-    protected JMenuItem menuSaveDefaultOrderConfiguration = new JMenuItem("table.save_as_default");
-
-    protected JMenuItem menuSave = new JMenuItem("save");
-
-    protected static String loadDefaultConfigurationKey = "table.load_default_configuration";
-
-    protected static String saveAsDefaultConfigurationKey = "table.save_as_default";
-
-    /**
-     * Class that contains a TableButton and a JButton into a JPanel..
-     */
-    protected static String saveKey = "save";
-
-    class AuxPanel extends JPanel implements MenuElement {
-
-        JButton button = null;
-
-        TableButton tableButton1 = null;
-
-        TableButton tableButton2 = null;
-
-        TableButton tableButton3 = null;
-
-        TableButton tableButtonI = null;
-
-        public AuxPanel(TableButton tableButton1, JButton jButton) {
-            this.tableButton1 = tableButton1;
-            this.button = jButton;
-            this.setLayout(new GridBagLayout());
-            this.setOpaque(false);
-            this.add(tableButton1, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(jButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-            this.setBorder(new EmptyBorder(0, 0, 0, 0));
-        }
-
-        public AuxPanel(TableButton tableButton1, TableButton tableButton2, JButton jButton) {
-            this.tableButton1 = tableButton1;
-            this.tableButton2 = tableButton2;
-            this.button = jButton;
-            this.setLayout(new GridBagLayout());
-            this.setOpaque(false);
-            this.add(jButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton1, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton2, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.setBorder(new EmptyBorder(0, 0, 0, 0));
-        }
-
-        public AuxPanel(TableButton tableButton1, TableButton tableButton2, TableButton tableButtonI, JButton jButton) {
-            this.tableButton1 = tableButton1;
-            this.tableButton2 = tableButton2;
-            this.tableButtonI = tableButtonI;
-            this.button = jButton;
-            this.setLayout(new GridBagLayout());
-            this.setOpaque(false);
-            this.add(tableButtonI, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(jButton, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton1, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton2, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.setBorder(new EmptyBorder(0, 0, 0, 0));
-        }
-
-        public AuxPanel(TableButton tableButton1, TableButton tableButton2, TableButton tableButton3,
-                TableButton tableButtonI, JButton jButton) {
-            this.tableButton1 = tableButton1;
-            this.tableButton2 = tableButton2;
-            this.tableButton3 = tableButton3;
-            this.tableButtonI = tableButtonI;
-            this.button = jButton;
-            this.setLayout(new GridBagLayout());
-            this.setOpaque(false);
-            this.add(tableButtonI, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(jButton, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton1, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton2, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(tableButton3, new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.setBorder(new EmptyBorder(0, 0, 0, 0));
-        }
-
-        /**
-         * Empty
-         */
-        @Override
-        public void menuSelectionChanged(boolean isIncluded) {
-            // m.menuSelectionChanged(isIncluded);
-        }
-
-        /**
-         * Empty
-         */
-        @Override
-        public void processMouseEvent(MouseEvent e, MenuElement[] path, MenuSelectionManager manager) {
-            // m.processMouseEvent(e,path,manager);
-        }
-
-        /**
-         * Empty
-         */
-        @Override
-        public void processKeyEvent(KeyEvent e, MenuElement[] path, MenuSelectionManager manager) {
-            // m.processKeyEvent(e,path,manager);
-        }
-
-        /**
-         * Returns the first MenuElement
-         */
-        @Override
-        public MenuElement[] getSubElements() {
-            return new MenuElement[0];
-        }
-
-        /**
-         * Returns this
-         */
-        @Override
-        public Component getComponent() {
-            return this;
-        }
-
-    }
-
-    /**
-     * Method call by the listener of the TableButton that manages the saving of the filter
-     * configuration. Creates the menu corresponding to the stored configurations and displays it.
-     * @param e the event
-     */
-    protected void configureFilterOrder(ActionEvent e) {
-        Application ap = ApplicationManager.getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-        if (prefs == null) {
-            return;
-        }
-        // Configuration window
-        if (this.menuOrderFilterSetup == null) {
-            this.menuOrderFilterSetup = new ExtendedJPopupMenu();
-            if (this.buttonSaveFilterOrderSetup != null) {
-                ((TableButtonPopupble) this.buttonSaveFilterOrderSetup).setMenu(this.menuOrderFilterSetup);
-            }
-            this.menuSave.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    // Ask
-                    Object s = MessageDialog.showInputMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "table.enter_configuration_name", Table.this.resourcesFile);
-                    if (s != null) {
-                        String str = s.toString();
-                        int i = JOptionPane.showConfirmDialog((Component) e.getSource(),
-                                ApplicationManager.getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS,
-                                        Table.this.resourcesFile));
-                        if (i == JOptionPane.YES_OPTION) {
-                            Table.this.saveFilterOrderConfiguration(str, true);
-                        } else if (i == JOptionPane.NO_OPTION) {
-                            Table.this.saveFilterOrderConfiguration(str, false);
-                        } else {
-                            return;
-                        }
-                    }
-                }
-            });
-
-            this.menuDefaultOrderSetup.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.loadFilterOrderConfiguration(null);
-                }
-            });
-            this.menuSaveDefaultOrderConfiguration.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int i = JOptionPane.showConfirmDialog((Component) e.getSource(),
-                            ApplicationManager.getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS,
-                                    Table.this.resourcesFile));
-                    if (i == JOptionPane.YES_OPTION) {
-                        Table.this.saveFilterOrderConfiguration(null, true);
-                    } else if (i == JOptionPane.NO_OPTION) {
-                        Table.this.saveFilterOrderConfiguration(null, false);
-                    } else {
-                        return;
-                    }
-                }
-            });
-            this.sortFilterOrderItemListener = new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (e.getSource() instanceof JButton) {
-                        Table.this.menuOrderFilterSetup.setVisible(false);
-                        Table.this.loadFilterOrderConfiguration(((JButton) e.getSource()).getActionCommand());
-                    }
-                }
-            };
-
-            this.orderFilterSetupDeleteItemsListener = new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (e.getSource() instanceof JButton) {
-                        Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
-                        // SwingUtilities.getWindowAncestor(((Component)
-                        // e.getSource())).setVisible(false);
-                        if (MessageDialog.showQuestionMessage(w, ApplicationManager
-                            .getTranslation(Table.M_WOULD_YOU_LIKE_TO_DELETE_THIS_CONFIGURATION_OF_FILTER))) {
-                            Table.this.deteleFilterOrderConfiguration(((JButton) e.getSource()).getActionCommand());
-                            Table.this.menuOrderFilterSetup.setVisible(false);
-                        }
-                    }
-                }
-            };
-
-            if (this.shareRemoteReferenceFilters) {
-                this.addShareFilterSetupItemsListener = new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e.getSource() instanceof JButton) {
-                            try {
-                                Point p = ((Component) e.getSource()).getLocationOnScreen();
-                                // SwingUtilities.getWindowAncestor(((Component)
-                                // e.getSource())).setVisible(false);
-                                String filterName = ((TableButton) e.getSource()).getActionCommand();
-                                Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
-                                FormAddSharedReference f = new FormAddSharedReference(w, true,
-                                        ApplicationManager.getApplication().getReferenceLocator(),
-                                        Table.this.getFilterOrderConfigurationValue(filterName),
-                                        Table.this.getFilterOrderConfPreferenceKey(null),
-                                        ((ClientReferenceLocator) ApplicationManager.getApplication()
-                                            .getReferenceLocator()).getUser(),
-                                        "", filterName, false, p);
-                                if (f.getButtonOptionResult()) {
-                                    Table.this.deteleFilterOrderConfiguration(filterName);
-                                }
-                                f = null;
-
-                            } catch (Exception e1) {
-                                Table.logger.error(null, e1);
-                            }
-                        }
-                    }
-                };
-            }
-
-            if (!ApplicationManager.useOntimizePlaf) {
-                this.menuOrderFilterSetup.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
-            }
-        }
-
-        if (prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(null)) != null) {
-            this.menuDefaultOrderSetup.setEnabled(true);
-        } else {
-            this.menuDefaultOrderSetup.setEnabled(false);
-        }
-
-        this.menuSave.setText(ApplicationManager.getTranslation(Table.saveKey, this.resourcesFile));
-        this.menuSaveDefaultOrderConfiguration
-            .setText(ApplicationManager.getTranslation(Table.saveAsDefaultConfigurationKey, this.resourcesFile));
-        this.menuDefaultOrderSetup
-            .setText(ApplicationManager.getTranslation(Table.loadDefaultConfigurationKey, this.resourcesFile));
-
-        Component[] c = this.menuOrderFilterSetup.getComponents();
-        for (int i = 0; (c != null) && (i < c.length); i++) {
-            if (c[i] instanceof JPanel) {
-                Component[] c2 = ((JPanel) c[i]).getComponents();
-                for (int j = 0; j < c2.length; j++) {
-                    if (c2[j] instanceof RolloverButton) {
-                        ((RolloverButton) c2[j]).removeActionListener(this.sortFilterOrderItemListener);
-                    } else if (c2[j] instanceof JButton) {
-                        ((JButton) c2[j]).removeActionListener(this.orderFilterSetupDeleteItemsListener);
-                    }
-                }
-                ((JPanel) c[i]).removeAll();
-            }
-        }
-
-        this.menuOrderFilterSetup.removeAll();
-        // By default
-
-        this.menuOrderFilterSetup.add(this.menuDefaultOrderSetup);
-
-        // Now all the others
-        String sKey = this.getFilterOrderConfigurationPreferenceKey();
-        String pref = prefs.getPreference(this.getUser(), sKey);
-        Vector tokens = ApplicationManager.getTokensAt(pref, ";");
-        if (this.shareRemoteReferenceFilters) {
-            this.showShareFilterTableList(tokens);
-        } else {
-            for (int i = 0; i < tokens.size(); i++) {
-                if (i == 0) {
-                    this.menuOrderFilterSetup.addSeparator();
-                }
-                final String token = (String) tokens.get(i);
-                JButton menu = new RolloverButton(token) {
-
-                    @Override
-                    public Dimension getPreferredSize() {
-                        Dimension d = super.getPreferredSize();
-                        d.height = 22;
-                        return d;
-                    }
-
-                    @Override
-                    public boolean isFocusTraversable() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean isRequestFocusEnabled() {
-                        return false;
-                    }
-                };
-                menu.setActionCommand(token);
-                menu.addActionListener(this.sortFilterOrderItemListener);
-                menu.setForeground(Color.blue.darker());
-                menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
-
-                TableButton b = new TableButton();
-                b.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
-                b.setToolTipText(
-                        ApplicationManager.getTranslation("table.delete_this_configuration", this.resourcesFile));
-                b.setActionCommand(token);
-
-                b.addActionListener(this.orderFilterSetupDeleteItemsListener);
-                JPanel p = new AuxPanel(b, menu);
-
-                this.menuOrderFilterSetup.add(p);
-
-            }
-
-            if (tokens.size() > 0) {
-                this.menuOrderFilterSetup.addSeparator();
-            }
-        }
-
-        this.menuOrderFilterSetup.add(this.menuSaveDefaultOrderConfiguration);
-        this.menuOrderFilterSetup.add(this.menuSave);
-
-        this.menuOrderFilterSetup.show((Component) e.getSource(), 0, ((Component) e.getSource()).getHeight() + 1);
-    }
-
-    protected void configurePivotDynamicFilterOrder(ActionEvent e) {
-
-    }
-
-    protected void showShareFilterTableList(Vector tokens) {
-
-        this.obtainShareElementMessageItemListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int shareId = Integer.parseInt(e.getActionCommand());
-                    int sessionID = Table.this.locator.getSessionId();
-                    IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                        .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                    String message = remoteReference.getSharedElementMessage(shareId, sessionID);
-                    if (!message.isEmpty()) {
-
-                        Toast.showMessage(Table.this, message, null, 1500);
-
-                    } else {
-                        JOptionPane.showMessageDialog(Table.this,
-                                ApplicationManager.getTranslation("shareRemote.message_empty"),
-                                ApplicationManager.getTranslation("shareRemote.message_dialog"),
-                                JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } catch (Exception ex) {
-                    Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
-                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "shareRemote.not_retrive_message");
-                }
-            }
-        };
-
-        this.stopSharingElementItemListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
-
-                if (MessageDialog.showQuestionMessage(w,
-                        ApplicationManager.getTranslation(Table.M_WOULD_YOU_LIKE_TO_DELETE_THIS_SHARE_FILTER))) {
-                    try {
-                        int shareId = Integer.parseInt(e.getActionCommand());
-                        int sessionID = Table.this.locator.getSessionId();
-                        IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                            .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                        SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
-                        Application ap = ApplicationManager.getApplication();
-                        ApplicationPreferences prefs = ap.getPreferences();
-
-                        if (prefs != null) {
-
-                            String confName = sharedItem.getName();
-
-                            prefs.setPreference(Table.this.getUser(),
-                                    Table.this.getFilterOrderConfPreferenceKey(sharedItem.getName()),
-                                    sharedItem.getContentShare());
-
-                            String sKey = Table.this.getFilterOrderConfigurationPreferenceKey();
-                            String pref = prefs.getPreference(Table.this.getUser(), sKey);
-
-                            if (pref != null) {
-                                Vector tokens = ApplicationManager.getTokensAt(pref, ";");
-                                if (!tokens.contains(confName)) {
-                                    tokens.add(confName);
-                                    String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
-                                    prefs.setPreference(Table.this.getUser(), sKey, sNew);
-                                }
-                            } else {
-                                String sNew = confName;
-                                prefs.setPreference(Table.this.getUser(), sKey, sNew);
-                            }
-                            prefs.savePreferences();
-                        }
-                        remoteReference.deleteSharedItem(shareId, sessionID);
-                    } catch (Exception ex) {
-                        Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
-                        MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                                "shareRemote.error_deleting_shared_element");
-                    }
-                }
-            }
-        };
-
-        this.editSharingElementItemListenes = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                try {
-                    Point p = ((Component) e.getSource()).getLocationOnScreen();
-                    // SwingUtilities.getWindowAncestor(((Component)
-                    // e.getSource())).setVisible(false);
-                    int shareId = Integer.parseInt(e.getActionCommand());
-                    int sessionID = Table.this.locator.getSessionId();
-                    IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                        .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                    SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
-                    String filterContent = null;
-                    int i = JOptionPane.showConfirmDialog(Table.this, ApplicationManager
-                        .getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS, Table.this.resourcesFile));
-                    if (i == JOptionPane.YES_OPTION) {
-                        filterContent = Table.this.getValueFilterOrderConfiguration(true);
-                    } else if (i == JOptionPane.NO_OPTION) {
-                        filterContent = Table.this.getValueFilterOrderConfiguration(false);
-                    } else {
-                        return;
-                    }
-
-                    FormUpdateSharedReference f = new FormUpdateSharedReference(
-                            SwingUtilities.getWindowAncestor(Table.this), true, Table.this.locator, p, sharedItem);
-                    if (f.getUpdateStatus()) {
-                        String nameUpdate = f.getName();
-                        String contentShareUpdate = filterContent;
-                        String messageUpdate = (String) f.getMessage();
-
-                        remoteReference.updateSharedItem(shareId, contentShareUpdate, messageUpdate, nameUpdate,
-                                sessionID);
-                    }
-                } catch (Exception ex) {
-                    Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
-                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "shareRemote.not_retrive_message");
-                }
-
-            }
-        };
-
-        this.addTargetToSharedElementItemListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                try {
-                    int shareId = Integer.parseInt(e.getActionCommand());
-                    int sessionID = Table.this.locator.getSessionId();
-                    Point p = ((Component) e.getSource()).getLocationOnScreen();
-                    // SwingUtilities.getWindowAncestor(((Component)
-                    // e.getSource())).setVisible(false);
-                    IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                        .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                    ListDataField listDataField = Table.this.createAndConfigureTargetUser();
-                    List<String> oldTargetList = remoteReference.getTargetSharedItemsList(shareId, sessionID);
-                    listDataField.setValue(new Vector<String>(oldTargetList));
-                    Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
-                    FormAddUserSharedReference f = new FormAddUserSharedReference(w, true, Table.this.locator,
-                            listDataField);
-                    f.setLocation(p);
-                    f.setVisible(true);
-
-                    if (f.getUpdateStatus()) {
-                        List<String> targetList = new ArrayList<String>();
-                        if (listDataField.getValue() != null) {
-                            for (Object oActual : (Vector) listDataField.getValue()) {
-                                targetList.add(oActual.toString());
-                            }
-                        }
-                        remoteReference.editTargetSharedElement(shareId, targetList, sessionID);
-                    }
-
-                } catch (Exception ex) {
-                    Table.logger.error(ApplicationManager.getTranslation("shareRemote.error_adding_target_user"), ex);
-                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "shareRemote.error_adding_target_user");
-                }
-
-            }
-        };
-
-        this.loadFilterSharedElementItemListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int shareId = Integer.parseInt(e.getActionCommand());
-                    int sessionID = Table.this.locator.getSessionId();
-                    IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                        .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                    SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
-                    Table.this.loadShareFilterOrderConfiguration(sharedItem);
-                } catch (Exception ex) {
-                    Table.logger.error(ApplicationManager.getTranslation("shareRemote.error_loading_shared_filter"),
-                            ex);
-                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "shareRemote.error_loading_shared_filter");
-                }
-
-            }
-
-        };
-
-        this.removeTargetSharedElementItemListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int shareId = Integer.parseInt(e.getActionCommand());
-                    int sessionID = Table.this.locator.getSessionId();
-                    IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
-                        .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-                    EntityResult erToret = remoteReference.deleteTargetSharedItem(shareId, sessionID);
-                    if (erToret.getCode() == EntityResult.OPERATION_WRONG) {
-                        Table.logger.error("{}", ApplicationManager.getTranslation("shareRemote.not_delete_target"),
-                                erToret.getMessage());
-                        MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                                "shareRemote.not_delete_target");
-                    }
-                } catch (Exception ex) {
-                    Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_delete_target"), ex);
-                    MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "shareRemote.not_delete_target");
-                }
-            }
-        };
-
-        try {
-            EntityReferenceLocator loc = ApplicationManager.getApplication().getReferenceLocator();
-            IShareRemoteReference shareReference = (IShareRemoteReference) ((UtilReferenceLocator) loc)
-                .getRemoteReference(IShareRemoteReference.REMOTE_NAME, loc.getSessionId());
-
-            for (int i = 0; i < tokens.size(); i++) {
-
-                if (i == 0) {
-                    this.menuOrderFilterSetup.addSeparator();
-                }
-
-                final String token = (String) tokens.get(i);
-                this.showNonSharedElement(token);
-
-                if ((i + 1) == tokens.size()) {
-                    this.menuOrderFilterSetup.addSeparator();
-                }
-
-            }
-
-            // LIST SHARED BY ME
-            this.showSharedElement();
-            // LIST SHARED WITH ME
-            this.showSharedElementUserTarget();
-
-        } catch (Exception e) {
-            if (Table.logger.isDebugEnabled()) {
-                Table.logger.debug(null, e);
-            } else {
-                Table.logger.info("Preference sharing system not available");
-            }
-        }
-    }
-
-    protected void showSharedElement() {
-        try {
-
-            String shareKey = this.getFilterOrderConfPreferenceKey(null);
-            String username = ((ClientReferenceLocator) Table.this.locator).getUser();
-            int sessionID = Table.this.locator.getSessionId();
-
-            IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) this.locator)
-                .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-            List<HashMap<String, Object>> result = remoteReference.getSourceSharedElementMenuList(username, shareKey,
-                    sessionID);
-
-            // if (!result.isEmpty()){
-            // this.menuOrderFilterSetup.addSeparator();
-            // }
-
-            for (Map<String, Object> actualPreference : result) {
-
-                int shareKeyId = (Integer) actualPreference.get(IShareRemoteReference.SHARE_KEY_STRING);
-                String filterName = (String) actualPreference.get(IShareRemoteReference.SHARE_NAME_STRING);
-
-                JButton menu = new RolloverButton(filterName) {
-
-                    @Override
-                    public Dimension getPreferredSize() {
-                        Dimension d = super.getPreferredSize();
-                        d.height = 22;
-                        return d;
-                    }
-
-                    @Override
-                    public boolean isFocusTraversable() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean isRequestFocusEnabled() {
-                        return false;
-                    }
-                };
-
-                menu.setActionCommand(Integer.toString(shareKeyId));
-                menu.addActionListener(this.loadFilterSharedElementItemListener);
-                menu.setForeground(Color.blue.darker());
-                menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
-
-                TableButton b1 = new TableButton();
-                b1.setIcon(ImageManager.getIcon(ImageManager.INFO_16));
-                b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.obtain_message", this.resourcesFile));
-                b1.setActionCommand(Integer.toString(shareKeyId));
-                b1.addActionListener(this.obtainShareElementMessageItemListener);
-
-                TableButton b2 = new TableButton();
-                b2.setIcon(ImageManager.getIcon(ImageManager.EDIT));
-                b2.setToolTipText(
-                        ApplicationManager.getTranslation("shareRemote.edit_share_element", this.resourcesFile));
-                b2.setActionCommand(Integer.toString(shareKeyId));
-                b2.addActionListener(this.editSharingElementItemListenes);
-
-                TableButton b3 = new TableButton();
-                b3.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARED_DELETE));
-                b3.setToolTipText(
-                        ApplicationManager.getTranslation("shareRemote.delete_share_element", this.resourcesFile));
-                b3.setActionCommand(Integer.toString(shareKeyId));
-                b3.addActionListener(this.stopSharingElementItemListener);
-
-                TableButton bI = new TableButton();
-                bI.setIcon(ImageManager.getIcon(ImageManager.USERS_EDIT));
-                bI.setToolTipText(
-                        ApplicationManager.getTranslation("shareRemote.add_target_element", this.resourcesFile));
-                bI.setActionCommand(Integer.toString(shareKeyId));
-                bI.addActionListener(this.addTargetToSharedElementItemListener);
-
-                JPanel p = new AuxPanel(b1, b2, b3, bI, menu);
-                this.menuOrderFilterSetup.add(p);
-
-            }
-
-            if (!result.isEmpty()) {
-                this.menuOrderFilterSetup.addSeparator();
-            }
-
-        } catch (Exception e) {
-            Table.logger.error("shareRemote.cannot_obtain_shared_element", e);
-        }
-
-    }
-
-    protected void showSharedElementUserTarget() {
-
-        try {
-            if (this.locator == null) {
-                this.locator = ApplicationManager.getApplication().getReferenceLocator();
-            }
-            String shareKey = this.getFilterOrderConfPreferenceKey(null);
-            String username = ((ClientReferenceLocator) Table.this.locator).getUser();
-            int sessionID = Table.this.locator.getSessionId();
-
-            IShareRemoteReference remoteReference;
-            remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) this.locator)
-                .getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
-
-            List<HashMap<String, Object>> result = remoteReference.getTargetSharedElementMenuList(username, shareKey,
-                    sessionID);
-
-            for (Map<String, Object> actualPreference : result) {
-
-                String filterName = (String) actualPreference.get(IShareRemoteReference.SHARE_NAME_STRING);
-
-                JButton menu = new RolloverButton(filterName) {
-
-                    @Override
-                    public Dimension getPreferredSize() {
-                        Dimension d = super.getPreferredSize();
-                        d.height = 22;
-                        return d;
-                    }
-
-                    @Override
-                    public boolean isFocusTraversable() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean isRequestFocusEnabled() {
-                        return false;
-                    }
-                };
-
-                int shareKeyId = (Integer) actualPreference.get(IShareRemoteReference.SHARE_KEY_STRING);
-                int shareTargetKey = (Integer) actualPreference.get(IShareRemoteReference.SHARE_TARGET_KEY_STRING);
-
-                menu.setActionCommand(Integer.toString(shareKeyId));
-                menu.addActionListener(this.loadFilterSharedElementItemListener);
-                menu.setForeground(Color.blue.darker());
-                menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
-
-                TableButton b1 = new TableButton();
-                b1.setIcon(ImageManager.getIcon(ImageManager.INFO_16));
-                b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.obtain_message", this.resourcesFile));
-                b1.setActionCommand(Integer.toString(shareKeyId));
-                b1.addActionListener(this.obtainShareElementMessageItemListener);
-
-                TableButton b2 = new TableButton();
-                b2.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARED_DELETE));
-                b2.setToolTipText(ApplicationManager.getTranslation("shareRemote.delete_target_share_element",
-                        this.resourcesFile));
-                b2.setActionCommand(Integer.toString(shareTargetKey));
-                b2.addActionListener(this.removeTargetSharedElementItemListener);
-
-                JPanel p = new AuxPanel(b1, b2, menu);
-                this.menuOrderFilterSetup.add(p);
-
-            }
-
-            if (!result.isEmpty()) {
-                this.menuOrderFilterSetup.addSeparator();
-            }
-
-        } catch (Exception e) {
-            Table.logger.error("Error obtaining elements shared with the user.", e);
-        }
-
-    }
-
-    protected ListDataField createAndConfigureTargetUser() throws Exception {
-        Hashtable h = new Hashtable();
-        h.put(DataField.ATTR, IShareRemoteReference.SHARE_USER_TARGET_STRING);
-        h.put(DataField.TEXT_STR, ApplicationManager.getTranslation(IShareRemoteReference.SHARE_USER_TARGET_STRING));
-        h.put(DataField.LABELPOSITION, "top");
-        h.put(DataField.DIM, "text");
-        h.put(DataField.EXPAND, "yes");
-        h.put("rows", "5");
-        ListDataField listDataField = new ListDataField(h);
-        return listDataField;
-    }
-
-    protected void showNonSharedElement(String token) {
-        JButton menu = new RolloverButton(token) {
-
-            @Override
-            public Dimension getPreferredSize() {
-                Dimension d = super.getPreferredSize();
-                d.height = 22;
-                return d;
-            }
-
-            @Override
-            public boolean isFocusTraversable() {
-                return false;
-            }
-
-            @Override
-            public boolean isRequestFocusEnabled() {
-                return false;
-            }
-        };
-        menu.setActionCommand(token);
-        menu.addActionListener(this.sortFilterOrderItemListener);
-        menu.setForeground(Color.blue.darker());
-        menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
-
-        TableButton b1 = new TableButton();
-        b1.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARE_ACTION));
-        b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.share_filter", this.resourcesFile));
-        b1.setActionCommand(token);
-        b1.addActionListener(this.addShareFilterSetupItemsListener);
-
-        TableButton b2 = new TableButton();
-        b2.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
-        b2.setToolTipText(ApplicationManager.getTranslation("table.delete_this_configuration", this.resourcesFile));
-        b2.setActionCommand(token);
-        b2.addActionListener(this.orderFilterSetupDeleteItemsListener);
-
-        JPanel p = new AuxPanel(b1, b2, menu);
-        this.menuOrderFilterSetup.add(p);
-
-    }
-
-    /**
-     * Loads the configuration which name is passed as parameter. If the filter configuration cannot be
-     * found, loads the default one, if exists.
-     * @param filterName
-     */
-    public void loadFilterOrderConfiguration(String filterName) {
-        Application ap = ApplicationManager.getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-
-        if (prefs == null) {
-            return;
-        }
-        String sf = prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName));
-        if (sf != null) {
-            Vector cols = ApplicationManager.getTokensAt(sf, ";");
-            if (cols.size() >= 2) {
-                String col = (String) cols.get(0);
-                String asc = (String) cols.get(1);
-                try {
-                    if (!"null".equals(col)) {
-                        // Search if there are multiple columns
-
-                        if (col.indexOf(":") >= 0) {
-                            Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-                            Vector ascends = ApplicationManager.getTokensAt(asc, ":");
-                            if (otherCols.size() != ascends.size()) {
-                                Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols,
-                                        ascends);
-                            } else {
-                                this.resetOrder();
-                                for (int i = 0; i < otherCols.size(); i++) {
-                                    String c = (String) otherCols.get(i);
-                                    String a = (String) ascends.get(i);
-                                    boolean ascb = ApplicationManager.parseStringValue(a, false);
-                                    this.sortByWithoutReset(c, ascb);
-                                }
-                            }
-                        } else {
-                            boolean ascb = ApplicationManager.parseStringValue(asc, false);
-                            this.sortBy(col, ascb);
-                        }
-                    } else {
-                        this.resetOrder();
-                    }
-                    if (cols.size() >= 3) {
-                        ((TableSorter) this.table.getModel()).resetGroup();
-                        // Check if it is groupping or filter
-                        String f = (String) cols.get(2);
-                        int index = 3;
-                        if (!f.startsWith("BASE64")) {
-                            // Load position and columns width
-                            if (!"null".equals(f)) {
-                                this.applyColumnPositonAndPreferences(f);
-                                if (filterName == null) {
-                                    this.prefWidthAndPosApply = true;
-                                }
-                            }
-                            f = (String) cols.get(3);
-                            index = 4;
-                        }
-                        if (cols.size() > index) {
-                            for (int i = index; i < cols.size(); i++) {
-                                f = f + ";" + cols.get(i);
-                            }
-                        }
-                        byte[] bytes = null;
-                        if (f.startsWith("BASE64")) {
-                            f = f.substring("BASE64".length());
-                        }
-
-                        bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
-                        ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
-                        ObjectInputStream in = new ObjectInputStream(bIn);
-                        Object o = in.readObject();
-                        if (o instanceof Hashtable) {
-                            // To avoid serialization problems
-                            Hashtable hNews = new Hashtable();
-                            Hashtable g = (Hashtable) o;
-                            Enumeration enumKeys = g.keys();
-                            while (enumKeys.hasMoreElements()) {
-                                Object oKey = enumKeys.nextElement();
-                                Object oValue = g.get(oKey);
-                                if (oValue instanceof TableSorter.Filter) {
-                                    TableSorter.Filter v = (TableSorter.Filter) oValue;
-                                    Object[] oValues = v.values;
-                                    for (int i = 0; i < oValues.length; i++) {
-                                        if (oValues[i] instanceof FilterDate) {
-                                            oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
-                                        }
-                                    }
-                                }
-                                hNews.put(oKey, oValue);
-                            }
-                            this.applyFilter(hNews);
-                        }
-                    }
-                } catch (Exception e) {
-                    Table.logger.error(null, e);
-                    prefs.setPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName), null);
-                }
-            }
-        }
-    }
-
-    public void loadShareFilterOrderConfiguration(SharedElement shareElement) {
-
-        String sf = shareElement.getContentShare();
-        String filterName = shareElement.getName();
-
-        Vector cols = ApplicationManager.getTokensAt(sf, ";");
-        if (cols.size() >= 2) {
-            String col = (String) cols.get(0);
-            String asc = (String) cols.get(1);
-            try {
-                if (!"null".equals(col)) {
-                    // Search if there are multiple columns
-
-                    if (col.indexOf(":") >= 0) {
-                        Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-                        Vector ascends = ApplicationManager.getTokensAt(asc, ":");
-                        if (otherCols.size() != ascends.size()) {
-                            Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols,
-                                    ascends);
-                        } else {
-                            this.resetOrder();
-                            for (int i = 0; i < otherCols.size(); i++) {
-                                String c = (String) otherCols.get(i);
-                                String a = (String) ascends.get(i);
-                                boolean ascb = ApplicationManager.parseStringValue(a, false);
-                                this.sortByWithoutReset(c, ascb);
-                            }
-                        }
-                    } else {
-                        boolean ascb = ApplicationManager.parseStringValue(asc, false);
-                        this.sortBy(col, ascb);
-                    }
-                } else {
-                    this.resetOrder();
-                }
-                if (cols.size() >= 3) {
-                    ((TableSorter) this.table.getModel()).resetGroup();
-                    // Check if it is groupping or filter
-                    String f = (String) cols.get(2);
-                    int index = 3;
-                    if (!f.startsWith("BASE64")) {
-                        // Load position and columns width
-                        if (!"null".equals(f)) {
-                            this.applyColumnPositonAndPreferences(f);
-                            if (filterName == null) {
-                                this.prefWidthAndPosApply = true;
-                            }
-                        }
-                        f = (String) cols.get(3);
-                        index = 4;
-                    }
-                    if (cols.size() > index) {
-                        for (int i = index; i < cols.size(); i++) {
-                            f = f + ";" + cols.get(i);
-                        }
-                    }
-                    byte[] bytes = null;
-                    if (f.startsWith("BASE64")) {
-                        f = f.substring("BASE64".length());
-                    }
-
-                    bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
-                    ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
-                    ObjectInputStream in = new ObjectInputStream(bIn);
-                    Object o = in.readObject();
-                    if (o instanceof Hashtable) {
-                        // To avoid serialization problems
-                        Hashtable hNews = new Hashtable();
-                        Hashtable g = (Hashtable) o;
-                        Enumeration enumKeys = g.keys();
-                        while (enumKeys.hasMoreElements()) {
-                            Object oKey = enumKeys.nextElement();
-                            Object oValue = g.get(oKey);
-                            if (oValue instanceof TableSorter.Filter) {
-                                TableSorter.Filter v = (TableSorter.Filter) oValue;
-                                Object[] oValues = v.values;
-                                for (int i = 0; i < oValues.length; i++) {
-                                    if (oValues[i] instanceof FilterDate) {
-                                        oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
-                                    }
-                                }
-                            }
-                            hNews.put(oKey, oValue);
-                        }
-                        this.applyFilter(hNews);
-                    }
-                }
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-                // prefs.setPreference(this.getUser(),
-                // this.getFilterOrderConfPreferenceKey(filterName), null);
-            }
-        }
-
-    }
-
-    public String getFilterOrderConfigurationValue(String filterName) {
-
-        String toRet = null;
-
-        Application ap = ApplicationManager.getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-
-        if (prefs == null) {
-            return toRet;
-        }
-
-        String sf = prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName));
-        if (sf != null) {
-            toRet = sf;
-        }
-
-        return toRet;
-    }
-
-    protected EditorManager cellEditorManager = null;
-
-    /**
-     * Sets an {@link EditorManager} to the present <code>Table</code>.
-     * @param manager
-     */
-    public void setEditorManager(EditorManager manager) {
-        this.cellEditorManager = manager;
-    }
-
-    /**
-     * Returns the {@link EditorManager} configured in the present table.
-     * @return
-     */
-    public EditorManager getEditorManager() {
-        return this.cellEditorManager;
-    }
-
-    protected RendererManager cellRendererManager = null;
-
-    /**
-     * Sets the RendererManager, which provides the renderes depending on the object type that must be
-     * renderer.
-     * @param manager
-     * @see RendererManager
-     */
-    public void setRendererManager(RendererManager manager) {
-        this.cellRendererManager = manager;
-    }
-
-    /**
-     * Returns the {@link RendererManager} configured for this table.
-     * @return
-     */
-    public RendererManager getRendererManager() {
-        return this.cellRendererManager;
-    }
-
-    /**
-     * Establishes the initial parameters for the {@link TableCellEditor} components
-     * <p>
-     * The method must be called to prepare all editors implementing <lu>
-     * <li>{@link ReferenceComponent}</li>
-     * <li>{@link Internationalization}</li>
-     * <li>{@link AccessForm}</li>
-     * <li>{@link CachedComponent}</li> </lu>
-     * @param editor
-     */
-    public void prepareEditor(TableCellEditor editor) {
-        if (editor instanceof ReferenceComponent) {
-            EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
-            ((ReferenceComponent) editor).setReferenceLocator(locator);
-        }
-        if (editor instanceof Internationalization) {
-            ((Internationalization) editor).setComponentLocale(this.locale);
-            ((Internationalization) editor).setResourceBundle(this.resourcesFile);
-        }
-        if (editor instanceof AccessForm) {
-            ((AccessForm) editor).setParentForm(this.parentForm);
-        }
-        if (editor instanceof CachedComponent) {
-            if (this.parentForm != null) {
-                EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
-                if (locator == null) {
-                    Table.logger.warn("Cannot set CacheManager to the editor {},  because locator is NULL",
-                            editor.getClass());
-                } else {
-                    CacheManager.getDefaultCacheManager(locator).addCachedComponent((CachedComponent) editor);
-                    ((CachedComponent) editor).setCacheManager(CacheManager.getDefaultCacheManager(locator));
-                }
-            } else {
-                Table.logger.warn("Cannot set CacheManager to the editor {}, because parent form is NULL",
-                        editor.getClass());
-            }
-        }
-    }
-
-    /**
-     * Establishes the initial parameters for the {@link TableCellRenderer} components
-     * <p>
-     * The method must be called to prepare all renderes implementing <lu>
-     * <li>{@link CellRenderer}</li>
-     * <li>{@link ReferenceComponent}</li>
-     * <li>{@link Internationalization}</li>
-     * <li>{@link AccessForm}</li>
-     * <li>{@link CachedComponent}</li> </lu>
-     * @param renderer
-     */
-    public void prepareRenderer(TableCellRenderer renderer) {
-        if (renderer instanceof CellRenderer) {
-            ((CellRenderer) renderer).setCellRendererColorManager(this.cellRendererColorManager);
-            ((CellRenderer) renderer).setCellRendererFontManager(this.cellRendererFontManager);
-        }
-
-        if (renderer instanceof ReferenceComponent) {
-            EntityReferenceLocator buscador = this.parentForm.getFormManager().getReferenceLocator();
-            ((ReferenceComponent) renderer).setReferenceLocator(buscador);
-        }
-        if (renderer instanceof Internationalization) {
-            ((Internationalization) renderer).setComponentLocale(this.locale);
-            ((Internationalization) renderer).setResourceBundle(this.resourcesFile);
-        }
-        if (renderer instanceof AccessForm) {
-            ((AccessForm) renderer).setParentForm(this.parentForm);
-        }
-        if (renderer instanceof CachedComponent) {
-            if (this.parentForm != null) {
-                EntityReferenceLocator buscador = this.parentForm.getFormManager().getReferenceLocator();
-                if (buscador == null) {
-                    Table.logger.debug("Cannot set CacheManager to the editor " + renderer.getClass()
-                            + ", because locator is NULL");
-                } else {
-                    CacheManager.getDefaultCacheManager(buscador).addCachedComponent((CachedComponent) renderer);
-                    ((CachedComponent) renderer).setCacheManager(CacheManager.getDefaultCacheManager(buscador));
-                }
-            } else {
-                Table.logger.debug("Cannot set CacheManager to the editor " + renderer.getClass()
-                        + ", because parent form is NULL");
-            }
-        }
-
-    }
-
-    /**
-     * Returns true if the table detail form is created.
-     * @return true if the table detail form is created
-     */
-    public boolean isDetailFormCreated() {
-        return this.detailForm != null;
-    }
-
-    /**
-     * Sets the default filter to the table. The default filter can be configured in the preferences.
-     */
-    protected void setDefaultFilter() {
-        if (this.defaultFilter instanceof Hashtable) {
-            this.applyFilter((Hashtable) this.defaultFilter);
-        }
-    }
-
-    /**
-     * Installs the button that manages the calculated columns configuration in the table.
-     */
-    protected void installCalculedColsButton() {
-        if (Table.createCalculatedButton && (MathExpressionParserFactory.getInstance() != null)) {
-            this.buttonCalculatedColumns = new TableButton();
-            if (this.buttonCalculatedColumns instanceof TableComponent) {
-                ((TableComponent) this.buttonCalculatedColumns).setKey(Table.BUTTON_CALCULATED_COL);
-            }
-
-            Icon icon = ImageManager.getIcon(ImageManager.TABLE_CALCULATEDCOLS);
-            if (icon != null) {
-                this.buttonCalculatedColumns.setIcon(icon);
-            } else {
-                this.buttonCalculatedColumns.setText("CalculatedCols");
-            }
-            this.buttonCalculatedColumns.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Table.this.showCalculatorWindow(e.getSource());
-                }
-            });
-            this.addComponentToControls(this.buttonCalculatedColumns);
-        }
-    }
-
-    /**
-     * Shows the calculator window
-     * @param source
-     */
-    protected void showCalculatorWindow(Object source) {
-        // ColumnCalculatorWindow.showCalculatorWindow((Component) source,
-        // this);
-        CalculatedColumnDialog.showCalculatorWindow((Component) source, this);
-    }
-
-    /**
-     * Installs the Report Button
-     */
-    protected void installReportButton() {
-        if (this.checkOk("BHVM")) {
-            if (!com.ontimize.report.ReportManager.isReportsEnabled()) {
-                return;
-            }
-            this.buttonReports = new TableButtonSelection();
-            this.buttonReports.setKey(Table.BUTTON_REPORT);
-            ImageIcon pageIcon = ImageManager.getIcon(ImageManager.TABLE_REPORTS);
-            if (pageIcon != null) {
-                this.buttonReports.setIcon(pageIcon);
-            } else {
-                this.buttonReports.setText("Reports");
-            }
-            this.buttonReports.setEnabled(false);
-            this.buttonReports.setMargin(new Insets(0, 0, 0, 0));
-            this.controlsPanel.add(this.buttonReports);
-            this.buttonReports.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Cursor oldCursor = Table.this.buttonReports.getCursor();
-                    try {
-                        Table.this.buttonReports.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        Table.this.showCustomReportsWindow();
-                    } finally {
-                        Table.this.buttonReports.setCursor(oldCursor);
-                    }
-                }
-            });
-
-            if (this.dynamicTable) {
-                this.buttonReports.getPreferredSize().width = this.buttonReports.getPreferredSize().width
-                        - this.buttonReports.getMenuButton().getPreferredSize().width;
-                this.buttonReports.getMenuButton().setVisible(false);
-            } else {
-                this.buttonReports.addActionMenuListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        Table.this.createReportSetupMenu();
-
-                        Table.this.menuReportSetup.show(Table.this.buttonReports, 0,
-                                Table.this.buttonReports.getHeight());
-                    }
-
-                });
-            }
-        }
-    }
-
-    /**
-     * Returns the configured reports for this table stored in the application preferences.
-     * @return
-     */
-    protected java.util.List getConfigurationReport() {
-        ArrayList arrayList = new ArrayList();
-        try {
-            Application ap = this.parentForm.getFormManager().getApplication();
-            String preferenceKey = this.getCustomReportPreferenceKey();
-            ApplicationPreferences prefs = ap.getPreferences();
-            if ((preferenceKey != null) && (prefs != null)) {
-                String p = prefs.getPreference(this.getUser(), preferenceKey);
-                if (p != null) {
-                    StringTokenizer st = new StringTokenizer(p, ";");
-                    while (st.hasMoreTokens()) {
-                        String token = st.nextToken();
-                        int index = token.indexOf(":");
-                        if (index > 0) {
-                            String sName = token.substring(0, index);
-                            arrayList.add(sName);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-        }
-        return arrayList;
-    }
-
-    /**
-     * Class that implement an action listener that shows the custom report window with the selected
-     * report. The selected report corresponds to the comand of the action.
-     */
-    protected class ListenerItem implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Object o = e.getSource();
-            if (o instanceof AbstractButton) {
-                String command = ((AbstractButton) o).getActionCommand();
-                Table.this.showCustomReportsWindow(command);
-            }
-            Table.this.menuReportSetup.setVisible(false);
-        }
-
-    }
-
-    /**
-     * Class that implement an action listener that deletes the selected report. The selected report
-     * corresponds to the command of the action.
-     */
-
-    protected class DeleteItemListener implements ActionListener {
-
-        protected String DELETE_KEY = "REPORT_DELETE_KEY";
-
-        protected ResourceBundle bundle = null;
-
-        public DeleteItemListener(ResourceBundle resource) {
-            this.bundle = resource;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Object o = e.getSource();
-            if (o instanceof AbstractButton) {
-                int i = JOptionPane.showConfirmDialog((Component) o,
-                        ApplicationManager.getTranslation(this.DELETE_KEY, this.bundle), "", JOptionPane.YES_NO_OPTION);
-                if (i == JOptionPane.OK_OPTION) {
-                    String command = ((AbstractButton) o).getActionCommand();
-                    Table.this.deleteConfigurationReport(command);
-                }
-            }
-            Table.this.menuReportSetup.setVisible(false);
-        }
-
-        public void setResourceBundle(ResourceBundle bundle) {
-            this.bundle = bundle;
-        }
-
-    }
-
-    protected ListenerItem listener = null;
-
-    private void deleteConfigurationReport(String conf) {
-        try {
-            Application ap = this.parentForm.getFormManager().getApplication();
-            String preferenceKey = this.getCustomReportPreferenceKey();
-            ApplicationPreferences prefs = ap.getPreferences();
-            if ((preferenceKey != null) && (prefs != null)) {
-                String p = prefs.getPreference(this.getUser(), preferenceKey);
-                String pout = "";
-                if (p != null) {
-                    StringTokenizer st = new StringTokenizer(p, ";");
-                    while (st.hasMoreTokens()) {
-                        String token = st.nextToken();
-                        int index = token.indexOf(":");
-                        if (index > 0) {
-                            String sName = token.substring(0, index);
-                            if (!sName.equalsIgnoreCase(conf)) {
-                                pout += pout.length() == 0 ? token : ";" + token;
-                            }
-                        }
-                    }
-                    prefs.setPreference(this.getUser(), preferenceKey, pout);
-                    prefs.savePreferences();
-                }
-            }
-        } catch (Exception e) {
-            Table.logger.error(null, e);
-        }
-    }
-
-    protected DeleteItemListener deleteListener = null;
-
-    /**
-     * Creates the report setup menu, and sets it to the menuReportSetup variable.
-     */
-    protected void createReportSetupMenu() {
-        if (this.menuReportSetup == null) {
-            this.menuReportSetup = new JPopupMenu();
-            this.buttonReports.setMenu(this.menuReportSetup);
-            this.listener = new ListenerItem();
-            this.deleteListener = new DeleteItemListener(this.resourcesFile);
-        }
-
-        java.util.List list = this.getConfigurationReport();
-        int originalSize = list.size();
-
-        for (int i = this.menuReportSetup.getComponentCount() - 1; i >= 0; i--) {
-            Object o = this.menuReportSetup.getComponent(i);
-            if (o instanceof JPanel) {
-                JPanel jPanel = (JPanel) o;
-                JButton item = (JButton) jPanel.getComponent(0);
-                String sKey = item.getActionCommand();
-                if (!list.contains(sKey)) {
-                    this.menuReportSetup.remove(i);
-                } else {
-                    list.remove(sKey);
-                }
-            } else {
-                this.menuReportSetup.remove(i);
-            }
-        }
-
-        if (originalSize != 0) {
-            for (int i = 0; i < list.size(); i++) {
-                JPanel panel = new JPanel(new GridBagLayout());
-                JButton item = new MenuButton((String) list.get(i));
-                item.addActionListener(this.listener);
-                panel.add(item, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER,
-                        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-                ImageIcon icon = ImageManager.getIcon(ImageManager.RECYCLER);
-                item.setMargin(new Insets(0, 0, 0, 0));
-                JButton delete = new MenuButton(icon);
-                delete.setActionCommand((String) list.get(i));
-                delete.addActionListener(this.deleteListener);
-                delete.setMargin(new Insets(0, 0, 0, 0));
-                panel.add(delete,
-                        new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.EAST,
-                                GridBagConstraints.VERTICAL, new Insets(0, 0, 0, 0), 0, 0));
-                this.menuReportSetup.add(panel);
-            }
-        } else {
-            JLabel label = new JLabel(
-                    ApplicationManager.getTranslation("table.no_stored_report_templates", this.resourcesFile));
-            this.menuReportSetup.add(label);
-        }
-    }
-
-    protected static class FilterDate implements Serializable {
-
-        public static final long serialVersionUID = 1509416594978732908L;
-
-        long l = -1;
-
-        static transient DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
-
-        public FilterDate(long l) {
-            this.l = l;
-        }
-
-        public long longValue() {
-            return this.l;
-        }
-
-        @Override
-        public String toString() {
-            return FilterDate.dateFormat.format(new java.util.Date(this.l));
-        }
-
-    }
-
-    /**
-     * Creates the preference according to the current table configuration.
-     * @return the String that defines this preference
-     */
-    protected String createColumnPositionAndWidthPreference() {
-        Vector cols = this.getVisibleColumns();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < this.table.getColumnCount(); i++) {
-            String n = this.table.getColumnName(i);
-            if (cols.contains(n)) {
-                TableColumn tc = this.table.getColumn(n);
-                sb.append(n);
-                sb.append("=" + tc.getWidth() + ":" + i);
-                tc.setPreferredWidth(tc.getWidth());
-                sb.append("|");
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Saves the columns color and width as table preference.
-     */
-    public void saveColumnsPositionAndWith() {
-        Application ap = this.parentForm.getFormManager().getApplication();
-        if (ap.getPreferences() != null) {
-            ap.getPreferences()
-                .setPreference(this.getUser(), this.getColumnsPosAndOrderPreferenceKey(),
-                        this.getColumnsPositionAndWith());
-            ap.getPreferences().savePreferences();
-        }
-    }
-
-    protected String getColumnsPositionAndWith() {
-        Vector cols = this.getVisibleColumns();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < this.table.getColumnCount(); i++) {
-            String n = this.table.getColumnName(i);
-            if (cols.contains(n)) {
-                TableColumn tc = this.table.getColumn(n);
-                sb.append(n);
-                sb.append("=" + tc.getWidth() + ":" + i);
-                tc.setPreferredWidth(tc.getWidth());
-                sb.append(";");
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Saves the operations passed as parameter in the preferences. The parameter keys must be column
-     * names and the values, the operations described in the <code>Table</code>.
-     * @param operations contains the operations to store
-     */
-    public void saveOperations(Hashtable operations) {
-        TableModel model = this.table.getModel();
-        if ((model != null) && (model instanceof TableSorter)) {
-            Enumeration enu = operations.keys();
-            StringBuilder sb = new StringBuilder();
-            while (enu.hasMoreElements()) {
-                String nameColumn = (String) enu.nextElement();
-                sb.append(nameColumn);
-                String sValue = (String) operations.get(nameColumn);
-                sb.append("=" + sValue + ";");
-            }
-            Application ap = this.parentForm.getFormManager().getApplication();
-            if (ap.getPreferences() != null) {
-                ap.getPreferences().setPreference(this.getUser(), this.getOperationPreferenceKey(), sb.toString());
-                ap.getPreferences().savePreferences();
-            }
-        }
-    }
-
-    /**
-     * Applies the operations stored in the preferences file to the table.
-     *
-     * @see TableSorter#setOperationColumns
-     */
-    public void applyOperations() {
-        Hashtable hOperations = null;
-        Application ap = this.parentForm.getFormManager().getApplication();
-        ApplicationPreferences prefs = ap.getPreferences();
-        String sf = prefs.getPreference(this.getUser(), this.getOperationPreferenceKey());
-        if (sf != null) {
-            hOperations = new Hashtable();
-            StringTokenizer st = new StringTokenizer(sf, ";");
-            while (st.hasMoreTokens()) {
-                String t = st.nextToken();
-                int iIg = t.indexOf('=');
-                if (iIg < 0) {
-                    continue;
-                }
-                String col = t.substring(0, iIg);
-                String ope = t.substring(iIg + 1);
-                hOperations.put(col, ope);
-            }
-            TableModel model = this.table.getModel();
-            if ((model != null) && (model instanceof TableSorter)) {
-                ((TableSorter) model).setOperationColumns(hOperations);
-            }
-        }
-    }
-
-    /**
-     * Saves the current visible controls configuration in the preferences.
-     */
-    public void saveVisibleControlsConfiguration() {
-        Application ap = this.parentForm.getFormManager().getApplication();
-        if (ap.getPreferences() != null) {
-            ap.getPreferences()
-                .setPreference(this.getUser(), this.getVisibleControlsPreferenceKey(),
-                        Boolean.toString(this.controlsPanel.isVisible()));
-            ap.getPreferences().savePreferences();
-        }
-    }
-
-    public void saveControlPanelConfiguration() {
-        Application ap = this.parentForm.getFormManager().getApplication();
-        if (ap.getPreferences() != null) {
-            ap.getPreferences()
-                .setPreference(this.getUser(), this.getControlPanelPreferenceKey(),
-                        this.controlsPanel.getButtonPosition());
-            ap.getPreferences().savePreferences();
-        }
-
-    }
-
-    protected boolean prefWidthAndPosApply = false;
-
-    /**
-     * Ensures that the {@link #setWidthAndPositionColumns()} method only is called once.
-     * @return true if all was ok, false otherwise
-     */
-    protected boolean evaluateColumnsWidthAndPosition() {
-        if (this.prefWidthAndPosApply) {
-            return true;
-        }
-        this.prefWidthAndPosApply = this.setWidthAndPositionColumns();
-        return this.prefWidthAndPosApply;
-    }
-
-    /**
-     * Sets the column width and position to the values stored in the preferences.
-     * @return true if all was ok, false otherwise
-     */
-    protected boolean setWidthAndPositionColumns() {
-        if (this.table == null) {
-            return false;
-        }
-        if (this.parentForm == null) {
-            return false;
-        }
-        if (this.parentForm.getFormManager() == null) {
-            return false;
-        }
-        Application ap = this.parentForm.getFormManager().getApplication();
-        if (ap == null) {
-            return false;
-        }
-        if (ap.getPreferences() != null) {
-            String p = ap.getPreferences().getPreference(this.getUser(), this.getColumnsPosAndOrderPreferenceKey());
-            if (p == null) {
-                return true;
-            }
-            StringTokenizer st = new StringTokenizer(p, ";");
-            while (st.hasMoreTokens()) {
-                String t = st.nextToken();
-                int iIg = t.indexOf('=');
-                if (iIg < 0) {
-                    continue;
-                }
-                int iDP = t.indexOf(':');
-                if (iDP < 0) {
-                    continue;
-                }
-                String col = t.substring(0, iIg);
-                String sWidth = t.substring(iIg + 1, iDP);
-                String pos = t.substring(iDP + 1);
-                if (!this.isVisibleColumn(col)) {
-                    continue;
-                }
-                try {
-                    TableColumn tc = this.table.getColumn(col);
-                    if (tc != null) {
-                        tc.setPreferredWidth(Integer.parseInt(sWidth));
-                        tc.setWidth(Integer.parseInt(sWidth));
-                        this.table.moveColumn(this.table.convertColumnIndexToView(tc.getModelIndex()),
-                                Integer.parseInt(pos));
-                    }
-                } catch (Exception e) {
-                    Table.logger.error(null, e);
-                }
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Applies the position and column preferences past as parameter.
-     * @param preference the preference value to set
-     */
-    protected void applyColumnPositonAndPreferences(String preference) {
-        Vector visibleCols = new Vector();
-        if (preference == null) {
-            return;
-        }
-        StringTokenizer st = new StringTokenizer(preference, "|");
-        while (st.hasMoreTokens()) {
-            String t = st.nextToken();
-            int iIg = t.indexOf('=');
-            if (iIg < 0) {
-                continue;
-            }
-            int iDP = t.indexOf(':');
-            if (iDP < 0) {
-                continue;
-            }
-            String col = t.substring(0, iIg);
-            String sWidth = t.substring(iIg + 1, iDP);
-            String pos = t.substring(iDP + 1);
-            visibleCols.add(col);
-            try {
-                TableColumn tc = this.table.getColumn(col);
-                if (tc != null) {
-                    tc.setMaxWidth(Integer.MAX_VALUE);
-                    tc.setPreferredWidth(Integer.parseInt(sWidth));
-                    tc.setWidth(Integer.parseInt(sWidth));
-                    this.table.moveColumn(this.table.convertColumnIndexToView(tc.getModelIndex()),
-                            Integer.parseInt(pos));
-                }
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-            }
-        }
-        this.setVisibleColumns(visibleCols, false);
-    }
-
-    /**
-     * Returns the key that will be used to identify the preference that will save the operations
-     * applied to the different columns.
-     * @return the preference key
-     */
-    protected String getOperationPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null ? Table.OPERATION_PREFERENCE + "_" + f.getArchiveName() + "_" + this.entity
-                : Table.OPERATION_PREFERENCE + "_" + this.entity;
-    }
-
-    /**
-     * Returns the key that will be used to identify the preference that will save the columns position
-     * and order.
-     * @return the preference key
-     */
-    protected String getColumnsPosAndOrderPreferenceKey() {
-        Form f = this.parentForm;
-        return f != null
-                ? BasicApplicationPreferences.TABLE_COLS_POSITION_SIZE + "_" + f.getArchiveName() + "_" + this.entity
-                : BasicApplicationPreferences.TABLE_COLS_POSITION_SIZE + "_" + this.entity;
-    }
-
-    /**
-     * Provides a reference to the table ScrollPane
-     * @return a refrence to the table scroll pane
-     */
-    public JScrollPane getJScrollPane() {
-        return this.scrollPane;
-    }
-
-    protected com.ontimize.report.ReportUtils ru = null;
-
-    /**
-     * Returns the key that will be used to identify the preference that will save the custom reports
-     * associated to this table.
-     * @return the preference key
-     */
-    protected String getCustomReportPreferenceKey() {
-        if (!this.dynamicPivotable) {
-            Form f = this.parentForm;
-            return f != null
-                    ? BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS + "_" + f.getArchiveName() + "_"
-                            + this.entity
-                    : BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS + "_" + this.entity;
-        } else {
-            return BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS_DYNAMIC_PIVOT_TABLE + "_"
-                    + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
-        }
-    }
-
-    /**
-     * Shows the custom reports windows, when the table is not empty.
-     */
-    public void showCustomReportsWindow() {
-        if (this.isEmpty()) {
-            return;
-        }
-        // TODO change the values to show using the renderers if exist
-        Hashtable hData = new Hashtable();
-        if (Table.renderReportValues) {
-            hData = (Hashtable) this.getValueToReport();
-        } else {
-            hData = (Hashtable) this.getShownValue();
-        }
-        // Hashtable hData = getValueToExport(false, false);
-        Application ap = null;
-        if (this.parentForm != null) {
-            ap = this.parentForm.getFormManager().getApplication();
-        } else {
-            ap = ApplicationManager.getApplication();
-        }
-        if (this.ru == null) {
-            this.ru = new com.ontimize.report.ReportUtils(EntityResultUtils.createTableModel(hData, this.reportCols),
-                    null, this.getResourceBundle(), null, this.entity,
-                    this.getUser(), this.getCustomReportPreferenceKey(), ap != null ? ap.getPreferences() : null);
-        } else {
-            this.ru.setModel(EntityResultUtils.createTableModel(hData, this.reportCols));
-        }
-        this.ru.setResourceBundle(this.getResourceBundle());
-        DefaultReportDialog reportDialog = this.ru.createDefaultDialog(this, this.lInfoFilter.getText());
-        if (this.dynamicTable && !this.dynamicPivotable) {
-            if (reportDialog.getLoadButton() != null) {
-                reportDialog.getLoadButton().setVisible(false);
-            }
-            if (reportDialog.getSaveButton() != null) {
-                reportDialog.getSaveButton().setVisible(false);
-            }
-        }
-        this.ru.showDefaultReportDialog(reportDialog, null);
-    }
-
-    /**
-     * Shows the custom reports windows, when the table is not empty.
-     * @param configuration the report description
-     */
-    public void showCustomReportsWindow(String configuration) {
-        if (this.isEmpty()) {
-            return;
-        }
-
-        Hashtable hData = new Hashtable();
-        if (Table.renderReportValues) {
-            hData = (Hashtable) this.getValueToReport();
-        } else {
-            hData = (Hashtable) this.getShownValue();
-        }
-        Vector vVisible = this.getOriginallyVisibleColumns();
-        Application ap = this.parentForm.getFormManager().getApplication();
-        if (this.ru == null) {
-            this.ru = new com.ontimize.report.ReportUtils(EntityResultUtils.createTableModel(hData, vVisible), null,
-                    this.getResourceBundle(), null, this.entity, this.getUser(),
-                    this.getCustomReportPreferenceKey(), ap.getPreferences());
-        } else {
-            this.ru.setModel(EntityResultUtils.createTableModel(hData, vVisible));
-        }
-        this.ru.setResourceBundle(this.getResourceBundle());
-        this.ru.showDefaultReportDialog(this, this.lInfoFilter.getText(), configuration);
-
-    }
-
-    /**
-     * Returns a String with the information of all the filters that are being applied to the table.
-     * This String will be stored in the preferences in order to recover the filter configuration later.
-     * @return an empty String when no filters set
-     */
-    protected String getFilterInfo() {
-        Hashtable hFilters = ((TableSorter) this.getJTable().getModel()).getFilters();
-        boolean lastFilterOr = ((TableSorter) this.getJTable().getModel()).lastFilterOr();
-        if (hFilters.isEmpty() || lastFilterOr) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        Enumeration enumKeys = hFilters.keys();
-        int i = 0;
-        while (enumKeys.hasMoreElements()) {
-            Object oKey = enumKeys.nextElement();
-            sb.append(ApplicationManager.getTranslation((String) oKey, this.resourcesFile));
-            sb.append(" '" + hFilters.get(oKey) + "'");
-            if (i < (hFilters.size() - 1)) {
-                sb.append(", ");
-            }
-            i++;
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Updates the text in the table that shows the current filter status,which shows the columns that
-     * are being filtered and the values that are being applied to those columns.
-     */
-    protected void updateFilterInfo() {
-        String s = this.getFilterInfo();
-        if ((s != null) && (s.length() > 0)) {
-            this.lInfoFilter.setText(ApplicationManager.getTranslation("table.filter", this.resourcesFile) + ": " + s);
-        } else {
-            this.lInfoFilter.setText("");
-        }
-        this.lInfoFilter.setToolTipText(this.lInfoFilter.getText());
-    }
-
-    /**
-     * Returns the view index of the column specified.
-     * @param columnName
-     * @return
-     */
-    public int getColumnIndex(String columnName) {
-        try {
-            return ((EJTable) this.table).getColumnIndex(columnName);
-        } catch (Exception ex) {
-            Table.logger.trace(null, ex);
-            return -1;
-        }
-    }
-
-    /**
-     * Adjusts the height of all rows to the contents inside them.
-     */
-    protected void evaluatePreferredRowsHeight() {
-        if ((this.table != null) && (this.table instanceof EJTable)) {
-            if (((EJTable) this.table).isFitRowsHeight()) {
-                ((EJTable) this.table).fitRowHeight();
-            }
-
-            int rowCount = this.table.getRowCount();
-            for(int i=0;i<rowCount;i++){
-                int rowHeight = this.table.getRowHeight(i);
-                this.blockedTable.setRowHeight(i, rowHeight);
-            }
-           // this.blockedTable.setRowHeight(17);
-        }
-
-    }
-
-    public static final String BUTTON_PIVOTTABLE = "pivottablebutton";
-
-    protected TableButton buttonPivotTable = null;
-
-    protected JDialog dPivot = null;
-
-    /**
-     * Installs the button that provides pivot functionallity in the control panel.
-     */
-    protected void installPivotTableButton() {
-        this.buttonPivotTable = new TableButton();
-        this.buttonPivotTable.setKey(Table.BUTTON_PIVOTTABLE);
-
-        ImageIcon pivotIcon = ImageManager.getIcon(ImageManager.TABLE_PIVOT);
-        if (pivotIcon != null) {
-            this.buttonPivotTable.setIcon(pivotIcon);
-        } else {
-            this.buttonPivotTable.setText("Pivot");
-        }
-        this.buttonPivotTable.setEnabled(true);
-        this.buttonPivotTable.setMargin(new Insets(0, 0, 0, 0));
-        this.controlsPanel.add(this.buttonPivotTable);
-        this.buttonPivotTable.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String columPosAndWith = Table.this.getColumnsPositionAndWith();
-                Map<?, ?> rederersMap = new HashMap(Table.this.getMapRenderersForColumns());
-                if ((Table.this.dPivot == null) || Table.this.dynamicTable) {
-                    Window w = SwingUtilities.getWindowAncestor(Table.this);
-                    Table.this.dPivot = PivotTableUtils.createPivotDialog(w,
-                            EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(),
-                                    Table.this.getOriginallyVisibleColumns()),
-                            Table.this.resourcesFile,
-                            Table.this.getDetailWindowParameters(), columPosAndWith);
-                    ApplicationManager.center(Table.this.dPivot);
-                    Table.this.setPivotTablePreferences(Table.this.dPivot);
-                }
-                ((PivotTableUtils.PivotDialog) Table.this.dPivot)
-                    .setModel(EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(),
-                            Table.this.getOriginallyVisibleColumns()), true);
-                ((PivotTableUtils.PivotDialog) Table.this.dPivot).setOriginalColPosAndWith(columPosAndWith);
-                ((PivotTableUtils.PivotDialog) Table.this.dPivot).setRenderersForColumns(rederersMap);
-                Table.this.dPivot.setVisible(true);
-            }
-        });
-
-    }
-
-    protected Map<?, ?> getMapRenderersForColumns() {
-        Map<String, Object> toRet = new HashMap<String, Object>();
-        for (Object s : Table.this.getTableSorter().getColumnNames()) {
-            String columnName = (String) s;
-            Object cellRenderer = Table.this.getRendererForColumn((String) s);
-            if (cellRenderer != null) {
-                toRet.put(columnName, cellRenderer);
-            }
-        }
-        return toRet;
-
-    }
-
-    protected Hashtable getDetailWindowParameters() {
-        Hashtable param = new Hashtable();
-        param.put("entity", "entity");
-        param.put("dynamic", "yes");
-        param.put("translateheader", "yes");
-        // if (this.dynamicPivotable) {
-        if (this.getParentForm() != null) {
-            param.put(Table.D_PIVOT_TABLE_PREFERENCES_FORM, this.getParentForm().getArchiveName());
-        } else {
-            if (this.dynamicPivotTableForm != null) {
-                param.put(Table.D_PIVOT_TABLE_PREFERENCES_FORM, this.dynamicPivotTableForm);
-            }
-        }
-
-        if (this.dynamicPivotTableEntity != null) {
-            param.put(Table.D_PIVOT_TABLE_PREFERENCES_ENTITY, this.dynamicPivotTableEntity);
-        } else {
-            param.put(Table.D_PIVOT_TABLE_PREFERENCES_ENTITY, this.getEntityName());
-        }
-
-        // }
-        if (this.parameters.contains("headerheight")) {
-            param.put("headerheight", this.parameters.get("headerheight"));
-        }
-        if (this.parameters.contains("headerfont")) {
-            param.put("headerfont", this.parameters.get("headerfont"));
-        }
-        if (this.parameters.contains("headerfg")) {
-            param.put("headerfg", this.parameters.get("headerfg"));
-        }
-        if (this.parameters.contains("headerbg")) {
-            param.put("headerbg", this.parameters.get("headerbg"));
-        }
-        if (this.parameters.contains("fontshadowcolor")) {
-            param.put("fontshadowcolor", this.parameters.get("fontshadowcolor"));
-        }
-        if (this.parameters.contains("headerbgimage")) {
-            param.put("headerbgimage", this.parameters.get("headerbgimage"));
-        }
-        if (this.parameters.contains("headerborder")) {
-            param.put("headerborder", this.parameters.get("headerborder"));
-        }
-        if (this.parameters.contains("headerlastcolumnborder")) {
-            param.put("headerlastcolumnborder", this.parameters.get("headerlastcolumnborder"));
-        }
-        if (this.parameters.contains("headerfirstcolumnborder")) {
-            param.put("headerfirstcolumnborder", this.parameters.get("headerfirstcolumnborder"));
-        }
-        if (this.parameters.contains("border")) {
-            param.put("border", this.parameters.get("border"));
-        }
-        if (this.parameters.contains("percentage")) {
-            param.put("percentage", this.parameters.get("percentage"));
-        }
-
-        return param;
-    }
-
-    /**
-     * Adds the fuctionallity of manage preferences to the pivot table dialog.
-     * @param pivotDialog the dialog that contains the pivot table
-     */
-    protected void setPivotTablePreferences(JDialog pivotDialog) {
-        if (!this.dynamicTable) {
-            if ((pivotDialog != null) && (pivotDialog instanceof PivotDialog)) {
-                PivotDialog pD = (PivotDialog) pivotDialog;
-
-                JButton preferencesButton = new JButton();
-
-                ImageIcon saveTableFilterIcon = ImageManager.getIcon(ImageManager.SAVE_TABLE_FILTER);
-                if (saveTableFilterIcon != null) {
-                    preferencesButton.setMargin(new Insets(2, 2, 2, 2));
-                    preferencesButton.setIcon(new ImageIcon(
-                            saveTableFilterIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_DEFAULT)));
-                } else {
-                    preferencesButton.setText("P");
-                }
-                pD.addButton(preferencesButton);
-                preferencesButton.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        Table.this.menuPivotTablePreferences(e);
-                    }
-                });
-            }
-        }
-    }
-
-    /**
-     * Returns the key that will be used to identify the preference that will save the pivot table
-     * configuration.
-     * @param configurationName the name of the concrete configuration
-     * @return the preference key for the specified configuration
-     */
-    protected String getPivotTablePreferenceKey(String configurationName) {
-        if ((configurationName == null) || (configurationName.length() == 0)) {
-            Form f = this.parentForm;
-            return f != null
-                    ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f.getArchiveName() + "_"
-                            + this.entity
-                    : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity;
-        } else {
-            Form f = this.parentForm;
-            return f != null
-                    ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f.getArchiveName() + "_"
-                            + this.entity + "_" + configurationName
-                    : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity + "_"
-                            + configurationName;
-        }
-    }
-
-    /**
-     * Returns the key that will be used to identify the preference that will save the pivot table
-     * configurations.
-     * @return the preference key for the default configuration
-     */
-    protected String getPivotTablePreferenceKey() {
-        Form f = this.parentForm;
-        return f != null
-                ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f.getArchiveName() + "_"
-                        + this.entity
-                : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity;
-    }
-
-    protected ExtendedJPopupMenu menuPivotTableSetup = null;
-
-    protected JMenuItem menuSavePivot = new JMenuItem("save");
-
-    /**
-     * Method called by the table pivot button listener that shows the pivot table dialog.
-     * @param e
-     */
-    protected void menuPivotTablePreferences(ActionEvent e) {
-        String prefer = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
-        if (this.menuPivotTableSetup == null) {
-            this.menuPivotTableSetup = new ExtendedJPopupMenu();
-            this.menuSavePivot.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Object s = MessageDialog.showInputMessage(SwingUtilities.getWindowAncestor(Table.this),
-                            "table.enter_configuration_name", Table.this.resourcesFile);
-                    if (s != null) {
-                        String str = s.toString();
-                        Table.this.savePivotTableConfiguration(str);
-                        return;
-                    }
-                }
-
-            });
-            if (!ApplicationManager.useOntimizePlaf) {
-                this.menuPivotTableSetup.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
-            }
-        } else {
-            Component[] c = this.menuPivotTableSetup.getComponents();
-            for (int i = 0; (c != null) && (i < c.length); i++) {
-                if (c[i] instanceof PreferenceItem) {
-                    ((PreferenceItem) c[i]).removeAllListeners();
-                }
-            }
-            this.menuPivotTableSetup.removeAll();
-        }
-
-        if (this.menuSavePivot != null) {
-            this.menuSavePivot.setText(ApplicationManager.getTranslation("save", this.getResourceBundle()));
-        }
-
-        if ((prefer != null) && (prefer.length() > 0)) {
-            StringTokenizer tokens = new StringTokenizer(prefer, ";");
-            while (tokens.hasMoreTokens()) {
-                PreferenceItem item = new PreferenceItem(tokens.nextToken());
-                this.menuPivotTableSetup.add(item);
-            }
-            this.menuPivotTableSetup.addSeparator();
-        }
-        this.menuPivotTableSetup.add(this.menuSavePivot);
-        this.menuPivotTableSetup.show((Component) e.getSource(), 0, ((Component) e.getSource()).getHeight());
-    }
-
-    protected ActionListener prefPivotTableItemListener = null;
-
-    protected ActionListener deletePrefPivotTableItemListener = null;
-
-    /**
-     * The listener that loads a concrete pivot table configuration. Called by the pivot table setup
-     * window.
-     */
-    protected class ListenerItemPrefPivotTable implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Table.this.loadPivotTableConfiguration(e.getActionCommand());
-            Table.this.menuPivotTableSetup.setVisible(false);
-        }
-
-    }
-
-    /**
-     * The listener that deletes a concrete pivot table configuration. Called by the pivo table setup
-     * window.
-     */
-    protected class ListenerItemDeletePrefPivotTable implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Table.this.deletePivotTableConfiguration(e.getActionCommand());
-            Table.this.menuPivotTableSetup.setVisible(false);
-        }
-
-    }
-
-    /**
-     * The class that has all the pivot table management GUI
-     */
-    protected class PreferenceItem extends JPanel {
-
-        private String token = null;
-
-        private JButton menu = null;
-
-        private TableButton button = null;
-
-        public PreferenceItem(String token) {
-            this.token = token;
-            this.menu = new RolloverButton(token) {
-
-                @Override
-                public Dimension getPreferredSize() {
-                    Dimension d = super.getPreferredSize();
-                    d.height = 22;
-                    return d;
-                }
-
-                @Override
-                public boolean isFocusTraversable() {
-                    return false;
-                }
-
-                @Override
-                public boolean isRequestFocusEnabled() {
-                    return false;
-                }
-            };
-            this.menu.setActionCommand(token);
-            if (Table.this.prefPivotTableItemListener == null) {
-                Table.this.prefPivotTableItemListener = new ListenerItemPrefPivotTable();
-            }
-            this.menu.addActionListener(Table.this.prefPivotTableItemListener);
-            this.menu.setForeground(Color.blue.darker());
-            this.menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
-
-            this.button = new TableButton();
-            this.button.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
-            this.button.setToolTipText(
-                    ApplicationManager.getTranslation("table.delete_this_configuration", Table.this.resourcesFile));
-            this.button.setActionCommand(token);
-            if (Table.this.deletePrefPivotTableItemListener == null) {
-                Table.this.deletePrefPivotTableItemListener = new ListenerItemDeletePrefPivotTable();
-            }
-            this.button.addActionListener(Table.this.deletePrefPivotTableItemListener);
-            this.setLayout(new GridBagLayout());
-            this.setOpaque(false);
-            this.add(this.button, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-            this.add(this.menu, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST,
-                    GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-            this.setBorder(new EmptyBorder(0, 0, 0, 0));
-        }
-
-        public void removeAllListeners() {
-            this.menu.removeActionListener(Table.this.deletePrefPivotTableItemListener);
-            this.button.removeActionListener(Table.this.deletePrefPivotTableItemListener);
-        }
-
-    }
-
-    /**
-     * Load the concrete pivot table configuration.
-     * @param confName the configuration name
-     */
-    protected void loadPivotTableConfiguration(String confName) {
-        if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
-            String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey(confName));
-            if ((pref != null) && (pref.length() > 0)) {
-                Hashtable selection = new Hashtable();
-                StringTokenizer tokens = new StringTokenizer(pref, "|");
-                while (tokens.hasMoreTokens()) {
-                    String token = tokens.nextToken();
-                    int ind = token.lastIndexOf("~");
-                    if (ind > 0) {
-                        String key = token.substring(1, ind);
-                        if (PivotTableUtils.PIVOTTABLE_ROWFIELD.equals(key)
-                                || PivotTableUtils.PIVOTTABLE_COLUMNFIELD.equals(key)
-                                || PivotTableUtils.PIVOTTABLE_DATAFIELD.equals(key)) {
-                            String value = token.substring(ind + 1);
-                            if (PivotTableUtils.PIVOTTABLE_ROWFIELD.equals(key) && (value != null)
-                                    && (value.length() > 0)) {
-                                StringTokenizer pairsFixed = new StringTokenizer(value, ":");
-                                ArrayList list = new ArrayList<Pair<String, Integer>>();
-                                while (pairsFixed.hasMoreTokens()) {
-                                    String tokenFixedColumns = pairsFixed.nextToken();
-                                    String[] pairComp = tokenFixedColumns.split("=");
-                                    if (pairComp.length > 1) {
-                                        list.add(new Pair<String, Integer>(pairComp[0], Integer.parseInt(pairComp[1])));
-                                    } else {
-                                        list.add(pairComp[0]);
-                                    }
-                                }
-                                selection.put(key, list);
-
-                            } else if ((value != null) && (value.length() > 0)) {
-                                ArrayList list = new ArrayList(ApplicationManager.getTokensAt(value, ":"));
-                                selection.put(key, list);
-                            }
-                        } else if (PivotTableUtils.PIVOTTABLE_OPERATION.equals(key)
-                                || PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS.equals(key)
-                                || PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS.equals(key)) {
-                            String value = token.substring(ind + 1);
-                            if ((value != null) && (value.length() > 0)) {
-                                selection.put(key, value);
-                            }
-                        }
-                    }
-                }
-                ((PivotDialog) this.dPivot).setSelectedColumn(selection);
-            }
-        }
-    }
-
-    /**
-     * Deletes the pivot table configuration passed as parameter.
-     * @param confName the configuration name
-     */
-    protected void deletePivotTableConfiguration(String confName) {
-        PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(confName), null);
-        String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
-        if ((pref != null) && (pref.length() > 0)) {
-            StringTokenizer tokens = new StringTokenizer(pref, ";");
-            StringBuilder buffer = new StringBuilder();
-            while (tokens.hasMoreTokens()) {
-                String tok = tokens.nextToken();
-                if (!confName.equals(tok)) {
-                    buffer.append(tok);
-                    if (tokens.hasMoreTokens()) {
-                        buffer.append(";");
-                    }
-                }
-            }
-            PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(), buffer.toString());
-        }
-    }
-
-    /**
-     * Saves the current pivot table configuration.
-     * @param confName the configuration name
-     */
-    protected void savePivotTableConfiguration(String confName) {
-        if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
-            Hashtable h = ((PivotDialog) this.dPivot).getSelectedColumn();
-            StringBuilder buffer = new StringBuilder();
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_ROWFIELD)) {
-                List<Pair> fixedColumnWidth = ((PivotDialog) this.dPivot).getFixedColumnWidth();
-                buffer.append("~" + PivotTableUtils.PIVOTTABLE_ROWFIELD + "~");
-                for (int i = 0; i < fixedColumnWidth.size(); i++) {
-                    Pair<String, Integer> p = fixedColumnWidth.get(i);
-                    buffer.append(p.getFirst());
-                    buffer.append("=");
-                    buffer.append(p.getSecond());
-                    if (i != (fixedColumnWidth.size() - 1)) {
-                        buffer.append(":");
-                    }
-                }
-                buffer.append("|");
-            }
-
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_COLUMNFIELD)) {
-                Object o = h.get(PivotTableUtils.PIVOTTABLE_COLUMNFIELD);
-                if (o instanceof ArrayList) {
-                    ArrayList list = (ArrayList) o;
-                    buffer.append("~" + PivotTableUtils.PIVOTTABLE_COLUMNFIELD + "~");
-                    for (int i = 0; i < list.size(); i++) {
-                        buffer.append(list.get(i));
-                        if (i != (list.size() - 1)) {
-                            buffer.append(":");
-                        }
-                    }
-                    buffer.append("|");
-                }
-            }
-
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_DATAFIELD)) {
-                Object o = h.get(PivotTableUtils.PIVOTTABLE_DATAFIELD);
-                if (o instanceof ArrayList) {
-                    ArrayList list = (ArrayList) o;
-                    buffer.append("~" + PivotTableUtils.PIVOTTABLE_DATAFIELD + "~");
-                    for (int i = 0; i < list.size(); i++) {
-                        buffer.append(list.get(i));
-                        if (i != (list.size() - 1)) {
-                            buffer.append(":");
-                        }
-                    }
-                    buffer.append("|");
-                }
-            }
-
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_OPERATION)) {
-                Object o = h.get(PivotTableUtils.PIVOTTABLE_OPERATION);
-                if (o instanceof String) {
-                    String list = (String) o;
-                    buffer.append("~" + PivotTableUtils.PIVOTTABLE_OPERATION + "~");
-                    buffer.append(list);
-                    buffer.append("|");
-                }
-            }
-
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS)) {
-                Object o = h.get(PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS);
-                if (o instanceof String) {
-                    String list = (String) o;
-                    buffer.append("~" + PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS + "~");
-                    buffer.append(list);
-                    buffer.append("|");
-                }
-            }
-
-            if (h.containsKey(PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS)) {
-                Object o = h.get(PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS);
-                if (o instanceof String) {
-                    String list = (String) o;
-                    buffer.append("~" + PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS + "~");
-                    buffer.append(list);
-                    buffer.append("|");
-                }
-            }
-
-            // Check if exists this name
-            String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
-            boolean insert = true;
-            if (pref != null) {
-                StringTokenizer tokens = new StringTokenizer(pref, ";");
-                while (tokens.hasMoreElements()) {
-                    String token = tokens.nextToken().trim();
-                    if (confName.equals(token)) {
-                        // Ask the user if replace the preference
-                        boolean replace = MessageDialog.showQuestionMessage(Table.this,
-                                "pivottable.preference_name_exists", this.resourcesFile);
-                        if (!replace) {
-                            return;
-                        } else {
-                            insert = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (insert) {
-                    StringBuilder buff = new StringBuilder(pref);
-                    buff.append(";");
-                    buff.append(confName);
-                    pref = buff.toString();
-                }
-            } else {
-                pref = confName;
-            }
-
-            PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(confName), buffer.toString());
-            PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(), pref);
-        }
-    }
-
-    private static boolean check = false;
-
-    private static boolean checkOKBHVM = false;
-
-    private static boolean checkOKZOZP = false;
-
-    private static boolean checkOKQENA = false;
-
-    private boolean checkOk(String code) {
-        if (!Table.check) {
-            Table.checkOKBHVM = CheckLComponent.checkOk("BHVM");
-            Table.checkOKZOZP = CheckLComponent.checkOk("ZOZP");
-            Table.checkOKQENA = CheckLComponent.checkOk("QENA");
-            Table.check = true;
-        }
-
-        if ("BHVM".equals(code)) {
-            return Table.checkOKBHVM;
-        }
-
-        if ("ZOZP".equals(code)) {
-            return Table.checkOKZOZP;
-        }
-
-        if ("QENA".equals(code)) {
-            return Table.checkOKQENA;
-        }
-        return false;
-    }
-
-    public static class QuickFieldText extends JTextField {
-
-        /**
-         * The name of class. Used by L&F to put UI properties.
-         *
-         * @since 5.2062EN
-         */
-        public static final String QUICKFILTER_NAME = "Table.QuickFilter";
-
-        public static boolean paintFindText = true;
-
-        protected String emptyText;
-
-        protected Font emptyFont;
-
-        protected ResourceBundle bundle;
-
-        public static int timeDelay = 500;
-
-        protected boolean selectAll = false;
-
-        public QuickFieldText() {
-            super(10);
-            this.emptyText = Table.FIND_MESSAGE;
-            super.setOpaque(ApplicationManager.useOntimizePlaf ? false : true);
-            this.setName(QuickFieldText.QUICKFILTER_NAME);
-            this.addFocusListener(new FocusAdapter() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    if (QuickFieldText.this.selectAll) {
-                        QuickFieldText.this.selectAll();
-                    }
-                }
-            });
-        }
-
-        @Override
-        public String getName() {
-            return QuickFieldText.QUICKFILTER_NAME;
-        }
-
-        @Override
-        public Dimension getMinimumSize() {
-            return this.getPreferredSize();
-        }
-
-        public void setEmptyText(String text) {
-            this.emptyText = text;
-        }
-
-        public String getEmptyText() {
-            return this.emptyText;
-        }
-
-        @Override
-        public void setOpaque(boolean isOpaque) {
-            if (isOpaque) {
-                super.setOpaque(isOpaque);
-            }
-        }
-
-        public boolean isSelectAll() {
-            return this.selectAll;
-        }
-
-        public void setSelectAll(boolean selectAll) {
-            this.selectAll = selectAll;
-        }
-
-        public void setResourceBundle(ResourceBundle resource) {
-            this.bundle = resource;
-            if (this.bundle != null) {
-                this.createFormatter(DateDataField.getSameCountryLocale(this.bundle.getLocale()));
-            }
-        }
-
-        protected void createFormatter(Locale locale) {
-            if (!DateFormatCache.containsDateFormat(locale)) {
-                this.createNewFormatter(locale);
-            } else {
-                QuickFieldText.format = DateFormatCache.getDateFormat(locale);
-            }
-        }
-
-        protected void createNewFormatter(Locale l) {
-            if (l != null) {
-                SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getDateInstance(DateFormat.MEDIUM, l);
-                dateFormat.setLenient(false);
-                GregorianCalendar calendar = new GregorianCalendar(l);
-                calendar.setLenient(false);
-                dateFormat.setCalendar(calendar);
-                // Set the patter using the locale
-                DateFormatSymbols symbols = new DateFormatSymbols(l);
-                symbols.setLocalPatternChars("GyMdkHmsSEDFwWahKz");
-                dateFormat.setDateFormatSymbols(symbols);
-
-                QuickFieldText.format = dateFormat;
-                // Initialize the date
-                // this.buildPattern();
-                // dateFormat.applyPattern(datePattern);
-                DateFormatCache.addDateFormat(l, dateFormat);
-            }
-        }
-
-        protected void clearFind(Graphics g) {
-            if (this.hasFocus()) {
-                Rectangle alloc = this.getBounds();
-                if ((alloc.width > 0) && (alloc.height > 0)) {
-                    alloc.x = alloc.y = 0;
-                    Insets insets = this.getInsets();
-                    alloc.x += insets.left;
-                    alloc.y += insets.top;
-                    alloc.width -= insets.left + insets.right;
-                    alloc.height -= insets.top + insets.bottom;
-                    g.clearRect(alloc.x, alloc.y, alloc.width, alloc.height);
-                }
-            }
-        }
-
-        protected void paintFind(Graphics g) {
-            Rectangle alloc = this.getBounds();
-            if ((alloc.width > 0) && (alloc.height > 0)) {
-                alloc.x = alloc.y = 0;
-                Insets insets = this.getInsets();
-                alloc.x += insets.left;
-                alloc.y += insets.top;
-                alloc.width -= insets.left + insets.right;
-                alloc.height -= insets.top + insets.bottom;
-                if (!this.hasFocus()) {
-                    g.setColor(Color.black);
-                    Font f = this.emptyFont == null
-                            ? this.getFont().deriveFont(Font.PLAIN, this.getFont().getSize() - 2) : this.emptyFont;
-                    g.setFont(f);
-                    g.drawString(ApplicationManager.getTranslation(this.emptyText, this.bundle), alloc.x, alloc.height);
-                }
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            this.clearFind(g);
-            super.paintComponent(g);
-            if ((this.getDocument().getLength() == 0) && (!this.hasFocus()) && QuickFieldText.paintFindText) {
-                this.paintFind(g);
-            }
-        }
-
-        // @Override
-        // public void paint(Graphics g) {
-        // this.clearFind(g);
-        // super.paint(g);
-        // if ((this.getDocument().getLength() == 0) && (this.hasFocus() ==
-        // false) && QuickFieldText.paintFindText) {
-        // this.paintFind(g);
-        // }
-        // }
-
-        public void setEmptyFont(Font emptyFont) {
-            this.emptyFont = emptyFont;
-        }
-
-        public static Format format = new SimpleDateFormat("dd/MM/yyyy");
-
-        protected QuickFilterActionListener target = new QuickFilterActionListener();
-
-        protected Timer timer = null;
-
-        public void executeFilter(String text, Table table) {
-            if (this.timer == null) {
-                this.timer = new Timer(0, this.target);
-                this.timer.setInitialDelay(QuickFieldText.timeDelay);
-            }
-
-            if (this.timer.isRunning()) {
-                this.timer.stop();
-                if (this.target.table != null) {
-                    if (!this.target.table.equals(table)) {
-                        this.target.applyFilter();
-                    }
-                }
-            }
-
-            this.target.setTableFilter(table, text);
-            this.timer.start();
-        }
-
-        public Timer getTimer() {
-            return this.timer;
-        }
-
-        public void setTimer(Timer timer) {
-            this.timer = timer;
-        }
-
-        public Vector getTextsToTranslate() {
-            return null;
-        }
-
-        public void setComponentLocale(Locale l) {
-
-        }
-
-    }
-
-    protected static class QuickFilterActionListener implements ActionListener {
-
-        protected Table table = null;
-
-        protected String text = null;
-
-        public void setTableFilter(Table newTable, String newText) {
-            this.table = newTable;
-            this.text = newText;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            this.table.getQuickFilter().getTimer().stop();
-            if ((this.table.getPageFetcher() != null) && this.table.getPageFetcher().isPageableEnabled()
-                    && !this.table.isQuickFilterLocal()) {
-                try {
-                    this.table.getQuickFilter().setEnabled(false);
-                    this.executeQuery();
-                } finally {
-                    this.table.getQuickFilter().setEnabled(true);
-                }
-            } else {
-                this.applyFilter();
-            }
-        }
-
-        protected String createResultText() {
-            StringBuilder queryText = new StringBuilder();
-
-            if ((this.text != null) && (this.text.length() > 0)) {
-                if (!this.text.startsWith("*")) {
-                    queryText.append("*");
-                }
-                queryText.append(this.text);
-                if (!this.text.endsWith("*")) {
-                    queryText.append("*");
-                }
-            }
-
-            return queryText.toString().replace('*', '%');
-        }
-
-        protected BasicExpression createExpression(boolean isNumber) {
-            String resultText = this.createResultText();
-
-            BasicExpression filterExpression = null;
-            List<String> cols = this.table.getQuickFilterColumns();
-            Vector calculedColumns = this.table.getCalculatedColumns();
-
-            Hashtable<String, Integer> columnSQLTypes = this.table.getColumnSQLTypes();
-
-            for (String currentColumn : cols) {
-                if ((calculedColumns != null) && calculedColumns.contains(currentColumn)) {
-                    continue;
-                }
-                if ((columnSQLTypes != null) && columnSQLTypes.containsKey(currentColumn)) {
-                    Integer sqlType = columnSQLTypes.get(currentColumn);
-                    switch (sqlType) {
-                        case java.sql.Types.VARCHAR:
-                        case java.sql.Types.LONGVARCHAR:
-                        case java.sql.Types.LONGNVARCHAR:
-                        case java.sql.Types.NCHAR:
-                        case java.sql.Types.NVARCHAR:
-                            break;
-                        case java.sql.Types.NCLOB:
-                        case java.sql.Types.CLOB:
-                            if (Table.quickFilterClobExclude) {
-                                continue;
-                            }
-                            break;
-                        case java.sql.Types.TINYINT:
-                        case java.sql.Types.SMALLINT:
-                        case java.sql.Types.INTEGER:
-                        case java.sql.Types.BIGINT:
-                        case java.sql.Types.FLOAT:
-                        case java.sql.Types.REAL:
-                        case java.sql.Types.DOUBLE:
-                        case java.sql.Types.NUMERIC:
-                        case java.sql.Types.DECIMAL:
-                            if (!isNumber) {
-                                continue;
-                            }
-                            break;
-                        default:
-                            continue;
-                    }
-                }
-
-                BasicField bF = new BasicField(currentColumn);
-                BasicExpression expression = new BasicExpression(bF, BasicOperator.LIKE_OP, resultText);
-                if (filterExpression == null) {
-                    filterExpression = expression;
-                } else {
-                    filterExpression = new BasicExpression(filterExpression, BasicOperator.OR_OP, expression);
-                }
-            }
-            return filterExpression;
-        }
-
-        protected boolean isNumber(String text) {
-            try {
-                Number object = NumberFormat.getInstance().parse(text);
-                return true;
-            } catch (ParseException e) {
-                Table.logger.trace("Check in quickfilter-> It's not number: " + text, e);
-            }
-            return false;
-        }
-
-        public void executeQuery() {
-            Cursor c = this.table.getCursor();
-            Cursor cQuickfilter = this.table.getQuickFilter().getCursor();
-            try {
-                this.table.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                this.table.getQuickFilter().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                boolean dateFilter = false;
-                boolean excludeDate = false;
-
-                PageFetcher pageFetcher = this.table.getPageFetcher();
-                pageFetcher.setOffset(0);
-                pageFetcher.changePageSize(false);
-
-                if ((this.text == null) || (this.text.length() == 0)) {
-                    pageFetcher.setFilterExpression(null);
-                    pageFetcher.refreshCurrentPageInThread();
-                    return;
-                }
-
-                boolean isNumber = this.isNumber(this.text);
-
-                excludeDate = !Table.checkFormatDate(this.text);
-
-                if (!excludeDate) {
-                    try {
-                        QuickFieldText.format.parseObject(this.text);
-                        dateFilter = true;
-                    } catch (ParseException e1) {
-                        Table.logger.trace(null, e1);
-                    }
-                }
-
-                BasicExpression filterExpression = this.createExpression(isNumber);
-                pageFetcher.setFilterExpression(filterExpression);
-                pageFetcher = this.table.getPageFetcher();
-                pageFetcher.refreshCurrentPageInThread();
-            } catch (Exception e1) {
-                Table.logger.error(null, e1);
-            } finally {
-                this.table.setCursor(c);
-                this.table.getQuickFilter().setCursor(cQuickfilter);
-            }
-        }
-
-        public void applyFilter() {
-            Cursor c = this.table.getCursor();
-            Cursor cQuickfilter = this.table.getQuickFilter().getCursor();
-            try {
-                this.table.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                this.table.getQuickFilter().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                boolean dateFilter = false;
-                boolean excludeDate = false;
-
-                TableSorter sorter = (TableSorter) this.table.getJTable().getModel();
-                if ((this.text == null) || (this.text.length() == 0)) {
-                    sorter.resetFilter();
-                    return;
-                }
-
-                excludeDate = !Table.checkFormatDate(this.text);
-
-                if (!excludeDate) {
-                    try {
-                        QuickFieldText.format.parseObject(this.text);
-                        dateFilter = true;
-                    } catch (ParseException e) {
-                        Table.logger.trace(null, e);
-                    }
-                }
-
-                if ((this.text != null) && (this.text.length() > 0)) {
-                    if (!this.text.startsWith("*")) {
-                        this.text = "*" + this.text;
-                    }
-                    if (!this.text.endsWith("*")) {
-                        this.text = this.text + "*";
-                    }
-                }
-
-                Vector cols = this.table.getVisibleColumns();
-                Hashtable filters = new Hashtable();
-                SimpleFilter filter = new SimpleFilter(this.text);
-
-                for (int i = 0; i < cols.size(); i++) {
-                    String currentColumn = (String) cols.get(i);
-                    for (int j = 0; j < sorter.getColumnCount(); j++) {
-                        if (currentColumn.equals(sorter.getColumnName(j))) {
-                            Class columnClass = sorter.getColumnClass(j);
-                            if (dateFilter) {
-                                if ((columnClass != null) && Date.class.isAssignableFrom(columnClass)) {
-                                    filters.put(currentColumn, filter);
-                                }
-                            } else if (excludeDate) {
-                                if ((columnClass != null) && !Date.class.isAssignableFrom(columnClass)) {
-                                    filters.put(currentColumn, filter);
-                                }
-                            } else {
-                                filters.put(currentColumn, filter);
-                            }
-                            continue;
-                        }
-                    }
-                }
-                sorter.applyFilter(filters, true);
-
-            } catch (Exception e) {
-                Table.logger.error(null, e);
-            } finally {
-                this.table.setCursor(c);
-                this.table.getQuickFilter().setCursor(cQuickfilter);
-            }
-        }
-
-    }
-
-    public void setQuickFilterValue(String text) {
-        if (this.quickFilterText != null) {
-            this.quickFilterText.setText(text);
-        }
-    }
-
-    public QuickFieldText getQuickFilter() {
-        return this.quickFilterText;
-    }
-
-    /**
-     * Get the configuration parameters. If this is a dynamic table this method updates the parameters
-     * with the new column configuration. When the value changes, the columns configuration changes too,
-     * and so, there is a difference between the configuration in the xml (that says that there are no
-     * columns) and the information that is being displayed in the GUI (which has the value in the
-     * hashtable). Some Table tools, such and the PrintTable button, creates a new Table from the
-     * parameters configuration, and then adds the values in the previous Table to the new one,
-     * provoking a configuration mismatch.
-     * @return
-     */
-    protected Hashtable getParameters() {
-        if (this.dynamicTable) {
-            Hashtable newParameters = (Hashtable) this.parameters.clone();
-            String cols = ApplicationManager.vectorToStringSeparateBySemicolon(this.attributes);
-            newParameters.put(Table.COLS, cols);
-            newParameters.put(Table.VISIBLE_COLS, cols);
-            return newParameters;
-        }
-        return this.parameters;
-    }
-
-    public int getMinRowHeight() {
-        return this.minRowHeight;
-    }
-
-    public void setMinRowHeight(int height) {
-        this.minRowHeight = height;
-    }
-
-    public int getPrintingFontSize() {
-        return this.fontSize;
-    }
-
-    /**
-     * Get the required columns to insert. This method must be used only if inserting row exist
-     * @return
-     */
-    public Vector getRequieredCols() {
-        return this.vrequiredCols;
-    }
-
-    /**
-     * @param insert
-     * @deprecated Use setInsertInDatabase
-     */
-    @Deprecated
-    public void setInsertInDataBase(boolean insert) {
-        this.setInsertInDatabase(insert);
-    }
-
-    public void setInsertInDatabase(boolean insert) {
-        this.dataBaseInsert = insert;
-        if (insert) {
-            this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
-        } else {
-            this.editableColumnsUpdateEntity = new Vector();
-        }
-    }
-
-    /**
-     * @deprecated Use setRemoveInDatabase
-     */
-    @Deprecated
-    public void setRemoveInDataBase(boolean insert) {
-        this.setRemoveInDatabase(insert);
-    }
-
-    public void setRemoveInDatabase(boolean remove) {
-        this.dataBaseRemove = remove;
-        if (remove) {
-            this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
-        } else {
-            this.editableColumnsUpdateEntity = new Vector();
-        }
-    }
-
-    /**
-     * Enabled/disabled updating the changes in the database when the user change the values stored in
-     * those.
-     * @param update
-     */
-    public void setUpdateInDatabase(boolean update) {
-        if (update) {
-            this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
-        } else {
-            this.editableColumnsUpdateEntity = new Vector();
-        }
-    }
-
-    public boolean isDataBaseInsert() {
-        return this.dataBaseInsert;
-    }
-
-    public boolean isInsertingEnabled() {
-        if (this.getJTable().getModel() instanceof TableSorter) {
-            return ((TableSorter) this.getJTable().getModel()).isInsertingEnabled();
-        }
-        return false;
-    }
-
-    @Override
-    public void addInsertTableInsertRowListener(InsertTableInsertRowListener l) {
-        this.insertTableInsertRowListenerList.add(InsertTableInsertRowListener.class, l);
-    }
-
-    @Override
-    public void removeInsertTableInsertRowListener(InsertTableInsertRowListener l) {
-        this.insertTableInsertRowListenerList.remove(InsertTableInsertRowListener.class, l);
-    }
-
-    @Override
-    public void fireInsertTableInsertRowChange(InsertTableInsertRowEvent insertTableInsertRowEvent) {
-        Object aobj[] = this.insertTableInsertRowListenerList.getListenerList();
-        for (int i = aobj.length - 2; i >= 0; i -= 2) {
-            if (aobj[i] == InsertTableInsertRowListener.class) {
-                ((InsertTableInsertRowListener) aobj[i + 1]).insertTableInsertRowChange(insertTableInsertRowEvent);
-            }
-        }
-    }
-
-    public TableSorter getTableSorter() {
-        if (this.getJTable().getModel() instanceof TableSorter) {
-            return (TableSorter) this.getJTable().getModel();
-        }
-        return null;
-    }
-
-    public int getColPress() {
-        return this.colPress;
-    }
-
-    public void checkInsertingRowValue() throws Exception {
-        Vector vreq = this.getRequieredCols();
-        for (int i = 0; i < vreq.size(); i++) {
-            Object col = vreq.elementAt(i);
-            Object value = this.getInsertingData().get(col);
-            if ((value == null) || value.equals("")) {
-                throw new Exception("table.insertingrequiredfieldserror");
-            }
-        }
-    }
-
-    protected Hashtable getInsertingData() {
-        if (this.isInsertingEnabled()) {
-            TableSorter model = this.getTableSorter();
-            Hashtable data = model.getInsertingData();
-
-            if ((this.getCalculatedColumns() != null) && (this.getCalculatedColumns().size() > 0)) {
-                int rowIndex = model.getRowCount() - 1;
-                if (model.isInsertingRow(rowIndex)) {
-                    Hashtable calculatedRowData = model.getCalculatedRowData(rowIndex);
-                    if (calculatedRowData != null) {
-                        data.putAll(calculatedRowData);
-                    }
-                }
-            }
-            return data;
-        }
-        return null;
-    }
-
-    protected void executeInsertRow() {
-        if (((TableSorter) this.getJTable().getModel()).isInsertingRow(this.getJTable().getSelectedRow())) {
-            try {
-                // If there is not an active insertion
-                if (!this.inserting) {
-                    this.checkInsertingRowValue();
-                    try {
-                        Hashtable insertingRowData = this.getInsertingData();
-                        if (this.isDataBaseInsert()) {
-                            Entity ent = ApplicationManager.getApplication()
-                                .getReferenceLocator()
-                                .getEntityReference(this.getEntityName());
-                            EntityResult rs = ent.insert(insertingRowData,
-                                    ApplicationManager.getApplication().getReferenceLocator().getSessionId());
-                            if (rs.getCode() == EntityResult.OPERATION_WRONG) {
-                                throw new Exception(rs.getMessage());
-                            }
-                            if (rs.getCode() == EntityResult.OPERATION_SUCCESSFUL_SHOW_MESSAGE) {
-                                this.getParentForm().message(rs.getMessage(), Form.INFORMATION_MESSAGE);
-                            }
-                            Enumeration en = rs.keys();
-                            while (en.hasMoreElements()) {
-                                Object key = en.nextElement();
-                                insertingRowData.put(key, rs.get(key));
-                            }
-                        }
-                        this.addRow(insertingRowData);
-                        this.enableInsert();
-                        this.fireInsertTableInsertRowChange(new InsertTableInsertRowEvent(this, insertingRowData));
-                        this.getTableSorter().clearInsertingRow(this.getParentKeyValues());
-                    } finally {
-                        this.inserting = false;
-                    }
-                }
-                // Insert the row
-                // getJTable().changeSelection(getJTable().getRowCount() - 1, 0,
-                // false, false);
-            } catch (Exception ex) {
-                Table.logger.error(null, ex);
-                this.getParentForm().message(ex.getMessage(), Form.ERROR_MESSAGE, ex);
-            }
-        }
-    }
-
-    protected void registerKeyListeners() {
-        this.getJTable().addKeyListener(new KeyAdapter() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-                if (Table.this.inserting) {
-                    return;
-                }
-                if ((e.getKeyCode() == KeyEvent.VK_ESCAPE) || (e.getKeyChar() == KeyEvent.VK_ESCAPE)) {
-                    if (Table.this.getJTable().getSelectedRow() == (Table.this.getJTable().getRowCount() - 1)) {
-                        TableSorter sorter = Table.this.getTableSorter();
-                        sorter.clearInsertingRow(Table.this.getParentKeyValues());
-                        sorter.fireTableChanged(new TableModelEvent(sorter, sorter.getRowCount() - 1));
-                    }
-                }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                if (Table.this.inserting) {
-                    return;
-                }
-                // if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                // executeInsertRow();
-                // getJTable().changeSelection(getJTable().getRowCount() - 1, 0,
-                // false, false);
-                // }
-            }
-        });
-    }
-
-    public boolean isTranslateHeader() {
-        return this.translateHeader;
-    }
-
-    public PageFetcher getPageFetcher() {
-        return this.pageFetcher;
-    }
-
-    @Override
-    public int getTemplateDataType() {
-        return ITemplateField.DATA_TYPE_TABLE;
-    }
-
-    @Override
-    public Object getTemplateDataValue() {
-        return this.getValueToExport(false, false);
-    }
-
-    protected Hashtable retrieveOnSetValueData() {
-        if (this.hOnSetValueSetFunction == null) {
-            this.hOnSetValueSetFunction = this.parseFunction(this.hOnSetValueSetEquivalences);
-        }
-        Hashtable data = new Hashtable();
-        for (int i = 0; i < this.onsetvaluesetAttributes.size(); i++) {
-            String at = (String) this.onsetvaluesetAttributes.get(i);
-            String columnName = (String) this.hOnSetValueSetEquivalences.get(at);
-            String function = (String) this.hOnSetValueSetFunction.get(at);
-            Object value = ((TableSorter) this.getJTable().getModel()).getColumnOperation(columnName, function);
-            if (value != null) {
-                data.put(columnName, value);
-            }
-        }
-        return data;
-    }
-
-    protected void updateOnSetValueSetAttributes(Hashtable data) {
-        if ((this.parentForm != null) && (data != null)) {
-            for (int i = 0; i < this.onsetvaluesetAttributes.size(); i++) {
-                Object at = this.onsetvaluesetAttributes.get(i);
-                Object oValue = data.get(this.hOnSetValueSetEquivalences.get(at));
-                this.parentForm.setDataFieldValue(at, oValue);
-                Table.logger.debug("Setting field value: {} -> {}", at, oValue);
-            }
-        }
-    }
-
-    protected Hashtable parseFunction(Hashtable equivalences) {
-        Hashtable functionEquivalences = new Hashtable();
-        Enumeration enumeration = equivalences.keys();
-        while (enumeration.hasMoreElements()) {
-            Object attr = enumeration.nextElement();
-            String valueToParse = (String) equivalences.get(attr);
-            String columnIdentifier;
-            String function = ExtendedTableModel.SUM_OPERATION;
-
-            if (valueToParse.indexOf("(") >= 0) {
-                function = valueToParse.substring(0, valueToParse.indexOf("(")).trim();
-                columnIdentifier = valueToParse.substring(valueToParse.indexOf("(") + 1, valueToParse.lastIndexOf(")"))
-                    .trim();
-            } else {
-                columnIdentifier = valueToParse;
-                int columnIndex = -1;
-                for (int i = 0; i < this.getTableSorter().getColumnCount(); i++) {
-                    if (columnIdentifier.equals(this.getTableSorter().getColumnName(i))) {
-                        columnIndex = i;
-                        break;
-                    }
-                }
-
-                if (columnIndex < 0) {
-                    function = ExtendedTableModel.SUM_OPERATION;
-                } else {
-                    Class columnClass = this.getTableSorter().getColumnClass(columnIndex);
-                    if (Number.class.isAssignableFrom(columnClass)) {
-                        function = ExtendedTableModel.SUM_OPERATION;
-                    } else if (String.class.isAssignableFrom(columnClass)) {
-                        function = ExtendedTableModel.CONCAT_OPERATION;
-                    }
-                }
-            }
-            equivalences.put(attr, columnIdentifier);
-            functionEquivalences.put(attr, function);
-        }
-        return functionEquivalences;
-    }
-
-    @Override
-    public Font getFont() {
-        Font font = super.getFont();
-        if (font == null) {
-            return this.getContentPane().getFont();
-        }
-        return font;
-    }
-
-    /**
-     * Pattern to format the field contents. Null if the <code>format</code> parameter is missing. Also
-     * wrappers the content of the <code>dateformat</code> parameter.
-     *
-     * @since Ontimize 5.4.3
-     */
-    protected FormatPattern formatPattern = null;
-
-    public FormatPattern getDetailFormatPattern() {
-        return this.formatPattern;
-    }
-
-    protected void configureDetailFormat(Hashtable parameters) {
-        String oFormat = ParseUtils.getString((String) parameters.get(Table.DETAIL_FORMAT), null);
-        if (oFormat != null) {
-            this.formatPattern = new FormatPattern(oFormat);
-
-            String oDateFormat = ParseUtils.getString((String) parameters.get(Table.DETAIL_DATE_FORMAT), null);
-            if (oDateFormat != null) {
-                this.formatPattern.setDateFormat(oDateFormat);
-            }
-        }
-    }
-
-    protected void configureInsertTitleKey(Hashtable parameters) {
-        this.insertTitleKey = ParseUtils.getString((String) parameters.get(Table.INSERT_TITLE_KEY), "insert");
-    }
-
-    protected String insertTitleKey;
-
-    public String getInsertTitleKey() {
-        return this.insertTitleKey;
-    }
-
-    public Hashtable<String, Integer> getColumnSQLTypes() {
-        return this.hColumnSQLTypes;
-    }
-
-    public boolean isQuickFilterLocal() {
-        return this.quickFilterLocal;
-    }
-
-    public boolean isQueryRowsModifiable() {
-        return this.queryRowsModifiable;
-    }
-
-    public void setQueryRowsModifiable(boolean queryRowsModifiable) {
-        this.queryRowsModifiable = queryRowsModifiable;
-    }
-
-    @Override
-    public void interactionManagerModeChanged(InteractionManagerModeEvent e) {
-        if (this.insertMode && (InteractionManager.INSERT == e.getInteractionManagerMode())) {
-            this.setEnabled(true);
-            this.operationInMemory = true;
-            if (this.memoryEntity == null) {
-                StringBuilder buffer = new StringBuilder("$LocalProxy$");
-                buffer.append(UUID.randomUUID());
-                buffer.append("$");
-                buffer.append(this.entity);
-                this.memoryEntity = buffer.toString();
-            }
-        } else {
-            this.operationInMemory = false;
-
-        }
-    }
-
-    public boolean isOperationInMemory() {
-        return this.operationInMemory;
-    }
-
-    public int getDetailTitleMaxSize() {
-        return this.detailTitleMaxSize;
-    }
-
-    public void setDetailTitleMaxSize(int detailTitleMaxSize) {
-        this.detailTitleMaxSize = detailTitleMaxSize;
-    }
-
-    public boolean isFitRowHeight() {
-		return fitRowHeight;
+	 * 
+	 * @return the names of the filtered columns
+	 */
+	public Vector getFilterColumn() {
+		return ((TableSorter) this.table.getModel()).getFilteredColumns();
+	}
+
+	/**
+	 * Returns the sorting mode corresponding to the first sorted column
+	 * 
+	 * @return true if the first sorted column is ascending. If no ordenation applied or in case that there is a sorting applied and this is descendant, the return will be false.
+	 */
+	public boolean getAscending() {
+		return ((TableSorter) this.table.getModel()).isAscending();
+	}
+
+	/**
+	 * Sorts the table based on the column values. Previous sorting is removed.
+	 * 
+	 * @param column
+	 *            the column that will be used for sorting
+	 * @param ascendant
+	 *            true if the sorting will start with the smallest values, false otherwise
+	 */
+	public void sortBy(String column, boolean ascendant) {
+		if (column == null) {
+			return;
+		}
+		TableColumn tc = this.table.getColumn(column);
+		if (tc != null) {
+			int modelIndex = tc.getModelIndex();
+			((TableSorter) this.table.getModel()).resetOrder();
+			((TableSorter) this.table.getModel()).sortByColumn(modelIndex, ascendant);
+		}
+	}
+
+	/**
+	 * Sorts the table based on the column values. Previous sorting is mantained.
+	 * 
+	 * @param column
+	 *            the column that will be used for sorting
+	 * @param ascendant
+	 *            true if the sorting will start with the smallest values, false otherwise
+	 */
+	public void sortByWithoutReset(String column, boolean ascendant) {
+		if (column == null) {
+			return;
+		}
+		TableColumn tc = this.table.getColumn(column);
+		if (tc != null) {
+			int modelIndex = tc.getModelIndex();
+			((TableSorter) this.table.getModel()).sortByColumn(modelIndex, ascendant);
+		}
+	}
+
+	/**
+	 * Sets the preferred width for all columns.
+	 * 
+	 * @return the width set for each column, in pixels, order by the column order in the table
+	 */
+	protected int[] setPreferredTableColumnWidths() {
+		return this.setPreferredTableColumnWidths(this.table.getRowCount());
+	}
+
+	/**
+	 * Returns the preferred width for the column passed as param.
+	 * 
+	 * @param modelColumnIndex
+	 *            the index of the column
+	 * @param maxRowNumber
+	 *            the max number of rows to check
+	 * @return
+	 */
+	protected int getPreferredColumnWidth(int modelColumnIndex, int maxRowNumber) {
+		int width = 0;
+		String sName = this.table.getColumnName(modelColumnIndex);
+
+		TableColumn tableColumn = this.table.getColumn(sName);
+		if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
+			width = tableColumn.getPreferredWidth();
+			return width;
+		}
+		if (!this.isVisibleColumn(sName)) {
+			tableColumn.setMinWidth(0);
+			tableColumn.setMaxWidth(0);
+			tableColumn.setWidth(0);
+			width = 0;
+			return width;
+		} else {
+			tableColumn.setMinWidth(10);
+			tableColumn.setMaxWidth(10000);
+		}
+		// If there is no data then initialize the columns with using the header
+		try {
+			// JRE 1.2 does not contain the function
+			// TableCellRenderer.getDefaultRenderer()
+
+			JTableHeader header = this.table.getTableHeader();
+			TableCellRenderer headerRenderer = header.getDefaultRenderer();
+			Object oHeaderValue = tableColumn.getHeaderValue();
+			Component hederRendererComponent = headerRenderer.getTableCellRendererComponent(this.table, oHeaderValue, false, false, 0, 1);
+			int headerPreferredWidth = hederRendererComponent.getPreferredSize().width;
+			if (hederRendererComponent instanceof JLabel) {
+				FontMetrics metrics = ((JLabel) hederRendererComponent).getFontMetrics(((JLabel) hederRendererComponent).getFont());
+				if (oHeaderValue != null) {
+					headerPreferredWidth = metrics.stringWidth(oHeaderValue.toString());
+				}
+			} else if (hederRendererComponent instanceof JTextComponent) {
+				FontMetrics fontMetrics = ((JTextComponent) hederRendererComponent).getFontMetrics(((JTextComponent) hederRendererComponent).getFont());
+				if (oHeaderValue != null) {
+					headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString() + 6);
+				}
+			} else {
+				headerPreferredWidth = hederRendererComponent.getPreferredSize().width;
+			}
+			width = headerPreferredWidth + 4;
+		} catch (Exception e) {
+			Table.logger.error("Exception initiating table column width. JRE 1.3 or above is required: ", e);
+			width = tableColumn.getPreferredWidth();
+		}
+
+		TableCellRenderer renderer = this.table.getDefaultRenderer(this.table.getColumnClass(modelColumnIndex));
+		TableCellRenderer cellRenderer2 = this.table.getColumnModel().getColumn(modelColumnIndex).getCellRenderer();
+		if (cellRenderer2 != null) {
+			renderer = cellRenderer2;
+		}
+
+		for (int j = 0; j < Math.min(this.table.getRowCount(), maxRowNumber); j++) {
+			Object oValue = this.table.getValueAt(j, modelColumnIndex);
+			Component rendererComponent = renderer.getTableCellRendererComponent(this.table, oValue, false, false, 0, 0);
+			int preferredWidth = rendererComponent.getPreferredSize().width;
+			if (rendererComponent instanceof JComponent) {
+				preferredWidth = preferredWidth - ((JComponent) rendererComponent).getInsets().left - ((JComponent) rendererComponent).getInsets().right;
+			}
+			if (rendererComponent instanceof JTextField) {
+				FontMetrics fontMetrics = ((JTextField) rendererComponent).getFontMetrics(((JTextField) rendererComponent).getFont());
+				preferredWidth = fontMetrics.stringWidth(((JTextField) rendererComponent).getText()) + 4;
+			} else if (rendererComponent instanceof JLabel) {
+				FontMetrics fontMetrics = ((JLabel) rendererComponent).getFontMetrics(((JLabel) rendererComponent).getFont());
+				try {
+					String text = ((JLabel) rendererComponent).getText();
+					if (text == null) {
+						text = "";
+					}
+					preferredWidth = fontMetrics.stringWidth(text) + 4;
+				} catch (Exception eM) {
+					Table.logger.trace(null, eM);
+				}
+			}
+			width = Math.max(preferredWidth + 5, width);
+
+		}
+		return width;
+	}
+
+	/**
+	 * Sets the preferred width for the columns in the table, up to the maximum number of rows.
+	 * 
+	 * @param maxRows
+	 *            max number of rows to check
+	 * @return the width set for each column, in pixels, order by the column order in the table
+	 */
+	protected int[] setPreferredTableColumnWidths(int maxRows) {
+		// Calculate the minimun table width to ensure that values are visible
+		this.setRowNumberColumnVisible(this.visibleRowNumberColumn);
+		int tableWidth = this.table.getParent().getWidth();
+		int columnsWidth = 0;
+		int nColsMaxTableWidth = 0;
+		int[] widths = new int[this.table.getColumnCount()];
+		int[] colsWidthMaxTableWidth = new int[this.table.getColumnCount()];
+		try {
+			for (int i = 0; i < this.table.getColumnCount(); i++) {
+				String sName = this.table.getColumnName(i);
+				TableColumn tableColumn = this.table.getColumn(sName);
+				widths[i] = this.getPreferredColumnWidth(i, maxRows);
+				if (widths[i] > tableWidth) {
+					colsWidthMaxTableWidth[i] = widths[i];
+					nColsMaxTableWidth++;
+				} else {
+					columnsWidth += widths[i];
+				}
+
+				tableColumn.setWidth(widths[i]);
+				tableColumn.setPreferredWidth(widths[i]);
+			}
+			int available = tableWidth - columnsWidth;
+			if ((available > 0) && (nColsMaxTableWidth > 0)) {
+				int single = available / nColsMaxTableWidth;
+				for (int i = 0; i < widths.length; i++) {
+					if (colsWidthMaxTableWidth[i] > 0) {
+						String sName = this.table.getColumnName(i);
+						TableColumn tableColumn = this.table.getColumn(sName);
+						tableColumn.setWidth(single);
+						tableColumn.setPreferredWidth(single);
+						widths[i] = single;
+					}
+				}
+			}
+		} catch (OutOfMemoryError errorMem) {
+			Table.logger.error("Memory Error", errorMem);
+			for (int i = 0; i < this.table.getColumnCount(); i++) {
+				String sName = this.table.getColumnName(i);
+				TableColumn tableColumn = this.table.getColumn(sName);
+				widths[i] = tableColumn.getPreferredWidth();
+			}
+			throw errorMem;
+		}
+		return widths;
+	}
+
+	public boolean isRowNumberColumnVisible() {
+		return this.visibleRowNumberColumn;
+	}
+
+	/**
+	 * Sets whether or not the row number column is visible.
+	 * 
+	 * @param visible
+	 *            true if the row number column should be visible, false otherwise
+	 */
+	public void setRowNumberColumnVisible(boolean visible) {
+
+		if (this.dynamicTable && visible && (this.getJTable().getRowCount() == 0)) {
+			// In a dynamic table only show the column with numbers if there are
+			// some data
+			this.setRowNumberColumnVisible(false);
+			return;
+		}
+
+		this.visibleRowNumberColumn = visible;
+		if (visible) {
+			TableColumn rowNumbersColumn = this.blockedTable.getColumn(ExtendedTableModel.ROW_NUMBERS_COLUMN);
+			TableCellRenderer renderer = this.blockedTable.getDefaultRenderer(Integer.class);
+			Component rendererComponnt = renderer.getTableCellRendererComponent(this.table, new Integer(this.blockedTable.getRowCount()), false, false, 0, 0);
+			int preferredWidth = rendererComponnt.getPreferredSize().width;
+			if (rendererComponnt instanceof JTextField) {
+				FontMetrics fontMetrics = ((JTextField) rendererComponnt).getFontMetrics(((JTextField) rendererComponnt).getFont());
+				preferredWidth = fontMetrics.stringWidth(((JTextField) rendererComponnt).getText()) + 4;
+			}
+			if (rendererComponnt instanceof JLabel) {
+				FontMetrics fontMetrics = ((JLabel) rendererComponnt).getFontMetrics(((JLabel) rendererComponnt).getFont());
+				try {
+					String text = ((JLabel) rendererComponnt).getText();
+					if (text == null) {
+						text = "";
+					}
+					preferredWidth = fontMetrics.stringWidth(text) + 4;
+					preferredWidth = preferredWidth < 15 ? 15 : preferredWidth;
+				} catch (Exception eM) {
+					Table.logger.trace(null, eM);
+				}
+			}
+			rowNumbersColumn.setMaxWidth(preferredWidth + 8);
+			rowNumbersColumn.setWidth(preferredWidth + 6);
+			rowNumbersColumn.setPreferredWidth(preferredWidth + 6);
+			rowNumbersColumn.setMinWidth(0);
+			// rowNumbersColumn.setResizable(true);
+		} else {
+			TableColumn rowNumbersColumn = this.blockedTable.getColumn(ExtendedTableModel.ROW_NUMBERS_COLUMN);
+			rowNumbersColumn.setMaxWidth(0);
+			rowNumbersColumn.setMinWidth(0);
+			rowNumbersColumn.setWidth(0);
+			rowNumbersColumn.setPreferredWidth(0);
+			rowNumbersColumn.setResizable(false);
+		}
+		this.mainSplit.setDividerLocation(this.blockedTable.getColumnModel().getTotalColumnWidth());
+		this.fixBlockedVisibility();
+	}
+
+	/**
+	 * Sets the current column width to the preferred column width for the columns past as parameter
+	 * 
+	 * @param visibleColumns
+	 *            a vector containing the column names
+	 * @return
+	 */
+	protected int[] setPreferredTableColumnWidths(Vector visibleColumns) {
+		return this.setPreferredTableColumnWidths(visibleColumns, null);
+	}
+
+	/**
+	 * Sets the current column width to the preferred column width for the columns past as parameter
+	 * 
+	 * @param visibleColumns
+	 *            a vector containing the column names
+	 * @param progressBar
+	 *            a progress bar to show the process
+	 * @return
+	 */
+	protected int[] setPreferredTableColumnWidths(Vector visibleColumns, final JProgressBar progressBar) {
+		// Calculate the minimun table width to ensure that values are visible
+
+		Table.logger.trace("Table: setting columns preferred width: Memory used: {} kbytes", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0);
+		long t = System.currentTimeMillis();
+
+		this.setRowNumberColumnVisible(this.visibleRowNumberColumn);
+		int[] widths = new int[this.table.getColumnCount()];
+		try {
+			int columnNumber = this.table.getColumnCount();
+			if (progressBar != null) {
+				progressBar.setMaximum(this.table.getRowCount() * visibleColumns.size());
+			}
+			int lastPainted = 0;
+			int aux = 0;
+			int paintIncrement = Math.max(1, (int) ((this.table.getRowCount() * columnNumber) / 10.0));
+			JTableHeader header = this.table.getTableHeader();
+			TableCellRenderer rendererCabecera = null;
+			try {
+				rendererCabecera = header.getDefaultRenderer();
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+			}
+
+			for (int i = 0; i < columnNumber; i++) {
+				String sName = this.table.getColumnName(i);
+				TableColumn tableColumn = this.table.getColumn(sName);
+				if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
+					widths[i] = tableColumn.getPreferredWidth();
+					continue;
+				}
+				if ((!this.isVisibleColumn(sName)) || ((visibleColumns != null) && !visibleColumns.contains(sName))) {
+					tableColumn.setMinWidth(0);
+					tableColumn.setMaxWidth(0);
+					tableColumn.setWidth(0);
+					widths[i] = 0;
+					continue;
+				} else {
+					tableColumn.setMinWidth(10);
+					tableColumn.setMaxWidth(10000);
+				}
+				// Without data use the header to initialize the columns width
+				try {
+					Object oHeaderValue = tableColumn.getHeaderValue();
+					Component rendererHeaderComponent = rendererCabecera.getTableCellRendererComponent(this.table, oHeaderValue, false, false, 0, 1);
+					int headerPreferredWidth = 0;
+					if (rendererHeaderComponent instanceof JLabel) {
+						FontMetrics fontMetrics = ((JLabel) rendererHeaderComponent).getFontMetrics(((JLabel) rendererHeaderComponent).getFont());
+						if (oHeaderValue != null) {
+							headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString()) + 4;
+						}
+					} else if (rendererHeaderComponent instanceof JTextComponent) {
+						FontMetrics fontMetrics = ((JTextComponent) rendererHeaderComponent).getFontMetrics(((JTextComponent) rendererHeaderComponent).getFont());
+						if (oHeaderValue != null) {
+							headerPreferredWidth = fontMetrics.stringWidth(oHeaderValue.toString() + 6);
+						}
+					} else {
+						headerPreferredWidth = rendererHeaderComponent.getPreferredSize().width;
+					}
+					widths[i] = headerPreferredWidth;
+				} catch (Exception e) {
+					Table.logger.error("Exception initiating table column width. JRE 1.3 or above is required", e);
+					widths[i] = tableColumn.getPreferredWidth();
+				}
+
+				TableCellRenderer renderer = this.table.getDefaultRenderer(this.table.getColumnClass(i));
+				TableCellRenderer cellRenderer2 = this.table.getColumnModel().getColumn(i).getCellRenderer();
+				if (cellRenderer2 != null) {
+					renderer = cellRenderer2;
+				}
+				cellRenderer2 = null;
+				FontMetrics fontMetrics = null;
+				int preferredWidth = 0;
+				Component componenteRender = null;
+				Object oValue = null;
+				long tIniCol = System.currentTimeMillis();
+				for (int j = 0; j < this.table.getRowCount(); j++) {
+					oValue = this.table.getValueAt(j, i);
+					componenteRender = renderer.getTableCellRendererComponent(null, oValue, false, false, 0, 0);
+					if (componenteRender instanceof JTextField) {
+						if (fontMetrics == null) {
+							fontMetrics = ((JTextField) componenteRender).getFontMetrics(((JTextField) componenteRender).getFont());
+						}
+						preferredWidth = fontMetrics.stringWidth(((JTextField) componenteRender).getText()) + 4;
+					} else if (componenteRender instanceof JLabel) {
+						if (fontMetrics == null) {
+							fontMetrics = ((JLabel) componenteRender).getFontMetrics(((JLabel) componenteRender).getFont());
+						}
+						try {
+							String text = ((JLabel) componenteRender).getText();
+							if (text == null) {
+								text = "";
+							}
+							preferredWidth = fontMetrics.stringWidth(text) + 4;
+						} catch (Exception eM) {
+							Table.logger.trace(null, eM);
+						}
+					} else if (componenteRender instanceof JComponent) {
+						preferredWidth = componenteRender.getPreferredSize().width;
+						preferredWidth = preferredWidth - ((JComponent) componenteRender).getInsets().left - ((JComponent) componenteRender).getInsets().right;
+					} else {
+						preferredWidth = componenteRender.getPreferredSize().width;
+					}
+
+					widths[i] = Math.max(preferredWidth + 5, widths[i]);
+
+					if (progressBar != null) {
+
+						aux++;
+						if ((aux - lastPainted) > paintIncrement) {
+							progressBar.setValue(aux);
+							if (SwingUtilities.isEventDispatchThread()) {
+								progressBar.paintImmediately(0, 0, progressBar.getWidth(), progressBar.getHeight());
+							} else {
+								SwingUtilities.invokeLater(() -> progressBar.paintImmediately(0, 0, progressBar.getWidth(), progressBar.getHeight()));
+							}
+							lastPainted = aux;
+
+						}
+					}
+
+				}
+
+				Table.logger.trace("Table:  columns preferred width set time: {} for {} rows: {}", tableColumn.getHeaderValue(), this.table.getRowCount(),
+						System.currentTimeMillis() - tIniCol);
+
+				Table.logger.debug("Table: set columns preferred width: {}. Memory use: {} kbytes", tableColumn.getHeaderValue(),
+						(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0);
+				// System.gc();
+				tableColumn.setWidth(widths[i]);
+				tableColumn.setPreferredWidth(widths[i]);
+
+			}
+		} catch (OutOfMemoryError errorMem) {
+			Table.logger.error("Memory error", errorMem);
+			throw errorMem;
+		}
+
+		Table.logger.trace("Table: columns preferred width set time: {} rows : {}", this.table.getRowCount(), System.currentTimeMillis() - t);
+
+		if ((this.table != null) && (this.table.getModel() instanceof TableSorter)) {
+			((TableSorter) this.table.getModel()).setPreferredHeadSize();
+		}
+		return widths;
+	}
+
+	/**
+	 * Starts the table printing process. No dialogs are shown.
+	 * 
+	 * @param title
+	 */
+	public void printSilent(String title) {
+		this.checkRefreshThread();
+		PrintingSetupWindow vPrintConfiguration = null;
+		try {
+			Window w = SwingUtilities.getWindowAncestor(Table.this);
+			if (w instanceof Dialog) {
+				if (vPrintConfiguration == null) {
+					vPrintConfiguration = new PrintingSetupWindow((Dialog) w, Table.this);
+				}
+				vPrintConfiguration.setResourceBundle(this.resourcesFile);
+				vPrintConfiguration.printDefault(title);
+			} else {
+				if (vPrintConfiguration == null) {
+					vPrintConfiguration = new PrintingSetupWindow(Table.this.parentFrame, Table.this);
+				}
+				vPrintConfiguration.setResourceBundle(this.resourcesFile);
+				vPrintConfiguration.printDefault(title);
+			}
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+			this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
+		} catch (OutOfMemoryError error) {
+			Table.logger.error("Memory Error", error);
+			vPrintConfiguration.setVisible(false);
+			vPrintConfiguration.dispose();
+			vPrintConfiguration = null;
+		}
+	}
+
+	/**
+	 * Starts the print table dialog.
+	 */
+	public void print() {
+		this.checkRefreshThread();
+		PrintingSetupWindow vPrintConfiguration = null;
+		try {
+			Window w = SwingUtilities.getWindowAncestor(Table.this);
+			if (w instanceof Dialog) {
+				if (vPrintConfiguration == null) {
+					vPrintConfiguration = new PrintingSetupWindow((Dialog) w, Table.this);
+				}
+				vPrintConfiguration.setResourceBundle(this.resourcesFile);
+				vPrintConfiguration.setVisible(true);
+			} else {
+				if (vPrintConfiguration == null) {
+					vPrintConfiguration = new PrintingSetupWindow(Table.this.parentFrame, Table.this);
+				}
+				vPrintConfiguration.setResourceBundle(this.resourcesFile);
+				vPrintConfiguration.setVisible(true);
+			}
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+			this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
+		} catch (OutOfMemoryError error) {
+			Table.logger.error("Memory Error", error);
+			vPrintConfiguration.setVisible(false);
+			vPrintConfiguration.dispose();
+			vPrintConfiguration = null;
+		}
+	}
+
+	/**
+	 * Copies the selected data in the table GUI to the system clipboard.
+	 */
+	protected void copySelection() {
+		try {
+			Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			if (this.table.getSelectedRowCount() == 0) {
+				return;
+			}
+			int[] selectedRows = this.table.getSelectedRows();
+			final StringSelection sselection = new StringSelection(this.getExcelString(selectedRows));
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sselection, sselection);
+		} catch (Exception e) {
+			Table.logger.debug("Exception establishing contents to Clipboard.", e);
+			this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE, e);
+		} finally {
+			Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		}
+	}
+
+	/**
+	 * Returns the grouping for the column over which was pressed the mouse to select the deletion.
+	 */
+	protected void deleteGroup() {
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			sorter.resetGroup();
+			this.enableInsert();
+		}
+	}
+
+	/**
+	 * Groups the selected column by the defined type. Types are defined in the TableSorter class, and can be at least: <ul> <li>YEAR</li> <li>YEAR_MONTH</li>
+	 * <li>YEAR_MONTH_DAY</li> <li>QUARTER_YEAR</li> <li>QUARTER</li> <li>MONTH</li> </ul>
+	 * 
+	 * @param type
+	 *            the grouping type; see {@link TableSorter}
+	 */
+	protected void insertGroup(int type) {
+		if (this.table.isEditing()) {
+			this.table.editingStopped(new ChangeEvent(this.table));
+		}
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			int column = this.table.convertColumnIndexToModel(this.colPress);
+			sorter.group(column, type);
+			this.disableInsert();
+		}
+	}
+
+	/**
+	 * Groups the selected column in the table by year.
+	 */
+	protected void insertGroup() {
+		if (this.table.isEditing()) {
+			this.table.editingStopped(new ChangeEvent(this.table));
+		}
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			int column = this.table.convertColumnIndexToModel(this.colPress);
+			sorter.group(column);
+			this.disableInsert();
+			if (this.buttonDelete != null) {
+				this.setTableComponentEnabled(Table.BUTTON_DELETE, false);
+			}
+		}
+	}
+
+	/**
+	 * Popup menu method that gets the value in the cell over which the menu was displayed, gets that value, and filters the table applying that value as filter value. The column
+	 * that will be filtered in the corresponding the cell.
+	 */
+	protected void insertFilterByValue() {
+		if ((this.rowPress < 0) || (this.colPress < 0)) {
+			return;
+		}
+		if (this.table.isEditing()) {
+			this.table.editingStopped(new ChangeEvent(this.table));
+		}
+
+		int row = this.rowPress;
+		int col = Table.this.table.convertColumnIndexToModel(this.colPress);
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			Object value = sorter.getValueAt(row, col);
+			Class columnClass = sorter.getColumnClass(col);
+
+			if (this.getJTable().getCellRenderer(0, this.colPress) instanceof ComboReferenceCellRenderer) {
+				value = ((ComboReferenceCellRenderer) this.getJTable().getCellRenderer(0, this.colPress)).getCodeDescription(value);
+				columnClass = String.class;
+			}
+
+			if (value == null) {
+				SimpleFilter simple = new SimpleFilter(value);
+				sorter.applyFilter(col, simple);
+			} else {
+				if (Number.class.isAssignableFrom(columnClass)) {
+					Filter filter = new Filter(Filter.EQUAL, new Object[] { value });
+					sorter.applyFilter(col, filter);
+				} else if (java.util.Date.class.isAssignableFrom(columnClass)) {
+					Filter filter = new Filter(Filter.EQUAL, new Object[] { value });
+					sorter.applyFilter(col, filter);
+				} else {
+					SimpleFilter simple = new SimpleFilter(value);
+					sorter.applyFilter(col, simple);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Shows the FilterDialog.
+	 *
+	 * @see FilterDialog
+	 */
+	protected void insertFilter() {
+		if (this.filterWindow == null) {
+			Window w = SwingUtilities.getWindowAncestor(this.table);
+			if (w instanceof Dialog) {
+				this.filterWindow = new FilterDialog((Dialog) w, this);
+			} else {
+				this.filterWindow = new FilterDialog((Frame) w, this);
+			}
+		}
+
+		this.filterWindow.setResourceBundle(this.resourcesFile);
+		this.filterWindow.setComponentLocale(this.locale);
+
+		if (!(this.table.getTableHeader().getDefaultRenderer() instanceof SortTableCellRenderer)) {
+			SortTableCellRenderer rend = new SortTableCellRenderer(this.table);
+			// rend.setMaxLinesNumber(SortTableCellRenderer.MAX_VALUE_HEAD_RENDERER_LINES);
+			this.table.getTableHeader().setDefaultRenderer(rend);
+			Table.logger.info("--");
+		} else {
+		}
+		this.table.getTableHeader().repaint();
+		Table.logger.debug("Table: Showing filter window");
+		this.filterWindow.show(this.eventPress);
+	}
+
+	/**
+	 * Deletes all the filters that are being applied to the table.
+	 */
+	protected void deleteFilter() {
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			// int column = table.convertColumnIndexToModel(this.colPress);
+			if (sorter.lastFilterOr()) {
+				this.quickFilterText.setText("");
+			} else {
+				sorter.resetFilter();
+			}
+		}
+	}
+
+	/**
+	 * Popup menu method. Deletes all the filters that are being applied to the column over which the right click menu was invoked.
+	 */
+	protected void deleteColumnFilter() {
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			TableSorter sorter = (TableSorter) model;
+			// TODO the following line can be removed
+			int column = this.table.convertColumnIndexToModel(this.colPress);
+			sorter.resetFilter(column);
+		}
+	}
+
+	/**
+	 * Opens the printing dialog to print the information contained in the selected rows.
+	 */
+	protected void printSelection() {
+		try {
+			Hashtable hSelectedData = Table.this.getSelectedRowData();
+			if (this.tAux == null) {
+				this.tAux = new Table(Table.this.getParameters());
+				this.tAux.setParentForm(this.parentForm);
+			}
+			this.tAux.setResourceBundle(this.getResourceBundle());
+			this.tAux.setValue(hSelectedData);
+			this.checkRefreshThread();
+			PrintingSetupWindow vPrintConfigurationSelection = null;
+			try {
+				Window w = SwingUtilities.getWindowAncestor(Table.this);
+				if (w instanceof Dialog) {
+					if (vPrintConfigurationSelection == null) {
+						vPrintConfigurationSelection = new PrintingSetupWindow((Dialog) w, Table.this.tAux);
+					}
+					vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
+					vPrintConfigurationSelection.setVisible(true);
+
+				} else if (w instanceof Frame) {
+					if (vPrintConfigurationSelection == null) {
+						vPrintConfigurationSelection = new PrintingSetupWindow((Frame) w, Table.this.tAux);
+					}
+					vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
+					vPrintConfigurationSelection.setVisible(true);
+
+				} else {
+					if (vPrintConfigurationSelection == null) {
+						vPrintConfigurationSelection = new PrintingSetupWindow(Table.this.parentFrame, Table.this.tAux);
+					}
+					vPrintConfigurationSelection.setResourceBundle(this.getResourceBundle());
+					vPrintConfigurationSelection.setVisible(true);
+				}
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+				this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
+			}
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+			this.parentForm.message(Table.M_ERROR_PRINTING_TABLE, Form.ERROR_MESSAGE, e);
+		}
+
+		this.tAux.deleteData();
+	}
+
+	/**
+	 * Copies to the clipboard the information contained by the cell over which the mouse right click opened the popup menu.
+	 */
+	protected void copyCell() {
+		Object datosSel = this.getCellValueAsString(this.rowPress, this.colPress);
+		// Object datosSel = this.table.getValueAt(rowPress, colPress);
+		try {
+			Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			final StringSelection sselection = new StringSelection(datosSel.toString());
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sselection, sselection);
+		} catch (Exception e) {
+			Table.logger.debug("Exception setting Clipboard content.", e);
+			this.parentForm.message("table.operation_cannot_be_performed", Form.WARNING_MESSAGE, e);
+		} finally {
+			Table.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		}
+	}
+
+	/**
+	 * Sets the height that will have the rendered images into the table.
+	 * 
+	 * @param pixels
+	 *            the height in pixels for the image renderers
+	 * @see ImageCellRenderer
+	 */
+	public void setImageRendererHeight(int pixels) {
+		Hashtable pImage = new Hashtable();
+		pImage.put("height", Integer.toString(pixels));
+		this.table.setDefaultRenderer(BytesBlock.class, new ImageCellRenderer(pImage));
+		this.table.repaint();
+	}
+
+	/**
+	 * Configures the pageable table.
+	 * 
+	 * @param pageSize
+	 */
+	protected void configurePageable(int pageSize) {
+		this.pageFetcher = new PageFetcher(this, pageSize);
+	}
+
+	/**
+	 * Returns the total amount of records shown in the table. In case that the table is filtered or grouped, returns the total amount of records after performing those operations.
+	 * <p> In any case the sum column will not be considered.
+	 * 
+	 * @return the total number of records shown in the table
+	 */
+	public int getCurrentRowCount() {
+		TableModel model = this.table.getModel();
+		return ((TableSorter) model).getCurrentRowCount();
+	}
+
+	/**
+	 * Returns the total amount of records in the table. Sum row is not included. In case that the table is filtered or grouped, the result will not be modified.
+	 * 
+	 * @return the total amount of records in the table
+	 */
+	public int getRealRecordsNumber() {
+		TableModel model = this.table.getModel();
+		return ((TableSorter) model).getRealRecordNumber();
+	}
+
+	/**
+	 * Returns a {@link #Hashtable} in which the keys are the field names configured as table parent keys (using the names in the table entity if they are different that the form
+	 * fields), and the values are the values those fields have in the table's parent form.
+	 * 
+	 * @return all the parent keys values
+	 * @see #getParentKeyValues(boolean)
+	 */
+	@Override
+	public Map<Object, Object> getParentKeyValues() {
+		return this.getParentKeyValues(true);
+	}
+
+	@Override
+	public Vector getParentKeyList() {
+		if (this.parentkeys != null) {
+			Vector temp = new Vector();
+			temp.addAll(this.parentkeys);
+			return temp;
+		}
+		return null;
+	}
+
+	@Override
+	public boolean hasParentKeys() {
+		if ((this.parentkeys == null) || this.parentkeys.isEmpty()) {
+			return false;
+		}
+		return true;
+
+	}
+
+	/**
+	 * Returns a {@link #Map} in which the keys are the field names configured as table parent keys, and the values are the values those fields have in the table's parent
+	 * form.
+	 * 
+	 * @param applyEquivalences
+	 *            If this parameter is true then the names used as keys in the result are the names of the parent keys in the table entity. If false, then the names are the names
+	 *            of the fields in the parent form
+	 * @return
+	 */
+	public Map<Object, Object> getParentKeyValues(boolean applyEquivalences) {
+
+		Map<Object, Object> kv = new HashMap<>();
+		if (this.parentkeys != null) {
+			for (Object element : this.parentkeys) {
+				Object v = this.parentForm.getDataFieldValue(element.toString());
+				if (v != null) {
+					Object pkName = element;
+					if (applyEquivalences) {
+						pkName = this.getParentkeyEquivalentValue(pkName);
+					}
+					kv.put(pkName, v);
+				} else {
+					Table.logger.debug(
+							"Table: Parentkey {} is null. It won't be included in the query.Check the xml file in which the table is defined to ensure that the field has a value",
+							element);
+					if (Table.logger.isTraceEnabled()) {
+						MessageDialog.showErrorMessage(this.parentFrame,
+								"DEBUG: Table: Parentkey " + element + " is null. It won't be included in the query. " + "Check the xml file in which the table is defined to ensure that the field has a value");
+					}
+				}
+			}
+		}
+		return kv;
+	}
+
+	/**
+	 * Sets whether the control buttons pannel will be enabled or not.
+	 * 
+	 * @param enabled
+	 *            true if the table header should enable
+	 */
+	protected void setControlButtonsEnabled(boolean enabled) {
+		if (this.showControls) {
+			this.setTableComponentEnabled(Table.BUTTON_COPY, enabled);
+			this.setTableComponentEnabled(Table.BUTTON_EXCEL_EXPORT, enabled);
+			this.setTableComponentEnabled(Table.BUTTON_HTML_EXPORT, enabled);
+			this.setTableComponentEnabled(Table.BUTTON_PRINTING, enabled);
+			this.setTableComponentEnabled(Table.BUTTON_PIVOTTABLE, enabled);
+			this.setTableComponentEnabled(Table.BUTTON_CHART, enabled);
+
+			this.setTableComponentEnabled(Table.BUTTON_REPORT, enabled);
+
+			this.setTableComponentEnabled(Table.BUTTON_DEFAULT_CHART, enabled && this.defaultChartsEnabled);
+			if (!this.defaultChartsEnabled) {
+				this.setTableComponentVisible(Table.BUTTON_DEFAULT_CHART, false);
+			}
+
+			if (this.dynamicTable) {
+				this.setTableComponentEnabled(Table.BUTTON_VISIBLE_COLS_SETUP, enabled);
+			}
+
+			boolean enableOperationButtons = this.getOperationColumns().size() > 0;
+			this.setTableComponentEnabled(Table.BUTTON_CALCULATED_COL, enableOperationButtons && enabled);
+			this.setTableComponentEnabled(Table.BUTTON_SUM_ROW_SETUP, enableOperationButtons && enabled);
+		}
+	}
+
+	/**
+	 * Configures the buttons tip.
+	 */
+	protected void setButtonTips() {
+		if (this.buttonVisibleColsSetup != null) {
+			this.buttonVisibleColsSetup.setToolTipText(Table.TIP_VISIBLES_COLS_SETUP);
+		}
+
+		if (this.buttonSumRowSetup != null) {
+			this.buttonSumRowSetup.setToolTipText(Table.TIP_SUMROW_SETUP);
+		}
+
+		if (this.buttonSaveFilterOrderSetup != null) {
+			this.buttonSaveFilterOrderSetup.setToolTipText(Table.TIP_FILTER_ORDEN_CONF);
+		}
+
+		if (this.buttonPrint != null) {
+			this.buttonPrint.setToolTipText(Table.TIP_PRINTING);
+			if (this.buttonPrint instanceof TableButton) {
+				((TableButton) this.buttonPrint).setDefaultToolTipText(Table.TIP_PRINTING_es_ES);
+			}
+		}
+
+		if (this.buttonDefaultChart != null) {
+			this.buttonDefaultChart.setToolTipText(Table.TIP_CHART_MENU);
+			this.buttonDefaultChart.setDefaultToolTipText(Table.TIP_CHART_MENU_es_ES);
+		}
+
+		if (this.buttonCopy != null) {
+			this.buttonCopy.setToolTipText(Table.TIP_CLIPBOARD_COPY);
+			if (this.buttonCopy instanceof TableButton) {
+				((TableButton) this.buttonCopy).setDefaultToolTipText(Table.TIP_CLIPBOARD_COPY_es_ES);
+			}
+		}
+
+		if (this.buttonExcelExport != null) {
+			this.buttonExcelExport.setToolTipText(Table.TIP_EXCEL_EXPORT);
+			if (this.buttonExcelExport instanceof TableButton) {
+				((TableButton) this.buttonExcelExport).setDefaultToolTipText(Table.TIP_EXCEL_EXPORT_es_ES);
+			}
+		}
+
+		if (this.buttonHTMLExport != null) {
+			this.buttonHTMLExport.setToolTipText(Table.TIP_HTML_EXPORT);
+			if (this.buttonHTMLExport instanceof TableButton) {
+				((TableButton) this.buttonHTMLExport).setDefaultToolTipText(Table.TIP_HTML_EXPORT_es_ES);
+			}
+		}
+
+		if (this.buttonPlus2 != null) {
+			this.buttonPlus2.setToolTipText(Table.TIP_INSERT_BUTTON);
+			if (this.buttonPlus2 instanceof TableButton) {
+				((TableButton) this.buttonPlus2).setDefaultToolTipText(Table.TIP_INSERT_BUTTON_es_ES);
+			}
+		}
+
+		if (this.buttonPlus != null) {
+			this.buttonPlus.setToolTipText(Table.TIP_INSERT_BUTTON);
+			if (this.buttonPlus instanceof TableButton) {
+				((TableButton) this.buttonPlus).setDefaultToolTipText(Table.TIP_INSERT_BUTTON_es_ES);
+			}
+		}
+
+		if (this.buttonReports != null) {
+			this.buttonReports.setToolTipText(Table.TIP_REPORT_PRINTING);
+			this.buttonReports.setDefaultToolTipText(Table.TIP_REPORT_PRINTING_es_ES);
+		}
+
+		if (this.buttonPivotTable != null) {
+			this.buttonPivotTable.setToolTipText(Table.TIP_PIVOT_TABLE);
+			this.buttonPivotTable.setDefaultToolTipText(Table.TIP_PIVOT_TABLE_es_ES);
+		}
+
+		if (this.buttonCalculatedColumns != null) {
+			this.buttonCalculatedColumns.setToolTipText(Table.TIP_CALCULATED_COLUMNS);
+			if (this.buttonCalculatedColumns instanceof TableButton) {
+				((TableButton) this.buttonCalculatedColumns).setDefaultToolTipText(Table.TIP_CALCULATED_COLUMNS);
+			}
+		}
+
+		if (this.groupTableButton != null) {
+			this.groupTableButton.setToolTipText(Table.TIP_GROUP_TABLE_BUTTON);
+			this.groupTableButton.setDefaultToolTipText(Table.TIP_GROUP_TABLE_BUTTON);
+		}
+
+		// adding the buttons
+		for (Object o : this.addButtons) {
+			if (o instanceof Internationalization) {
+				((Internationalization) o).setResourceBundle(this.resourcesFile);
+			}
+		}
+
+		for (Object o : this.addComponents) {
+			if (o instanceof Internationalization) {
+				((Internationalization) o).setResourceBundle(this.resourcesFile);
+			}
+		}
+
+	}
+
+	/**
+	 * Returns the sum of all the values for the specified column.
+	 * 
+	 * @param col
+	 *            the column to sum
+	 * @return the sum of the values of the record for the column
+	 */
+	public Number getSumColumn(Object col) {
+		this.checkRefreshThread();
+		if ((this.table == null) || (this.table.getModel() == null)) {
+			return new Double(0.0);
+		}
+		return ((TableSorter) this.table.getModel()).getColumnSum(col);
+	}
+
+	/**
+	 * Returns the DetailForm configured for this table. The detail form is the form in which the records can be shown in detail by double clicking the rows in the grid. It is used
+	 * as well to perform insert operations from the tables, by clicking the insert button in the top right corner of the table.
+	 * 
+	 * @return the detail form, or null if no form has been specified
+	 */
+	public DetailForm getDetailForm() {
+		if (this.formName != null) {
+			if (this.detailForm == null) {
+				this.createDetailForm();
+				this.detailForm.setKeys(new Hashtable(0), 0);
+
+				this.detailForm.resetParentkeys(this.parentkeys);
+				Hashtable hOtherKeys = new Hashtable();
+				for (Object element : this.parentkeys) {
+					Object vParentKey = Table.this.parentForm.getDataFieldValueFromFormCache(element.toString());
+					if (Table.logger.isDebugEnabled() && (vParentKey == null)) {
+						MessageDialog.showErrorMessage(this.parentFrame,
+								"DEBUG: Table: parentkey " + element + " is NULL. It won't be included in the query. Check the xml that contains the table configuration and ensure that the parentkey has value there.");
+					}
+					if (vParentKey != null) {
+						hOtherKeys.put(element, vParentKey);
+					}
+				}
+				this.detailForm.setParentKeyValues(hOtherKeys);
+			}
+			return this.detailForm;
+		} else {
+			Table.logger.debug("This table does not have detail form");
+			return null;
+		}
+	}
+
+	/**
+	 * Sets the preferred size to the specified column.
+	 * 
+	 * @param column
+	 *            the column to set the size
+	 */
+	public void fitColumnSize(int column) {
+		String sName = this.table.getColumnName(column);
+		TableColumn tableColumn = null;
+		if (column <= this.getBlockedColumnIndex()) {
+			tableColumn = this.blockedTable.getColumn(sName);
+		} else {
+			tableColumn = this.table.getColumn(sName);
+		}
+
+		this.table.getColumn(sName);
+		if (tableColumn == null) {
+			return;
+		}
+
+		int iPreferredWidth = this.getPreferredColumnWidth(column, this.table.getRowCount());
+
+		if (sName.equals(ExtendedTableModel.ROW_NUMBERS_COLUMN)) {
+			tableColumn.setWidth(iPreferredWidth);
+			tableColumn.setPreferredWidth(iPreferredWidth);
+		} else {
+			tableColumn.setMaxWidth(this.table.getWidth());
+			tableColumn.setMinWidth(0);
+			tableColumn.setWidth(iPreferredWidth);
+			tableColumn.setPreferredWidth(iPreferredWidth + 5);
+		}
+	}
+
+	/**
+	 * Sets all the table texts in the table popup menu.
+	 */
+	protected void setTextsMenu() {
+		// TODO this code must be extracted to reduce the number of lines used
+		// because it is a repetion of the same code
+		String sText = ApplicationManager.getTranslation(Table.detailKey, this.resourcesFile);
+		this.menuDetail.setText(sText);
+
+		sText = ApplicationManager.getTranslation(Table.insertKey, this.resourcesFile);
+		this.menuInsert.setText(sText);
+
+		sText = ApplicationManager.getTranslation(Table.resetOrderKey, this.resourcesFile);
+		this.menuResetOrder.setText(sText);
+
+		sText = Table.PRINTING_SELECTION_es_ES;
+		try {
+			if (this.resourcesFile != null) {
+				sText = this.resourcesFile.getString(Table.PRINTING_SELECTION);
+			}
+		} catch (Exception e) {
+			Table.logger.error("PRINTING_SELECTION Error", e);
+		}
+		this.menuPrintSelection.setText(sText);
+
+		sText = Table.COPY_CELL_es_ES;
+		try {
+			if (this.resourcesFile != null) {
+				sText = this.resourcesFile.getString(Table.COPY_CELL);
+			}
+		} catch (Exception e) {
+			Table.logger.error("COPY_CELL Error", e);
+		}
+
+		this.menuCopyCell.setText(sText);
+
+		if (this.menuOpenInNewWindow != null) {
+			this.menuOpenInNewWindow.setText(ApplicationManager.getTranslation(Table.openInNewWindowKey, this.resourcesFile));
+		}
+
+		sText = Table.COPY_SELECTION_es_ES;
+		try {
+			if (this.resourcesFile != null) {
+				sText = this.resourcesFile.getString(Table.COPY_SELECTION);
+			}
+		} catch (Exception e) {
+			Table.logger.error("COPY_SELECTION", e);
+		}
+
+		this.menuCopySelection.setText(sText);
+
+		if (this.menuRefresh != null) {
+			this.menuRefresh.setText(ApplicationManager.getTranslation(Table.REFRESH, this.resourcesFile));
+		}
+
+		if (this.menuPageableEnabled != null) {
+			this.menuPageableEnabled.setText(ApplicationManager.getTranslation(Table.PAGEABLE, this.resourcesFile));
+		}
+
+		if (this.menuOpenInNewWindow != null) {
+			this.menuOpenInNewWindow.setText(ApplicationManager.getTranslation(Table.openInNewWindowKey, this.resourcesFile));
+		}
+
+		if (this.menuShowHideControls != null) {
+			this.menuShowHideControls.setText(ApplicationManager.getTranslation(Table.SHOW_HIDE_CONTROLS, this.resourcesFile));
+		}
+
+	}
+
+	/**
+	 * Returns the information contained in the selected rows in a {@link #Hashtable}. The {@link #Hashtable} keys are the table attributes, and the values are {@link #Vector} with
+	 * the row values.
+	 * 
+	 * @return the information contained by the selected rows, and null when there is no selection
+	 */
+	public Hashtable getSelectedRowData() {
+		if (this.table.getSelectedRowCount() == 0) {
+			return null;
+		}
+		// Return a new hastable with the data
+		int[] selectedRows = this.table.getSelectedRows();
+		Vector attributes = this.getAttributeList();
+		Hashtable hData = new Hashtable();
+		for (int i = 0; i < selectedRows.length; i++) {
+			int row = selectedRows[i];
+			Hashtable hRowData = this.getRowData(row);
+			if (hRowData == null) {
+				continue;
+			}
+			for (int j = 0; j < attributes.size(); j++) {
+				Object oKey = attributes.get(j);
+				Object oValue = hRowData.get(oKey);
+				Vector v = (Vector) hData.get(oKey);
+				if (v == null) {
+					Vector vAux = new Vector();
+					vAux.add(0, oValue);
+					hData.put(oKey, vAux);
+				} else {
+					v.add(i, oValue);
+				}
+			}
+		}
+		return hData;
+	}
+
+	/**
+	 * Checks the component visibility. Depending on the client permissions, the table can be shown or not. This method checks that permission to hide the table when necessary.
+	 * 
+	 * @return true in case the table can not be visible, false if it can
+	 */
+	protected boolean checkVisiblePermission() {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			if (this.visiblePermission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					this.visiblePermission = new FormPermission(this.parentForm.getArchiveName(), "visible", this.entity, true);
+				}
+			}
+			try {
+				// Check to show
+				if (this.visiblePermission != null) {
+					manager.checkPermission(this.visiblePermission);
+				}
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("Visible permission:", e);
+				} else {
+					Table.logger.trace("Visible permission:", e);
+				}
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Checks if the table must be disabled. Depending on the client permissions, the table can be enabled or not. This method checks that permission to disable or enable the table
+	 * when necessary.
+	 * 
+	 * @return true in case the table can not be enabled, false if it can
+	 */
+	protected boolean checkEnabledPermission() {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			if (this.enabledPermission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					this.enabledPermission = new FormPermission(this.parentForm.getArchiveName(), "enabled", this.entity, true);
+				}
+			}
+			try {
+				if (this.enabledPermission != null) {
+					manager.checkPermission(this.enabledPermission);
+				}
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("Enabled Permission:", e);
+				} else {
+					Table.logger.trace("Enabled Permission:", e);
+				}
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Checks if the table can perform insertions. Depending on the client permissions, the table can have the insertions restricted. This method checks that permission to disable
+	 * or enable the inserting from the table feature.
+	 * 
+	 * @return true in case the table can insert, false if it cannot
+	 */
+	protected boolean checkInsertPermission() {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			if (this.insertPermission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					this.insertPermission = new FormPermission(this.parentForm.getArchiveName(), "insert", this.entity, true);
+				}
+			}
+			try {
+				if (this.insertPermission != null) {
+					manager.checkPermission(this.insertPermission);
+				}
+
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("Insert permission:", e);
+				} else {
+					Table.logger.trace("Insert permission:", e);
+				}
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Checks if the table can perform queries. Depending on the client permissions, the table can have the queries restricted. This method checks that permission to disable or
+	 * enable querying.
+	 * 
+	 * @return true in case the table can query, false if it cannot
+	 */
+	protected boolean checkQueryPermission() {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			if (this.queryPermission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					this.queryPermission = new FormPermission(this.parentForm.getArchiveName(), "query", this.entity, true);
+				}
+			}
+			try {
+				if (this.queryPermission != null) {
+					manager.checkPermission(this.queryPermission);
+				}
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("Query permission:", e);
+				} else {
+					Table.logger.trace("Query permission:", e);
+				}
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Checks whether the component with this <code>key</code> has been restricted by the permission <code>type</code> . If this method returns true the table component will not be
+	 * restricted by this permission <code>type</code>. <br> For example, if the a call to this method with the type "visible" returns true, then the component is visible.
+	 * 
+	 * @param key
+	 *            the key of the table component to be restricted
+	 * @param type
+	 *            the type of permission to be checked
+	 * @return false the component are restricted
+	 */
+	protected boolean checkComponentTablePermission(Object key, String type) {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			TableFormPermission permission = this.tableComponentPermission.get((String) key, type);
+			if (permission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					permission = new TableFormPermission(this.parentForm.getArchiveName(), (String) key, this.entity, true, null, type);
+					this.tableComponentPermission.addTableFormPermission((String) key, type, permission);
+				}
+			}
+			try {
+				if (permission != null) {
+					manager.checkPermission(permission);
+				}
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("TableComponentPermission:", e);
+				} else {
+					Table.logger.trace("TableComponentPermission:", e);
+				}
+				return false;
+			}
+
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Checks whether the column with this <code>columnName</code> has been restricted by the permission <code>type</code> . If this method returns true the table column will not
+	 * be restricted by this permission <code>type</code>. <br> For example, if the a call to this method with the type "visible" returns true, then column is able to be visible
+	 * according to permission (another program condition could be hide it).
+	 * 
+	 * @param key
+	 *            the key of the table component to be restricted
+	 * @param type
+	 *            the type of permission to be checked
+	 * @return false the component are restricted
+	 *
+	 *
+	 * @since 5.2077EN-0.2
+	 */
+	protected boolean checkColumnTablePermission(Object key, String type) {
+		ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+		if (manager != null) {
+			TableFormPermission permission = this.tableColumnPermission.get((String) key, type);
+			if (permission == null) {
+				if ((this.entity != null) && (this.parentForm != null)) {
+					permission = new TableFormPermission(this.parentForm.getArchiveName(), "column", this.entity, true, null, type, key.toString());
+					this.tableColumnPermission.addTableFormPermission((String) key, type, permission);
+				}
+			}
+			try {
+				if (permission != null) {
+					manager.checkPermission(permission);
+				}
+				this.restricted = false;
+				return true;
+			} catch (Exception e) {
+				this.restricted = true;
+				if (e instanceof NullPointerException) {
+					Table.logger.error("ColumnTablePermission:", e);
+				} else {
+					Table.logger.trace("ColumnTablePermission:", e);
+				}
+				return false;
+			}
+
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Sets the table visible. Client permissions are checked.
+	 *
+	 * @see checkVisiblePermission
+	 */
+	@Override
+	public void setVisible(boolean vis) {
+		if (vis) {
+			boolean permission = this.checkVisiblePermission();
+			if (!permission) {
+				return;
+			}
+		}
+		super.setVisible(vis);
+		this.controlsPanel.setVisible(this.controlsVisible);
+	}
+
+	/**
+	 * Some table functionalities and behaviours can be controled using client security, so the same table can be different depending on the user profile. <p> This method sets the
+	 * client permission for the table, according to the client permissions XML profile. This is, checks whether the table can be visible or not, as well as whether the table is
+	 * enabled or not. <p> The method checks some other permissions such as the query permission and the insert permission, which can allow insertions from the table.
+	 *
+	 * @see #initTableComponentPermissions
+	 * @see #initTableColumnPermissions()
+	 */
+	@Override
+	public void initPermissions() {
+		if (ApplicationManager.getClientSecurityManager() != null) {
+			ClientSecurityManager.registerSecuredElement(this);
+		}
+		boolean pVisible = this.checkVisiblePermission();
+		if (!pVisible) {
+			this.setVisible(false);
+		}
+
+		boolean pEnabled = this.checkEnabledPermission();
+		if (!pEnabled) {
+			this.setEnabled(false);
+		}
+
+		this.checkQueryPermission();
+
+		this.initTableComponentPermissions();
+		this.initTableColumnPermissions();
+
+		boolean pInsert = this.checkInsertPermission();
+		if (!pInsert) {
+			this.setTableComponentEnabled(Table.BUTTON_PLUS, false);
+			this.setTableComponentVisible(Table.BUTTON_PLUS, false);
+			if (this.buttonPlus != null) {
+				this.buttonPlus.setEnabled(false);
+				this.buttonPlus.setVisible(false);
+			}
+		}
+	}
+
+	/**
+	 * Applies client permissions to the components in the controlsPanel. <p> The table functionalities, accessible through the controlsPanel buttons, can be controlled using
+	 * client permission. This implies that those buttons can be disabled or hidden using the client permission XML.
+	 *
+	 * @see #checkComponentTablePermission
+	 */
+	public void initTableComponentPermissions() {
+		if (this.controlsPanel != null) {
+			for (int i = 0; i < this.controlsPanel.getComponentCount(); i++) {
+				Component c = this.controlsPanel.getComponent(i);
+				if (c instanceof TableComponent) {
+					TableComponent cT = (TableComponent) c;
+					Object o = cT.getKey();
+					if (o != null) {
+						boolean v = this.checkComponentTablePermission(o, "visible");
+						if (!v) {
+							c.setVisible(false);
+						} else {
+							c.setVisible(true);
+						}
+
+						boolean e = this.checkComponentTablePermission(o, "enabled");
+						if (!e) {
+							c.setEnabled(false);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Applies client permissions to the table columns. <p> The table columns can be controlled using client permission. This implies those columns can be hidden using the client
+	 * permission XML. e.g. for hiding a column named BALANCE: <br> <b> <code> &lt;column attr="BALANCE" restricted="yes" type="visible"/&gt</code> </b>
+	 *
+	 * @see #checkComponentTablePermission
+	 *
+	 * @since 5.2077EN-0.2
+	 */
+	public void initTableColumnPermissions() {
+		if (this.getJTable().getColumnModel() != null) {
+			TableColumnModel columnModel = this.getJTable().getColumnModel();
+			for (int i = 0; i < columnModel.getColumnCount(); i++) {
+				Object o = columnModel.getColumn(i).getIdentifier();
+				if (o != null) {
+					boolean v = this.checkColumnTablePermission(o, "visible");
+					if (!v) {
+						columnModel.getColumn(i).setWidth(0);
+						columnModel.getColumn(i).setMaxWidth(0);
+						columnModel.getColumn(i).setMinWidth(0);
+					}
+
+					v = this.checkColumnTablePermission(o, "enabled");
+					if (!v) {
+						this.setEditableColumn((String) o, false, false);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Sets whether a tip informing about the record number when pressing the table scroll must be shown or not.
+	 * 
+	 * @param enable
+	 *            true if the tip should be enabled, false otherwise
+	 */
+	public void setScrollTipEnabled(boolean enable) {
+		this.tipScrollEnabled = enable;
+	}
+
+	/**
+	 * Toggles the control panel visibility.
+	 */
+	public void toggleControls() {
+		if (this.showControls) {
+			this.controlsVisible = !this.controlsPanel.isVisible();
+			this.controlsPanel.setVisible(this.controlsVisible);
+			if (this.quickFilterText != null) {
+				this.quickFilterText.setVisible(this.controlsVisible || this.quickFilterVisible);
+			}
+			if (this.menuShowHideControls != null) {
+				this.menuShowHideControls.setSelected(this.controlsVisible);
+			}
+			this.saveVisibleControlsConfiguration();
+		}
+	}
+
+	/**
+	 * Sets whether or not the table controls are visible.
+	 * 
+	 * @param visible
+	 *            true if the table controls should be visible, false otherwise
+	 */
+	public void setControlsVisible(boolean visible) {
+		this.setControlsVisible(visible, false);
+	}
+
+	/**
+	 * Sets whether or not the table controls are visible.
+	 * 
+	 * @param vis
+	 *            true if the table controls should be visible, false otherwise
+	 * @param savePreferences
+	 *            if true, the visibility set will be stored as application preference
+	 */
+	public void setControlsVisible(boolean vis, boolean savePreferences) {
+		if (this.showControls) {
+			this.controlsVisible = vis;
+			this.controlsPanel.setVisible(vis);
+			if (this.quickFilterText != null) {
+				this.quickFilterText.setVisible(this.controlsVisible || this.quickFilterVisible);
+			}
+			if (this.menuShowHideControls != null) {
+				this.menuShowHideControls.setSelected(vis);
+			}
+			if (savePreferences) {
+				this.saveVisibleControlsConfiguration();
+			}
+		} else if (this.menuShowHideControls != null) {
+			this.menuShowHideControls.setSelected(false);
+		}
+	}
+
+	/**
+	 * Is call when a preference changes, because the table is registered as a preference change listener. <p>
+	 * 
+	 * @param prefEvent
+	 *            the event with the preference changes
+	 */
+	@Override
+	public void preferenceChanged(PreferenceEvent prefEvent) {
+		String pref = prefEvent.getPreference();
+		if (pref.equals(BasicApplicationPreferences.SHOW_TABLE_CONTROLS)) {
+			String sValue = prefEvent.getValue();
+			if (sValue != null) {
+				boolean controlesVisibles = ApplicationManager.parseStringValue(sValue);
+				this.setControlsVisible(controlesVisibles);
+			}
+		} else if (pref.equals(BasicApplicationPreferences.TABLE_EVEN_ROWS_COLOR)) {
+			String sValue = prefEvent.getValue();
+			if (sValue != null) {
+				try {
+					Color c = ColorConstants.parseColor(sValue);
+					if (CellRenderer.getEvenRowBackgroundColor() != c) {
+						CellRenderer.setEvenRowBackgroundColor(c);
+					}
+					this.repaint();
+				} catch (Exception ex) {
+					Table.logger.error(null, ex);
+				}
+			}
+		} else if (pref.equals(BasicApplicationPreferences.SHOW_TABLE_NUM_ROW)) {
+			String sValue = prefEvent.getValue();
+			if (sValue != null) {
+				boolean rowNumber = ApplicationManager.parseStringValue(sValue);
+				this.setRowNumberColumnVisible(rowNumber);
+			}
+		}
+	}
+
+	protected String userPrefs = null;
+
+	/**
+	 * Returns the user name.
+	 * 
+	 * @return the user name
+	 */
+	protected String getUser() {
+		if (this.locator instanceof ClientReferenceLocator) {
+			return ((ClientReferenceLocator) this.locator).getUser();
+		} else {
+			return this.userPrefs;
+		}
+	}
+
+	protected void initCalculedColPreferences(ApplicationPreferences aPrefs, String user) {
+		String calcColsPref = aPrefs.getPreference(user, this.getCalculatedColumnsConfPreferenceKey());
+		if (calcColsPref != null) {
+			// configure the current calculated columns
+
+			// Parse the calculated columns stored in preferences
+			Vector calculatedColsUserConf = ApplicationManager.getTokensAt(calcColsPref, ";");
+			Vector calcColNames = new Vector(calculatedColsUserConf.size());
+			Vector expressions = new Vector(calculatedColsUserConf.size());
+			Vector renderKey = new Vector(calculatedColsUserConf.size());
+			for (int i = 0; i < calculatedColsUserConf.size(); i++) {
+				Vector tokensAt = ApplicationManager.getTokensAt((String) calculatedColsUserConf.get(i), ":");
+				if (tokensAt.size() >= 2) {
+					calcColNames.add(tokensAt.get(0));
+					expressions.add(tokensAt.get(1));
+				}
+
+				if (tokensAt.size() == 3) {
+					renderKey.add(tokensAt.get(2));
+				} else {
+					renderKey.add(Table.DEFAULT_CELL_RENDERER);
+				}
+			}
+
+			this.configureCalculatedCols(calcColNames, expressions, renderKey, false);
+		}
+	}
+
+	protected void initVisibleColumnsPreferences(ApplicationPreferences aPrefs, String user) {
+		String tvc = aPrefs.getPreference(user, this.getVisibleColumnsPreferenceKey());
+		if (tvc != null) {
+			Vector cols = ApplicationManager.getTokensAt(tvc, ";");
+			this.setVisibleColumns(cols);
+		} else if ((this.defaultVisibleColumns != null) && (this.defaultVisibleColumns.size() >= 0)) {
+			this.setVisibleColumns(this.defaultVisibleColumns);
+		}
+	}
+
+	protected void initPanelControlPreferences(ApplicationPreferences aPrefs, String user) {
+		String tpc = aPrefs.getPreference(user, this.getControlPanelPreferenceKey());
+		if (tpc != null) {
+			this.controlsPanel.setButtonPosition(tpc);
+		} else {
+			this.controlsPanel.setButtonPosition(this.controlButtonLayout);
+		}
+
+	}
+
+	/**
+	 * Sets the table preferences. <p> Tables can remember their state between application execution. For instance things like visible columns, column size and order, and, in
+	 * general, all the parameters that can be modified and changed but the user can be reset by calling this method.
+	 */
+	@Override
+	public void initPreferences(ApplicationPreferences aPrefs, String user) {
+		boolean paginable = false;
+		try {
+			if ((this.getPageFetcher() != null) && this.getPageFetcher().isPageableEnabled()) {
+				paginable = true;
+				this.getPageFetcher().setPageableEnabled(false);
+			}
+			if (aPrefs == null) {
+				return;
+			}
+			this.userPrefs = user;
+			String sc = aPrefs.getPreference(user, BasicApplicationPreferences.SHOW_TABLE_CONTROLS);
+			if (sc != null) {
+				boolean prefControlsVisible = ApplicationManager.parseStringValue(sc);
+				if (this.controlsVisible) {
+					this.setControlsVisible(prefControlsVisible);
+				}
+			}
+			String snr = aPrefs.getPreference(user, BasicApplicationPreferences.SHOW_TABLE_NUM_ROW);
+			if (snr != null) {
+				boolean bRowNumberColumnVisible = ApplicationManager.parseStringValue(snr);
+				this.setRowNumberColumnVisible(bRowNumberColumnVisible);
+				this.initColumnsWidth();
+			}
+
+			this.initCalculedColPreferences(aPrefs, user);
+
+			this.initVisibleColumnsPreferences(aPrefs, user);
+
+			this.initPanelControlPreferences(aPrefs, user);
+
+			this.initFilterOrderPreferences(aPrefs, user);
+
+			try {
+				// Background
+				String pref = aPrefs.getPreference(user, BasicApplicationPreferences.TABLE_EVEN_ROWS_COLOR);
+				if (pref != null) {
+					Color c = ColorConstants.parseColor(pref);
+					if (CellRenderer.getEvenRowBackgroundColor() != c) {
+						CellRenderer.setEvenRowBackgroundColor(c);
+						this.repaint();
+					}
+				}
+			} catch (Exception ex) {
+				Table.logger.error("Table event rows color:", ex);
+			}
+
+			try {
+				String pref = aPrefs.getPreference(user, this.getVisibleControlsPreferenceKey());
+				if (pref != null) {
+					boolean vis = ApplicationManager.parseStringValue(pref);
+					this.setControlsVisible(vis);
+				}
+			} catch (Exception ex) {
+				Table.logger.error("VisibleControlsPreference:", ex);
+			}
+			this.applyOperations();
+		} finally {
+			if (this.getPageFetcher() != null) {
+				this.getPageFetcher().setPageableEnabled(paginable);
+			}
+		}
+	}
+
+	protected void initFilterOrderPreferences(ApplicationPreferences aPrefs, String user) {
+		// Apply filter and order configuration
+		String sf = aPrefs.getPreference(user, this.getFilterOrderConfPreferenceKey(null));
+		if (sf != null) {
+			// Disable the filter
+			Vector cols = ApplicationManager.getTokensAt(sf, ";");
+			if (cols.size() >= 2) {
+				String col = (String) cols.get(0);
+				String asc = (String) cols.get(1);
+				try {
+					if (!"null".equals(col)) {
+						if (col.indexOf(":") >= 0) {
+							Vector otherCols = ApplicationManager.getTokensAt(col, ":");
+							Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+							if (otherCols.size() != ascends.size()) {
+								Table.logger.info("Error in preference: {} -> {} has a different size from {}", sf, otherCols, ascends);
+							} else {
+								this.resetOrder();
+								for (int i = 0; i < otherCols.size(); i++) {
+									String c = (String) otherCols.get(i);
+									String a = (String) ascends.get(i);
+									boolean ascb = ApplicationManager.parseStringValue(a, false);
+									this.sortByWithoutReset(c, ascb);
+								}
+							}
+						} else {
+							boolean ascb = ApplicationManager.parseStringValue(asc, false);
+							this.sortBy(col, ascb);
+						}
+					} else {
+						this.resetOrder();
+					}
+					if (cols.size() >= 3) {
+
+						String f = (String) cols.get(2);
+						int index = 3;
+
+						if (!f.startsWith("BASE64")) {
+							// Load position and column width
+							if (!"null".equals(f)) {
+								this.applyColumnPositonAndPreferences(f);
+								this.prefWidthAndPosApply = true;
+							}
+							f = (String) cols.get(3);
+							index = 4;
+						}
+						if (cols.size() > index) {
+							for (int i = index; i < cols.size(); i++) {
+								f = f + ";" + cols.get(i);
+							}
+						}
+						byte[] bytes = null;
+						if (f.startsWith("BASE64")) {
+							f = f.substring("BASE64".length());
+						}
+
+						bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+						ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
+						ObjectInputStream in = new ObjectInputStream(bIn);
+						Object o = in.readObject();
+						if (o instanceof Hashtable) {
+							// To avoid serialization problems
+							Hashtable hNews = new Hashtable();
+							Hashtable g = (Hashtable) o;
+							Enumeration enumKeys = g.keys();
+							while (enumKeys.hasMoreElements()) {
+								Object oKey = enumKeys.nextElement();
+								Object oValue = g.get(oKey);
+								if (oValue instanceof TableSorter.Filter) {
+									TableSorter.Filter v = (TableSorter.Filter) oValue;
+									Object[] oValues = v.values;
+									for (int i = 0; i < oValues.length; i++) {
+										if (oValues[i] instanceof FilterDate) {
+											oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
+										}
+									}
+								}
+								hNews.put(oKey, oValue);
+							}
+							this.defaultFilter = hNews;
+							this.applyFilter(hNews);
+						}
+					}
+				} catch (Exception e) {
+					Table.logger.error("Error reading preference " + this.getFilterOrderConfPreferenceKey(null), e);
+					aPrefs.setPreference(user, this.getFilterOrderConfPreferenceKey(null), null);
+				}
+			}
+		}
+	}
+
+	protected void configureCalculatedCols(List calcColNames, List expressions, List rendersKey, boolean savePreferences) {
+		// First of all check the existing ones to update the expression or
+		// delete the column
+		Vector vCurrentCalcCols = this.getCalculatedColumns();
+		Vector vOriginalCaclCols = this.getOriginalCalculatedColumns();
+		for (int i = 0; i < vCurrentCalcCols.size(); i++) {
+			String currentColName = (String) vCurrentCalcCols.get(i);
+			int index = calcColNames.indexOf(currentColName);
+			if (index >= 0) {
+				if (this.modifiableCalculatedColumns || (vOriginalCaclCols == null) || !vOriginalCaclCols.contains(currentColName)) {
+					String col = (String) calcColNames.get(index);
+					String exp = (String) expressions.get(index);
+					String renderKey = (String) rendersKey.get(index);
+					this.getTableSorter().setCalculatedColumnExpression(col, exp);
+					Hashtable allRender = this.getAllColumnRenderer();
+					Hashtable allEditor = this.getAllColumnEditors();
+					if (!Table.DEFAULT_CELL_RENDERER.equalsIgnoreCase(renderKey)) {
+						allRender.put(col, Table.getRendererMap().get(renderKey));
+					} else {
+						allRender.remove(col);
+						this.getJTable().getColumn(col).setCellRenderer(null);
+					}
+					StringBuilder builder = new StringBuilder();
+					builder.append(exp);
+					builder.append(":");
+					builder.append(renderKey);
+					this.calculedColumns.put(col, builder.toString());
+					this.configureRenderEditor(allRender, allEditor);
+				}
+				calcColNames.remove(index);
+				expressions.remove(index);
+				rendersKey.remove(index);
+			} else {
+				if (this.modifiableCalculatedColumns || (vOriginalCaclCols == null) || !vOriginalCaclCols.contains(currentColName)) {
+					this.deleteCalculatedColumn((String) vCurrentCalcCols.get(i));
+				}
+			}
+		}
+
+		// Now check the new calculated columns
+		for (int i = 0; i < calcColNames.size(); i++) {
+			this.addCalculatedColumn((String) calcColNames.get(i), (String) expressions.get(i), (String) rendersKey.get(i));
+		}
+
+		if (savePreferences) {
+			// Save the preferences
+			Application ap = this.parentForm.getFormManager().getApplication();
+			if (ap.getPreferences() != null) {
+				ap.getPreferences().setPreference(this.getUser(), this.getCalculatedColumnsConfPreferenceKey(), this.getCalculatedColsPreferenceStringValue());
+				ap.getPreferences().savePreferences();
+			}
+		}
+		this.repaint();
+	}
+
+	protected String getCalculatedColsPreferenceStringValue() {
+		if (this.calculedColumns != null) {
+			Enumeration calcCols = this.calculedColumns.keys();
+			Vector value = new Vector(this.calculedColumns.size());
+			while (calcCols.hasMoreElements()) {
+				String col = (String) calcCols.nextElement();
+				String expression = (String) this.calculedColumns.get(col);
+				value.add(col + ":" + expression);
+			}
+			return ApplicationManager.vectorToStringSeparateBy(value, ";");
+		}
+		return null;
+	}
+
+	/**
+	 * Establishes as visible columns the columns passed as parameter and shows the columns.
+	 * 
+	 * @param visibleColumns
+	 *            a List containing the column names to show.
+	 */
+	public void setVisibleColumns(List<Object> visibleColumns) {
+		this.setVisibleColumns(visibleColumns, true);
+	}
+
+	/**
+	 * Establishes as visible columns the columns passed as parameter and shows the columns.
+	 * 
+	 * @param visibleColumns
+	 *            a List containing the column names to show.
+	 * @param autoSizeColumns
+	 *            if true, the column size will be adjusted to its new contents
+	 */
+	public void setVisibleColumns(List<Object> visibleColumns, boolean autoSizeColumns) {
+		if (visibleColumns == null) {
+			throw new IllegalArgumentException("visiblecols can not be NULL");
+		}
+		this.visibleColumns = visibleColumns;
+
+		boolean bHideColumns = false;
+		for (int i = 0; i < this.originalVisibleColumns.size(); i++) {
+			if (!this.visibleColumns.contains(this.originalVisibleColumns.get(i))) {
+				bHideColumns = true;
+				break;
+			}
+		}
+		if (bHideColumns && (this.buttonVisibleColsSetup != null)) {
+			this.buttonVisibleColsSetup.setIcon(this.getButtonVisibleColsSetupIcon(true));
+		} else if (this.buttonVisibleColsSetup != null) {
+			this.buttonVisibleColsSetup.setIcon(this.getButtonVisibleColsSetupIcon(false));
+		}
+		this.setVisibleColumns();
+		if (autoSizeColumns) {
+			this.initColumnsWidth();
+		}
+	}
+
+	protected Icon getButtonVisibleColsSetupIcon(boolean renderer) {
+		if ((this.buttonIcons != null) && this.buttonIcons.containsKey(((TableComponent) this.buttonVisibleColsSetup).getKey())) {
+			return (Icon) this.buttonIcons.get(((TableComponent) this.buttonVisibleColsSetup).getKey());
+		} else {
+			if (renderer) {
+				return ImageManager.getIcon(ImageManager.TABLE_CONF_VISIBLE_COLS_RED);
+			} else {
+				return ImageManager.getIcon(ImageManager.TABLE_CONF_VISIBLE_COLS);
+			}
+		}
+	}
+
+	/**
+	 * Returns the client preferences key to store the visible columns.
+	 * 
+	 * @return the client preferences key to store the visible columns
+	 */
+	protected String getVisibleColumnsPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + this.entity;
+	}
+
+	/**
+	 * Returns the client preferences key to store the button position.
+	 * 
+	 * @return the client preferences key to store the button position.
+	 */
+	protected String getControlPanelPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.TABLE_CONTROL_PANEL + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_VISIBLE_COLS + "_" + this.entity;
+	}
+
+	/**
+	 * Returns the client preferences key to store the visibility of the controls.
+	 * 
+	 * @return the client preferences key to store the visibility of the controls
+	 */
+	protected String getVisibleControlsPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.SHOW_TABLE_CONTROLS + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.SHOW_TABLE_CONTROLS + "_" + this.entity;
+	}
+
+	/**
+	 * Returns the client preferences key to store the filters for a determined column.
+	 * 
+	 * @param columnName
+	 *            the column name
+	 * @return the client preferences key to store the filters for a determined column.
+	 */
+	protected String getFilterOrderConfPreferenceKey(String columnName) {
+		if (!this.dynamicPivotable) {
+			if ((columnName == null) || (columnName.length() == 0)) {
+				Form f = this.parentForm;
+				return f != null ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + f
+						.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + this.entity;
+			} else {
+				Form f = this.parentForm;
+				return f != null ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + f
+						.getArchiveName() + "_" + this.entity + "_" + columnName : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER + "_" + this.entity + "_" + columnName;
+			}
+		} else {
+			if ((columnName == null) || (columnName.length() == 0)) {
+				return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_DYNAMIC_PIVOT_TABLE + "_" + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
+			} else {
+				return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_DYNAMIC_PIVOT_TABLE + "_" + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity + columnName;
+			}
+		}
+	}
+
+	protected Object getOriginalForm(Object table) {
+
+		return null;
+	}
+
+	/**
+	 * Returns the client preferences key to store the configuration of the sorting columns
+	 * 
+	 * @return the client preferences key to store the configuration of the sorting columns
+	 */
+	protected String getFilterOrderConfigurationPreferenceKey() {
+		if (!this.dynamicPivotable) {
+			Form f = this.parentForm;
+			return f != null ? BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS + "_" + f
+					.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS + "_" + this.entity;
+		} else {
+			return BasicApplicationPreferences.TABLE_CONF_SORT_FILTER_CONFIGURATIONS_DYNAMIC_PIVOT_TABLE + "_" + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
+		}
+	}
+
+	/**
+	 * Returns the client preferences key to store the calculated columns configuration.
+	 * 
+	 * @return the client preferences key to store the calculated columns configuration
+	 */
+	protected String getCalculatedColumnsConfPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.TABLE_CALCULATED_COLUMNS_CONFIGURATION + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CALCULATED_COLUMNS_CONFIGURATION + "_" + this.entity;
+	}
+
+	/**
+	 * Returns the current visible columns.
+	 * 
+	 * @return the current visible columns
+	 */
+	public List<String> getVisibleColumns() {
+		return new ArrayList<>(this.visibleColumns);
+	}
+
+	public List<String> getQuickFilterColumns() {
+		if (this.quickFilterColumns != null) {
+			return this.quickFilterColumns;
+		}
+		return this.getVisibleColumns();
+	}
+
+	/**
+	 * Returns the columns used to build reports.
+	 * 
+	 * @return the columns used to build reports.
+	 */
+	public Vector getReportColumns() {
+		return (Vector) this.reportCols.clone();
+	}
+
+	public void setReportColumns(Vector columns) {
+		if (this.reportCols == null) {
+			this.reportCols = new Vector();
+		}
+		this.reportCols.clear();
+		this.reportCols.addAll(columns);
+	}
+
+	/**
+	 * Returns the visible columns specified in the XML table definition.
+	 * 
+	 * @return a {@link #List} with the visible columns specified in the XML
+	 */
+	public List<String> getOriginallyVisibleColumns() {
+		return new ArrayList<>(this.originalVisibleColumns);
+	}
+
+	/**
+	 * Returns the sum row columns specified in the XML table definition.
+	 * 
+	 * @return a {@link #List} with the sum row columns specified in the XML
+	 */
+	public List<String> getOriginalSumRowCols() {
+		if (this.columnsToSum == null) {
+			return new ArrayList<>();
+		}
+		return new ArrayList<> (this.columnsToSum);
+	}
+
+	/**
+	 * Returns a {@link #Vector} with the column names that have been set as visible columns in the XML, and that are visible in the table as well.
+	 * 
+	 * @return he column names set as visible columns in the XML, and that are visible in the table as well
+	 */
+	public List<Object> getRealColumns() {
+		// TODO maybe is a good idea to chage this method's name
+		Vector cols = new Vector();
+		for (int i = 0; i < this.table.getColumnCount(); i++) {
+			String name = this.table.getColumnName(i);
+			if (this.originalVisibleColumns.contains(name)) {
+				cols.add(this.table.getColumnName(i));
+			}
+		}
+		return cols;
+	}
+
+	/**
+	 * Returns the current visible columns managed by the table.
+	 * 
+	 * @return the current visible columns managed by the table
+	 */
+	public List<Object> getCurrentColumns() {
+		Vector cols = new Vector();
+		for (int i = 0; i < this.table.getColumnCount(); i++) {
+			String name = this.table.getColumnName(i);
+			if (this.visibleColumns.contains(name)) {
+				cols.add(this.table.getColumnName(i));
+			}
+		}
+		return cols;
+	}
+
+	public Vector getCalculatedColumns() {
+		if (this.calculedColumns != null) {
+			return new Vector(Arrays.asList(this.calculedColumns.keySet().toArray()));
+		}
+		return null;
+	}
+
+	public Vector getOriginalCalculatedColumns() {
+		return this.originalCalculatedColumns;
+	}
+
+	public boolean isModifiableCalculatedColumns() {
+		return this.modifiableCalculatedColumns;
+	}
+
+	static {
+		Table.checkChartEnabled();
+	}
+
+	/**
+	 * Check whether or not the charting functionality is enabled for this table.
+	 * 
+	 * @return true if charting is allowed, false otherwise
+	 */
+	public static boolean isChartEnabled() {
+		return Table.CHART_ENABLED;
+	}
+
+	/**
+	 * Checks if the charting classes are set into the classpath
+	 */
+	protected static void checkChartEnabled() {
+		Table.logger.debug("Looking for charting classes...");
+		long t = System.currentTimeMillis();
+		try {
+			Class.forName("com.jrefinery.data.DefaultXYDataset");
+		} catch (Exception e) {
+			Table.logger.info("0.9.3 Charting classes not found");
+			Table.logger.debug(null, e);
+			Table.CHART_ENABLED = false;
+		}
+		Table.logger.trace("Check time: {}", System.currentTimeMillis() - t);
+		Table.CHART_ENABLED = ChartVersionControl.isChartEnabled();
+		Table.CHART_V1 = ChartVersionControl.isVersion_1_0();
+	}
+
+	/**
+	 * Adds a button to the controls panel
+	 * 
+	 * @param button
+	 *            the button to add to the panel
+	 */
+	public void addButtonToControls(AbstractButton button) {
+		this.addButtonToControls(button, false);
+	}
+
+	public void addButtonToControls(AbstractButton button, boolean useDefaultConfiguration) {
+		if (useDefaultConfiguration) {
+			this.configureControlButton(button);
+		}
+		if ((button != null) && !this.addButtons.contains(button)) {
+			button.setMargin(new Insets(0, 0, 0, 0));
+			this.controlsPanel.add(button);
+			this.addButtons.add(button);
+		}
+
+		if ((button instanceof Internationalization) && (this.parentForm != null)) {
+			this.parentForm.addComponentsToInternationalizeList(button, true);
+		}
+		// since 5.3.13 check permissions after added
+		if (button instanceof TableComponent) {
+			TableComponent cT = (TableComponent) button;
+			Object o = cT.getKey();
+			if (o != null) {
+				boolean v = this.checkComponentTablePermission(o, "visible");
+				if (!v) {
+					button.setVisible(false);
+				} else {
+					button.setVisible(true);
+				}
+
+				boolean e = this.checkComponentTablePermission(o, "enabled");
+				if (!e) {
+					button.setEnabled(false);
+				}
+			}
+		} else {
+			Table.logger.warn("{} button in table control does not implement TableComponent", button);
+		}
+	}
+
+	protected void configureControlButton(AbstractButton button) {
+		if (button != null) {
+			if (!this.borderbuttons) {
+				button.setBorder(BorderFactory.createEmptyBorder());
+			}
+			if (!this.opaquebuttons) {
+				button.setOpaque(false);
+				button.setContentAreaFilled(false);
+			}
+			if (this.listenerHighlightButtons != null) {
+				button.addMouseListener(this.listenerHighlightButtons);
+			}
+		}
+	}
+
+	protected QuickFieldText createQuickFilter() {
+		// since 5.2071EN-0.2
+		final JLabel label;
+		final JPopupMenu pageablePopUpMessage;
+		if (this.quickFilterLocal) {
+			label = new JLabel(Table.QUICK_FILTER_PAGEABLE_MESSAGE_KEY, ImageManager.getIcon(ImageManager.VIEW_DETAILS), SwingConstants.RIGHT);
+			pageablePopUpMessage = new JPopupMenu(label.getText()) {
+
+				@Override
+				public void show(Component c, int x, int y) {
+					Dimension dScreen = Toolkit.getDefaultToolkit().getScreenSize();
+					int height = this.getHeight() == 0 ? this.getPreferredSize().height : this.getHeight();
+					int width = this.getWidth() == 0 ? this.getPreferredSize().width : this.getWidth();
+					// Avoid that the menu disappears of the window
+					try {
+						Point p = c.getLocationOnScreen();
+						x = Math.max(x - width, -p.x);
+						if ((p.y + y + height) > dScreen.height) {
+							y = Math.max(y - height, -p.y);
+						}
+					} catch (Exception e) {
+						Table.logger.error(null, e);
+					}
+					super.show(c, x, y - height);
+				}
+			};
+			pageablePopUpMessage.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if ((e.getX() > ((label.getBounds().x + label.getBounds().width) - label.getIcon().getIconWidth())) && (e
+							.getX() < (label.getBounds().x + label.getBounds().width))) {
+						if ((e.getY() > label.getBounds().y) && (e.getY() < (label.getBounds().y + label.getBounds().height))) {
+							Table.this.pageFetcher.downloadAll();
+						}
+					}
+				}
+			});
+			label.setHorizontalTextPosition(SwingConstants.LEFT);
+			pageablePopUpMessage.add(label);
+		} else {
+			label = null;
+			pageablePopUpMessage = null;
+		}
+
+		final QuickFieldText quickFilterText = new QuickFieldText();
+
+		quickFilterText.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				quickFilterText.repaint();
+				quickFilterText.getParent().repaint();
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				quickFilterText.repaint();
+				quickFilterText.getParent().repaint();
+			}
+		});
+
+		quickFilterText.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void changedUpdate(DocumentEvent event) {}
+
+			@Override
+			public void insertUpdate(DocumentEvent event) {
+				this.update(event);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent event) {
+				this.update(event);
+			}
+
+			protected void update(DocumentEvent e) {
+				try {
+					if ((Table.this.pageFetcher != null) && Table.this.pageFetcher
+							.isPageableEnabled() && (Table.this.pageFetcher.totalSize > Table.this.pageFetcher.pageSize) && Table.defaultQuickFilterWarningVisibility) {
+						if (Table.this.quickFilterLocal) {
+							label.setText(ApplicationManager.getTranslation(Table.QUICK_FILTER_PAGEABLE_MESSAGE_KEY, Table.this.getResourceBundle()));
+							pageablePopUpMessage.show(Table.this, quickFilterText.getBounds().x + quickFilterText.getBounds().width, quickFilterText.getBounds().y);
+						}
+						quickFilterText.requestFocus();
+					}
+					quickFilterText.executeFilter(e.getDocument().getText(0, e.getDocument().getLength()), Table.this);
+				} catch (BadLocationException ex) {
+					Table.logger.error(null, ex);
+				}
+			}
+		});
+
+		quickFilterText.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				if (!Table.this.quickFilterLocal) {
+					if ((Table.this.waitPanel != null) && Table.this.waitPanel.isVisible()) {
+						e.consume();
+						return;
+					}
+				}
+				super.keyTyped(e);
+			}
+		});
+
+		return quickFilterText;
+	}
+
+	/**
+	 * Removes a button from the controls panel
+	 * 
+	 * @param button
+	 *            the button to remove
+	 */
+	public void removeButtonFromControls(AbstractButton button) {
+		if (button != null) {
+			this.controlsPanel.remove(button);
+			this.addButtons.remove(button);
+		}
+	}
+
+	/**
+	 * Adds a {@link #JComponent} to the controls panel
+	 * 
+	 * @param component
+	 *            the component to be added
+	 */
+	public void addComponentToControls(JComponent component) {
+		if ((component != null) && !this.addComponents.contains(component)) {
+			this.controlsPanel.add(component);
+			this.addComponents.add(component);
+			if ((component instanceof Internationalization) && (this.parentForm != null)) {
+				this.parentForm.addComponentsToInternationalizeList(component, true);
+			}
+		}
+
+	}
+
+	/**
+	 * Removes a {@link #JComponent} from the controls panel.
+	 * 
+	 * @param component
+	 *            the component to remove
+	 */
+	public void removeComponentFromControls(JComponent component) {
+		if (component != null) {
+			this.controlsPanel.remove(component);
+			this.addComponents.remove(component);
+
+			if ((component instanceof Internationalization) && (this.parentForm != null)) {
+				this.parentForm.removeComponentsToInternationalizeList(component);
+			}
+		}
+	}
+
+	/**
+	 * Updates row values in the table. The {@link #Map} with the parameters contains both the keys that select the row and the values to be updated.
+	 * 
+	 * @param rowData
+	 * @see com.ontimize.gui.table.TableSorter#updateRowData
+	 */
+	public void updateRowData(Map<Object, Object> rowData) {
+		this.checkRefreshThread();
+		TableSorter ts = (TableSorter) this.table.getModel();
+		ts.updateRowData(rowData, (Vector) this.getKeys().clone());
+		this.table.repaint();
+	}
+
+	public void updateRowData(Map<Object, Object> rowData, Map<Object, Object> newkv) {
+		this.checkRefreshThread();
+		TableSorter ts = (TableSorter) this.table.getModel();
+		ts.updateRowData(rowData, newkv);
+		this.table.repaint();
+	}
+
+	public void updateRowData(Map<Object, Object> rowData, List columns, Map<Object, Object> newkv) {
+		this.checkRefreshThread();
+		TableSorter ts = (TableSorter) this.table.getModel();
+		ts.updateRowData(rowData, columns, newkv);
+		this.table.repaint();
+	}
+
+	@Override
+	public String getHelpIdString() {
+		String sClassName = this.getClass().getName();
+		sClassName = sClassName.substring(sClassName.lastIndexOf(".") + 1);
+		return sClassName + "HelpId";
+	}
+
+	/**
+	 * Sets the help id for this class in the {@link HelpUtilities}
+	 *
+	 * @see #getHelpIdString
+	 */
+	@Override
+	public void installHelpId() {
+		try {
+			String helpId = this.getHelpIdString();
+			HelpUtilities.setHelpIdString(this, helpId);
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+			return;
+		}
+	}
+
+	protected boolean restricted = false;
+
+	/**
+	 * Determines if the table is restricted, this is, has client permission restrictions.
+	 * 
+	 * @return true if the table is restricted; otherwise, false
+	 */
+	@Override
+	public boolean isRestricted() {
+		return this.restricted;
+	}
+
+	/**
+	 * Configures the table to perform the operations in memory. In that case, the entity that will be use to perform the operations will be the one defined in the table
+	 * configuration
+	 * 
+	 * @param inMemory
+	 *            true if this component should perform operations in memory. false otherwise
+	 * @see Table#init
+	 */
+	public void setMemoryOperations(boolean inMemory) {
+		this.operationInMemory = inMemory;
+
+	}
+
+	/**
+	 * Adds a {@link #TableRowHeader} to the table. The {@link #TableRowHeader} will be actually set in the {@link #scrollPane}.
+	 * 
+	 * @param tableRowHeader
+	 *            the TableRowHeader
+	 */
+	public void addTableRowHeader(TableRowHeader tableRowHeader) {
+		this.scrollPane.setRowHeaderView(tableRowHeader);
+	}
+
+	/**
+	 * Applies a filter to the specified column. When the filter depends on a range, the array size must be at least 2. If values is null, a {@link SimpleFilter} will be set. In
+	 * case that values has a String or a Boolean, a {@link SimpleFilter} will be applied, and in other case a {@link Filter} will be set.
+	 * 
+	 * @param columnName
+	 *            the column in which the filter will be applied
+	 * @param values
+	 *            the values to make the filter
+	 * @param condition
+	 *            the condition to filter
+	 */
+	public void applyFilter(String columnName, Object[] values, int condition) {
+		if (this.table.getModel() instanceof TableSorter) {
+			TableSorter ts = (TableSorter) this.table.getModel();
+			if (values.length == 0) {
+				return;
+			} else if (values[0] == null) {
+				TableSorter.SimpleFilter f = new TableSorter.SimpleFilter(null);
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
+			} else if ((values[0] instanceof String) || (values[0] instanceof Boolean)) {
+
+				TableSorter.SimpleFilter f = new TableSorter.SimpleFilter(values[0]);
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
+			} else {
+				TableSorter.Filter f = new TableSorter.Filter(condition, values);
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), f);
+			}
+		}
+	}
+
+	/**
+	 * Applies a filter to the specified column.
+	 * 
+	 * @param columnName
+	 * @param filter
+	 *            must be an instance of the classes {@link MultipleFilter}, {@link Filter} , {@link SimpleFilter} or {@link DateFilter}
+	 */
+	public void applyFilter(String columnName, Object filter) {
+		if (this.table.getModel() instanceof TableSorter) {
+			TableSorter ts = (TableSorter) this.table.getModel();
+			if (filter == null) {
+				return;
+			}
+			if (filter instanceof TableSorter.SimpleFilter) {
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
+			} else if (filter instanceof TableSorter.Filter) {
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
+			} else if (filter instanceof TableSorter.MultipleFilter) {
+				ts.applyFilter(this.table.getColumn(columnName).getModelIndex(), filter);
+			}
+		}
+	}
+
+	/**
+	 * Applies filters to the current table.
+	 *
+	 * @see TableSorter#applyFilter(Hashtable)
+	 * @see Filter
+	 * @param filters
+	 *            is a Hashtable containing the filters. The key is the columns name and the value must be an instance of the classes {@link MultipleFilter}, {@link Filter} ,
+	 *            {@link SimpleFilter} , {@link DateFilter}
+	 */
+	public void applyFilter(Hashtable filters) {
+
+		if (this.table.getModel() instanceof TableSorter) {
+			TableSorter ts = (TableSorter) this.table.getModel();
+			ts.applyFilter(filters);
+		}
+	}
+
+	/**
+	 * Removes all the filters set to the table.
+	 */
+	public void resetFilter() {
+		if (this.table.getModel() instanceof TableSorter) {
+			TableSorter ts = (TableSorter) this.table.getModel();
+			ts.resetFilter();
+		}
+	}
+
+	/**
+	 * Removes the filter set to the specified column.
+	 * 
+	 * @param column
+	 *            the column name
+	 */
+	public void resetFilter(String column) {
+		if (this.table.getModel() instanceof TableSorter) {
+			TableSorter ts = (TableSorter) this.table.getModel();
+			ts.resetFilter(column);
+		}
+	}
+
+	/**
+	 * Adds a column to the table.
+	 * 
+	 * @param column
+	 *            the column name
+	 */
+	public void addColumn(String column) {
+		this.addColumn(column, true);
+	}
+
+	public void addColumn(String[] columns) {
+		if ((columns != null) && (columns.length > 0)) {
+			for (int i = 0; i < columns.length; i++) {
+				if (i == (columns.length - 1)) {
+					this.addColumn(columns[i], true);
+				} else {
+					this.addColumn(columns[i], false);
+				}
+			}
+		}
+	}
+
+	protected void addColumn(String column, boolean fireEvent) {
+		if (!(this.attributes.contains(column)) && !this.calculedColumns.containsKey(column)) {
+			if (this.table.getModel() instanceof TableSorter) {
+
+				Table.logger.debug("Table: Adding column: {} previous column number = {} previous attributes: {}", column, this.table.getColumnCount(), this.attributes);
+
+				// This is needed to conserve all the renderes and editor after
+				// adding the column
+				Hashtable allRender = this.getAllColumnRenderer();
+				Hashtable allEditor = this.getAllColumnEditors();
+
+				TableSorter ts = (TableSorter) this.table.getModel();
+				this.attributes.add(column);
+				this.originalVisibleColumns.add(column);
+				this.visibleColumns.add(column);
+				this.reportCols.add(column);
+				ts.addColumn(column, fireEvent);
+				Table.logger.debug("Table: Column added: {} current column number= {}", column, this.table.getColumnCount());
+
+				this.configureRenderEditor(allRender, allEditor);
+				if (fireEvent) {
+					this.setResourceBundle(this.resourcesFile);
+				}
+			}
+		} else {
+			Table.logger.warn("Table: The specified column already exists: {}", column);
+		}
+	}
+
+	/**
+	 * Adds a calculated column to the table.
+	 * 
+	 * @param column
+	 *            the column name
+	 * @param expression
+	 *            the column expression, for example SomeColumnName*5
+	 */
+	public void addCalculatedColumn(String columnName, String expression, String renderKey) {
+
+		TableSorter sorter = this.getTableSorter();
+		if ((!this.attributes.contains(columnName)) && !this.calculedColumns.containsKey(columnName)) {
+
+			// This is needed to conserve all the renderes and editor after
+			// adding the column
+			Hashtable allRender = this.getAllColumnRenderer();
+			Hashtable allEditor = this.getAllColumnEditors();
+
+			if (sorter != null) {
+				Table.logger.debug("Table: Adding calculated column: {} previous column number = {}", columnName, this.table.getColumnCount());
+				this.originalVisibleColumns.add(columnName);
+				this.visibleColumns.add(columnName);
+				this.calculedColumns.put(columnName, expression);
+				this.reportCols.add(columnName);
+
+				sorter.addCalculatedColumn(columnName, expression);
+				if ((renderKey != null) && !Table.DEFAULT_CELL_RENDERER.equalsIgnoreCase(renderKey)) {
+					allRender.put(columnName, Table.getRendererMap().get(renderKey));
+				}
+
+				Table.logger.debug("Table: Column added: {} current column number= {}", columnName, this.table.getColumnCount());
+				this.configureRenderEditor(allRender, allEditor);
+				this.setResourceBundle(this.resourcesFile);
+
+			}
+		} else {
+			Table.logger.debug("Table: The specified column already exists: {}", columnName);
+		}
+	}
+
+	/**
+	 * Creates a Hashtable with all the columns that have a renderer.<br> Hashtable key is the column name and value is the column renderer
+	 * 
+	 * @return
+	 */
+	protected Hashtable getAllColumnRenderer() {
+		int count = this.table.getColumnCount();
+		Hashtable renderers = new Hashtable();
+		for (int i = 0; i < count; i++) {
+			String cName = this.getColumnName(i);
+			TableCellRenderer rendererForColumn = this.getRendererForColumn(cName);
+			if (rendererForColumn != null) {
+				renderers.put(cName, rendererForColumn);
+			}
+		}
+		return renderers;
+	}
+
+	/**
+	 * Creates a Hashtable with all the columns that have an editor.<br> Hashtable key is the column name and value is the column editor
+	 * 
+	 * @return
+	 */
+	protected Hashtable getAllColumnEditors() {
+		int count = this.table.getColumnCount();
+		Hashtable editors = new Hashtable();
+		for (int i = 0; i < count; i++) {
+			String cName = this.getColumnName(i);
+			TableCellEditor editorForColumn = this.getEditorForColumn(cName);
+			if (editorForColumn != null) {
+				editors.put(cName, editorForColumn);
+			}
+		}
+		return editors;
+	}
+
+	/**
+	 * Configure the renderer and editor to the columns
+	 * 
+	 * @param renderer
+	 *            Key is the column name and value is the renderer to set
+	 * @param editor
+	 *            Key is the column name and value is the editor to set
+	 */
+	protected void configureRenderEditor(Hashtable renderer, Hashtable editor) {
+		int count = this.table.getColumnCount();
+		for (int i = 0; i < count; i++) {
+			String cName = this.getColumnName(i);
+			if (renderer != null) {
+				Object object = renderer.get(cName);
+				if (object instanceof TableCellRenderer) {
+					this.setRendererForColumn(cName, (TableCellRenderer) object);
+				}
+			}
+			if (editor != null) {
+				Object object = editor.get(cName);
+				if (object instanceof TableCellEditor) {
+					this.setColumnEditor(cName, (TableCellEditor) object);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Deletes the specified column from the table.
+	 * 
+	 * @param column
+	 *            the column name
+	 */
+	public void deleteColumn(String column) {
+		this.deleteColumn(column, true);
+	}
+
+	public void deleteColumn(String[] columns) {
+		if ((columns != null) && (columns.length > 0)) {
+			for (int i = 0; i < columns.length; i++) {
+				if (i == (columns.length - 1)) {
+					this.deleteColumn(columns[i], true);
+				} else {
+					this.deleteColumn(columns[i], false);
+				}
+			}
+		}
+	}
+
+	protected void deleteColumn(String column, boolean fireEvent) {
+		if (this.attributes.contains(column)) {
+			if (this.table.getModel() instanceof TableSorter) {
+				Table.logger.debug("Table: Deleting column: {} previous column number = {} previous attributes: {}", column, this.table.getColumnCount(), this.attributes);
+				// This is needed to conserve all the renderes and editor after
+				// deleting the column
+				Hashtable allRenderers = new Hashtable();
+				Hashtable allEditors = new Hashtable();
+				if (fireEvent) {
+					// Retrieve renderer and editor of columns before event
+					for (Object cName : this.attributes) {
+						TableCellRenderer rendererForColumn = this.getRendererForColumn(cName.toString());
+						if (rendererForColumn != null) {
+							allRenderers.put(cName, rendererForColumn);
+						}
+
+						TableCellEditor editorForColumn = this.getEditorForColumn(cName.toString());
+						if (editorForColumn != null) {
+							allEditors.put(cName, editorForColumn);
+						}
+					}
+				}
+
+				// Hashtable allRender = this.getAllColumnRenderer();
+				// Hashtable allEditor = this.getAllColumnEditors();
+				// allRender.remove(column);
+				// allEditor.remove(column);
+
+				TableSorter ts = (TableSorter) this.table.getModel();
+				this.attributes.remove(column);
+				this.visibleColumns.remove(column);
+				this.originalVisibleColumns.remove(column);
+				this.reportCols.remove(column);
+				try {
+					this.table.getColumn(column).removePropertyChangeListener(this.columnWidthListener);
+				} catch (Exception ex) {
+					Table.logger.trace(null, ex);
+				}
+				ts.deleteColumn(column, fireEvent);
+				Table.logger.debug("Table: Deleted column: {} current column number = {}", column, this.table.getColumnCount());
+				if (fireEvent) {
+					this.configureRenderEditor(allRenderers, allEditors);
+					this.setResourceBundle(this.resourcesFile);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Deletes the specified calculated column from the table.
+	 * 
+	 * @param column
+	 *            the column name
+	 */
+	public void deleteCalculatedColumn(String column) {
+		if ((this.calculedColumns != null) && this.calculedColumns.containsKey(column)) {
+			TableSorter sorter = this.getTableSorter();
+			if (sorter != null) {
+				Table.logger.debug("Table: Deleting calculated column: {} previous column number = {}", column, this.table.getColumnCount());
+
+				// This is needed to conserve all the renderes and editor after
+				// deleting the column
+				Hashtable allRender = this.getAllColumnRenderer();
+				Hashtable allEditor = this.getAllColumnEditors();
+				allRender.remove(column);
+				allEditor.remove(column);
+
+				this.calculedColumns.remove(column);
+				this.visibleColumns.remove(column);
+				this.originalVisibleColumns.remove(column);
+				this.reportCols.remove(column);
+
+				try {
+					this.table.getColumn(column).removePropertyChangeListener(this.columnWidthListener);
+				} catch (Exception ex) {
+					Table.logger.trace(null, ex);
+				}
+
+				sorter.deleteCalculatedColumn(column);
+				Table.logger.debug("Table: Deleted column: {} current column number= {}", column, this.table.getColumnCount());
+				this.configureRenderEditor(allRender, allEditor);
+				this.setResourceBundle(this.resourcesFile);
+			}
+		}
+	}
+
+	/**
+	 * Sets the fixed attributes to the detail form. Thas is, make the detail form to have, in the fields configured as fixattr, the same values that are placed in the form in
+	 * which the talbe is placed.
+	 */
+	protected void setAttributesToFix() {
+		if ((this.detailForm != null) && (this.attributesToFix != null)) {
+			for (String element : this.attributesToFix) {
+				this.detailForm.setAttributeToFix(this.hAttributesToFixEquivalences.get(element), this.parentForm.getDataFieldValue(element));
+			}
+		}
+	}
+
+	public Integer getBlockedColumnIndex() {
+		if (this.blockedTable == null) {
+			return -1;
+		}
+		return this.blockedTable.getBlockedColumnIndex();
+	}
+
+	public void setBlockedColumnIndex(int column) {
+		BlockedTableModel model = (BlockedTableModel) this.blockedTable.getModel();
+		this.mainSplit.setDividerSize(4);
+		int index = this.blockedTable.getBlockedColumnIndex();
+
+		if (column > index) {
+			TableColumnModel tcModel = this.table.getColumnModel();
+			int size = 0;
+			for (int i = index + 1; i <= column; i++) {
+				size = size + tcModel.getColumn(i).getWidth();
+			}
+			this.mainSplit.setDividerLocation(this.mainSplit.getDividerLocation() + size);
+		} else if (column < index) {
+			TableColumnModel tcModel = this.blockedTable.getColumnModel();
+			int size = 0;
+			for (int i = 0; i <= column; i++) {
+				size = size + tcModel.getColumn(i).getWidth();
+			}
+			this.mainSplit.setDividerLocation(size);
+		} else {
+			// Remove blockedColumn;
+			this.mainSplit.setDividerSize(0);
+			this.mainSplit.setDividerLocation(this.blockedTable.getColumnModel().getColumn(0).getWidth());
+			column = 0;
+		}
+
+		this.fixBlockedVisibility();
+
+		this.blockedTable.setBlockedColumnIndex(column);
+		// this.doLayout();
+	}
+
+	protected void fixBlockedVisibility() {
+		this.blockedScrollPane.setVisible(this.mainSplit.getDividerLocation() > 0);
+		this.sumRowBlockedScrollPane.setVisible(this.mainSplit.getDividerLocation() > 0);
+	}
+
+	public boolean isBlockedEnabled() {
+		if (this.blockedCols) {
+			return this.scrollHorizontal;
+		}
+		return false;
+	}
+
+	/**
+	 * Sets an horizontal scroll to the <code>Table</code>. This allows the <code>Table</code> to contain a big number of columns and display them.
+	 * 
+	 * @param scrollH
+	 *            true to enable the scroll, false to disable it
+	 */
+	protected void setHorizontalScroll(boolean scrollH) {
+		this.scrollHorizontal = scrollH;
+
+		if (this.scrollHorizontal) {
+			if (this.scrollPane != null) {
+				this.table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+				this.sumRowTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+				this.scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.scrollPane.revalidate();
+				this.sumRowScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+				this.sumRowScrollPane.revalidate();
+
+				this.blockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.blockedScrollPane.revalidate();
+
+				this.sumRowBlockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+				this.sumRowBlockedScrollPane.revalidate();
+			}
+		} else {
+			if (this.scrollPane != null) {
+				this.table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+				this.sumRowTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+
+				this.scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.sumRowScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.blockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.sumRowBlockedScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+				this.scrollPane.revalidate();
+				this.sumRowScrollPane.revalidate();
+				this.blockedScrollPane.revalidate();
+				this.sumRowBlockedScrollPane.revalidate();
+			}
+		}
+	}
+
+	/**
+	 * Returns a vector containing the parent key names, this is, the names set in the XML to the attribute 'parentkeys'.
+	 *
+	 * @see #init
+	 * @return the parent key names
+	 */
+	public List<Object> getParentKeys() {
+		return this.getParentKeys(false);
+	}
+
+	public List<Object> getParentKeys(boolean applyEquivalences) {
+		List<Object> v = new ArrayList<>();
+		if (this.parentkeys != null) {
+			for (Object element : this.parentkeys) {
+				Object pkName = element;
+				if (applyEquivalences) {
+					pkName = this.getParentkeyEquivalentValue(pkName);
+				}
+				v.add(pkName);
+			}
+		}
+		return v;
+	}
+
+	/**
+	 * Get the name of the table column associated with the parent key field name
+	 * 
+	 * @param parentkey
+	 * @return
+	 */
+	public Object getParentkeyEquivalentValue(Object parentkey) {
+		if ((this.hParentkeyEquivalences != null) && this.hParentkeyEquivalences.containsKey(parentkey)) {
+			return this.hParentkeyEquivalences.get(parentkey);
+		}
+		return parentkey;
+	}
+
+	/**
+	 * Updates the value determined by the specified column and row in the Entity. If other data related to the row must be updates, can be passed as param.
+	 * 
+	 * @param rowIndex
+	 *            the row indes
+	 * @param viewColumnIndex
+	 *            the column index in the model
+	 * @return the result of the update
+	 * @throws Exception
+	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)} Must be used
+	 *             {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 */
+	@Deprecated
+	protected EntityResult updateTable(int rowIndex, int viewColumnIndex) throws Exception {
+		return this.updateTable(rowIndex, viewColumnIndex, null);
+	}
+
+	/**
+	 * Updates the value determined by the specified column and row in the Entity. If other data related to the row must be updates, can be passed as param.
+	 * 
+	 * @param rowIndex
+	 *            the row index
+	 * @param viewColumnIndex
+	 *            the column index in the model
+	 * @param otherData
+	 *            other data to be updated in that entity
+	 * @return the result of the update
+	 * @throws Exception
+	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 */
+	@Deprecated
+	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData) throws Exception {
+		if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
+			return new EntityResult();
+		}
+		return this.updateTable(rowIndex, viewColumnIndex, otherData, null);
+	}
+
+	/**
+	 * Updates the value determined by the specified column and row in the Entity. If other data related to the row must be updates, can be passed as param.
+	 * 
+	 * @param rowIndex
+	 *            the row index
+	 * @param viewColumnIndex
+	 *            the column index in the model
+	 * @param otherData
+	 *            other data to be updated in that entity
+	 * @param previousData
+	 * @return the result of the update
+	 * @throws Exception
+	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 */
+
+	@Deprecated
+	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData, Object previousData) throws Exception {
+		if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
+			return new EntityResult();
+		}
+
+		// TODO because the modelRowIndex is nonsense (is the same for the model
+		// and for the view) replace all rowIndex for rowIndex
+		if ((this.entity != null) && (this.entity.length() != 0)) {
+			Hashtable av = new Hashtable();
+			TableModel m = this.table.getModel();
+			Object col = m.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
+			Object oValue = m.getValueAt(rowIndex, this.table.convertColumnIndexToModel(viewColumnIndex));
+			if (oValue != null) {
+				av.put(col, oValue);
+			} else {
+				TableCellEditor cellEditor = this.table.getCellEditor(rowIndex, viewColumnIndex);
+				if ((cellEditor != null) && (cellEditor instanceof com.ontimize.gui.table.CellEditor)) {
+					com.ontimize.gui.table.CellEditor cE = (com.ontimize.gui.table.CellEditor) cellEditor;
+					av.put(col, new NullValue(cE.getSQLDataType()));
+				}
+			}
+			if (otherData != null) {
+				av.putAll(otherData);
+			}
+
+			// To include calculted values in the update operation
+			Hashtable calculatedRowData = this.getCalculatedRowData(rowIndex);
+			if (calculatedRowData != null) {
+				av.putAll(calculatedRowData);
+			}
+
+			Hashtable kv = new Hashtable();
+			// Keys and parentkeys
+			Vector vKeys = this.getKeys();
+			for (Object atr : vKeys) {
+				if (atr.equals(col)) {
+					Object oKeyValue = previousData;
+					if (oKeyValue != null) {
+						kv.put(atr, oKeyValue);
+					}
+				} else {
+					// Object oKeyValue = table.getValueAt(rowIndex,
+					// getColumnIndex((String) atr));
+					Object oKeyValue = m.getValueAt(rowIndex, this.table.getColumn(atr).getModelIndex());
+					if (oKeyValue != null) {
+						kv.put(atr, oKeyValue);
+					}
+				}
+			}
+			Vector vParentkeys = this.getParentKeys();
+			for (Object atr : vParentkeys) {
+				Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
+				if (oParentkeyValue != null) {
+					kv.put(atr, oParentkeyValue);
+				}
+			}
+			Entity ent = this.locator.getEntityReference(this.getEntityName());
+			return ent.update(av, kv, this.locator.getSessionId());
+		} else {
+			return new EntityResult();
+		}
+	}
+
+	/**
+	 * Updates the value determined by the specified column and row in the Entity. If other data related to the row must be updates, can be passed as param.
+	 * 
+	 * @param keysValues
+	 *            the values of the keys
+	 * @param viewColumnIndex
+	 *            the column index in the model
+	 * @param tableCellEditor
+	 *            the editor
+	 * @param otherData
+	 *            other data to be updated in that entity
+	 * @param previousData
+	 * @return the result of the update
+	 * @throws Exception
+	 */
+
+	protected EntityResult updateTable(Hashtable keysValues, int viewColumnIndex, TableCellEditor tableCellEditor, Hashtable otherData, Object previousData) throws Exception {
+		if ((this.entity != null) && (this.entity.length() != 0)) {
+			Hashtable av = new Hashtable();
+			TableSorter model = (TableSorter) this.table.getModel();
+			Object col = model.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
+			Object newData = tableCellEditor.getCellEditorValue();
+			if (newData != null) {
+				av.put(col, newData);
+			} else {
+				if ((tableCellEditor != null) && (tableCellEditor instanceof com.ontimize.gui.table.CellEditor)) {
+					com.ontimize.gui.table.CellEditor cE = (com.ontimize.gui.table.CellEditor) tableCellEditor;
+					av.put(col, new NullValue(cE.getSQLDataType()));
+				}
+			}
+
+			if (otherData != null) {
+				av.putAll(otherData);
+			}
+
+			// To include calculted values in the update operation
+			Hashtable rowData = this.getRowDataForKeys(keysValues);
+
+			Vector calculatedColumns = model.getCalculatedColumnsName();
+			for (Object column : calculatedColumns) {
+				if (rowData.containsKey(column)) {
+					av.put(column, rowData.get(column));
+				}
+			}
+
+			Hashtable kv = (Hashtable) keysValues.clone();
+
+			// Keys and parentkeys
+			Vector vKeys = this.getKeys();
+			for (Object atr : vKeys) {
+				if (atr.equals(col)) {
+					Object oKeyValue = previousData;
+					if (oKeyValue != null) {
+						kv.put(atr, oKeyValue);
+					}
+				}
+			}
+			// Parentkeys with equivalences
+			Vector vParentkeys = this.getParentKeys();
+			for (Object atr : vParentkeys) {
+				Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
+				if (oParentkeyValue != null) {
+					// since 5.2074EN-0.4
+					// when equivalences, we must get equivalence value for
+					// parentkey insteadof atr
+					kv.put(this.getParentkeyEquivalentValue(atr), oParentkeyValue);
+				}
+			}
+			Entity ent = this.locator.getEntityReference(this.getEntityName());
+			return ent.update(av, kv, this.locator.getSessionId());
+		} else {
+			return new EntityResult();
+		}
+	}
+
+	/**
+	 * The reference locator set for this table.
+	 */
+	protected EntityReferenceLocator locator = null;
+
+	/**
+	 * Sets a reference to the EntityReferenceLocator
+	 * 
+	 * @param referenceLocator
+	 *            the {@link EntityReferenceLocator}
+	 */
+	@Override
+	public void setReferenceLocator(EntityReferenceLocator referenceLocator) {
+		this.locator = referenceLocator;
+
+		// Configure the locator in all renderers and editors
+		this.configureComponentsLocator(this.getAllColumnRenderer(), this.locator);
+		this.configureComponentsLocator(this.getAllColumnEditors(), this.locator);
+
+	}
+
+	protected void configureComponentsLocator(Hashtable components, EntityReferenceLocator locator) {
+		if ((components != null) && (locator != null)) {
+			Iterator iterator = components.values().iterator();
+			while (iterator.hasNext()) {
+				Object element = iterator.next();
+				if (element instanceof ReferenceComponent) {
+					((ReferenceComponent) element).setReferenceLocator(locator);
+				}
+
+				if ((this.parentForm != null) && (element instanceof CachedComponent)) {
+					CacheManager.getDefaultCacheManager(locator).addCachedComponent((CachedComponent) element);
+					((CachedComponent) element).setCacheManager(CacheManager.getDefaultCacheManager(locator));
+				}
+			}
+		}
+	}
+
+	protected void configureComponentsParentForm(Hashtable components, Form parentForm) {
+		if ((components != null) && (parentForm != null)) {
+			Iterator iterator = components.values().iterator();
+			while (iterator.hasNext()) {
+				Object element = iterator.next();
+				if (element instanceof AccessForm) {
+					((AccessForm) element).setParentForm(parentForm);
+				}
+
+				if ((this.locator != null) && (element instanceof CachedComponent)) {
+					CacheManager.getDefaultCacheManager(this.locator).addCachedComponent((CachedComponent) element);
+					((CachedComponent) element).setCacheManager(CacheManager.getDefaultCacheManager(this.locator));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the detail form name.
+	 * 
+	 * @return the detail form name
+	 */
+	public String getFormName() {
+		return this.formName;
+	}
+
+	/**
+	 * Returns the insert detail form name.
+	 * 
+	 * @return the insert detail form name
+	 */
+	public String getInsertFormName() {
+		return this.insertFormName;
+	}
+
+	/**
+	 * Determines if the table is grouped.
+	 * 
+	 * @return true if the table is grouped; otherwise, false
+	 */
+	public boolean isGroup() {
+		return ((TableSorter) this.table.getModel()).isGrouped();
+	}
+
+	/**
+	 * Removes the grouping applied to the table.
+	 */
+	public void resetGroup() {
+		((TableSorter) this.table.getModel()).resetGroup();
+		if (this.buttonDelete != null) {
+			this.setTableComponentEnabled(Table.BUTTON_DELETE, true);
+		}
+	}
+
+	/**
+	 * Sets whether the default charting functionality is enabled or not. If <code>enabled</code> is true it is; if it is false it is not.
+	 * 
+	 * @param enabled
+	 *            true if default charting is enabled
+	 */
+	public void setDefaultChartsEnabled(boolean enabled) {
+		this.defaultChartsEnabled = enabled;
+		if (!Table.CHART_ENABLED) {
+			return;
+		}
+		if (this.buttonDefaultChart != null) {
+			if ((!this.isEmpty()) && (enabled)) {
+				this.buttonDefaultChart.setEnabled(enabled);
+			}
+			this.buttonDefaultChart.setVisible(enabled);
+		}
+	}
+
+	/**
+	 * Creates, adds to the control panel, and creates the action listener related to the button that manages the configuration of the sum rows.
+	 */
+	protected void installConfSumRowButton() {
+		this.buttonSumRowSetup = new TableButton();
+		if (this.buttonSumRowSetup instanceof TableComponent) {
+			((TableComponent) this.buttonSumRowSetup).setKey(Table.BUTTON_SUM_ROW_SETUP);
+		}
+
+		ImageIcon calcIcon = ImageManager.getIcon(ImageManager.TABLE_SUMROWSETUP);
+		if (calcIcon != null) {
+			this.buttonSumRowSetup.setIcon(calcIcon);
+		} else {
+			this.buttonSumRowSetup.setText("SumConf");
+		}
+		this.buttonSumRowSetup.setEnabled(true);
+		this.buttonSumRowSetup.setMargin(new Insets(0, 0, 0, 0));
+		this.controlsPanel.add(this.buttonSumRowSetup);
+		this.buttonSumRowSetup.addActionListener(e -> Table.this.showConfSumRowDialog());
+	}
+
+	protected void showConfSumRowDialog() {
+		// If there is some cell in editing mode then finish the edition
+		this.table.removeEditor();
+
+		Window w = SwingUtilities.getWindowAncestor(Table.this);
+		if (this.sumRowSetupDialog == null) {
+			if (w instanceof Frame) {
+				this.sumRowSetupDialog = new SumRowSetupDialog((Frame) w, Table.this);
+			} else if (w instanceof Dialog) {
+				this.sumRowSetupDialog = new SumRowSetupDialog((Dialog) w, Table.this);
+			} else {
+				this.sumRowSetupDialog = new SumRowSetupDialog((Frame) null, Table.this);
+			}
+		}
+		this.sumRowSetupDialog.setColumn();
+		this.sumRowSetupDialog.setResourceBundle(this.resourcesFile);
+		this.sumRowSetupDialog.pack();
+		ApplicationManager.center(this.sumRowSetupDialog);
+		this.sumRowSetupDialog.setVisible(true);
+	}
+
+	/**
+	 * @since 5.2079EN-0.1
+	 * @return sumrowsetup dialog instance
+	 */
+	public SumRowSetupDialog getSumRowSetupDialog() {
+		return this.sumRowSetupDialog;
+	}
+
+	/**
+	 * Creates, adds to the control panel, and creates the action listener related to the button that manages the configuration of the visible columns.
+	 */
+	protected void installConfVisibleColsButtons() {
+		this.buttonVisibleColsSetup = new TableButton();
+		if (this.buttonVisibleColsSetup instanceof TableComponent) {
+			((TableComponent) this.buttonVisibleColsSetup).setKey(Table.BUTTON_VISIBLE_COLS_SETUP);
+		}
+		Icon confColsIcon = this.getButtonVisibleColsSetupIcon(false);
+		if (confColsIcon != null) {
+			this.buttonVisibleColsSetup.setIcon(confColsIcon);
+		} else {
+			this.buttonVisibleColsSetup.setText("ColsConf");
+		}
+		this.buttonVisibleColsSetup.setEnabled(false);
+		this.buttonVisibleColsSetup.setMargin(new Insets(0, 0, 0, 0));
+		this.controlsPanel.add(this.buttonVisibleColsSetup);
+		this.buttonVisibleColsSetup.addActionListener(e -> {
+			Window w = SwingUtilities.getWindowAncestor(Table.this);
+			if (Table.this.visibleColsSetupDialog == null) {
+				if (w instanceof Frame) {
+					Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Frame) w, Table.this);
+				} else if (w instanceof Dialog) {
+					Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Dialog) w, Table.this);
+				} else {
+					Table.this.visibleColsSetupDialog = new VisibleColsSetupDialog((Frame) null, Table.this);
+				}
+			}
+			Table.this.visibleColsSetupDialog.setColumn();
+			Table.this.visibleColsSetupDialog.setResourceBundle(Table.this.resourcesFile);
+			Table.this.visibleColsSetupDialog.pack();
+			ApplicationManager.center(Table.this.visibleColsSetupDialog);
+			Table.this.visibleColsSetupDialog.checkSelectPosition(-1);
+			Table.this.visibleColsSetupDialog.setVisible(true);
+		});
+		this.setVisibleColsConfigurationAllowed(this.allowSetupVisibleColumns);
+	}
+
+	/**
+	 * Creates, adds to the control panel, and creates the action listener related to the button that open the charting window.
+	 */
+	protected void installDefaultChartsButton() {
+		if (!Table.CHART_ENABLED) {
+			return;
+		}
+		this.buttonDefaultChart = new ChartButton(this);
+		this.buttonDefaultChart.setKey(Table.BUTTON_DEFAULT_CHART);
+		ImageIcon chartsIcon = ImageManager.getIcon(ImageManager.TABLE_DEFAULT_CHARTS);
+		if (chartsIcon != null) {
+			this.buttonDefaultChart.setIcon(chartsIcon);
+		} else {
+			this.buttonDefaultChart.setText("ChartsConf");
+		}
+
+		if (this.dynamicTable) {
+			// In a dynamic table it is not possible to save default chart
+			// configuration, so hide the option
+			this.buttonDefaultChart.getPreferredSize().width = this.buttonDefaultChart.getPreferredSize().width - this.buttonDefaultChart.getMenuButton().getPreferredSize().width;
+			this.buttonDefaultChart.getMenuButton().setVisible(false);
+
+			((ChartButton) this.buttonDefaultChart).setLoadButtonVisible(false);
+			((ChartButton) this.buttonDefaultChart).setSaveButtonVisible(false);
+		}
+
+		this.buttonDefaultChart.setEnabled(false);
+		this.buttonDefaultChart.setMargin(new Insets(0, 0, 0, 0));
+		this.controlsPanel.add(this.buttonDefaultChart);
+
+	}
+
+	/**
+	 * Retuns the resources file used by the table.
+	 * 
+	 * @return
+	 */
+	public ResourceBundle getResourceBundle() {
+		return this.resourcesFile;
+	}
+
+	/**
+	 * Sets whether or not the <code>DetailForm</code> of this component is enabled.
+	 * 
+	 * @param enabled
+	 *            true if this component should be enabled, false otherwise
+	 */
+	public void setEnabledDetail(boolean enabled) {
+		this.enabledDetail = enabled;
+	}
+
+	/**
+	 * If the table has a detail form, the method returns true. False, in other case.
+	 * 
+	 * @return true if the table has detail form
+	 */
+	public boolean hasForm() {
+		return this.formName != null;
+	}
+
+	/**
+	 * Determines if the detail form of the table is enable.
+	 * 
+	 * @return true if the detail form is enable, false otherwise
+	 */
+	public boolean getEnabledDetail() {
+		return this.enabledDetail;
+	}
+
+	/**
+	 * Determines if the table is sorted.
+	 * 
+	 * @return true if the table is sorted; otherwise, false
+	 */
+	public boolean isSorted() {
+		return ((TableSorter) this.table.getModel()).isSorted();
+	}
+
+	/**
+	 * Returns the view index of the first column that is sorted.
+	 *
+	 * @see TableSorter#getFirstSortedColumn
+	 * @return the view index of the first column that is sorted, null when the table is not sorted
+	 */
+	public int getViewOrderColumnIndex() {
+		if (!this.isSorted()) {
+			return -1;
+		}
+		return this.table.convertColumnIndexToView(((TableSorter) this.table.getModel()).getFirstSortedColumn());
+	}
+
+	/**
+	 * Determines whether the first sorting applied to this table is ascending or not.
+	 * 
+	 * @return true if the first column sorted has an ascending sorting; false otherwise
+	 */
+	protected boolean isAscending() {
+		return ((TableSorter) this.table.getModel()).isAscending();
+	}
+
+	protected Vector editionListeners = new Vector(0, 3);
+
+	/**
+	 * Notifies the edition listeners that the edition has been stopped.
+	 * 
+	 * @param value
+	 *            the new value
+	 * @param previousValue
+	 *            the old value
+	 * @param rowIndex
+	 *            the row that has been changed
+	 * @param viewColumnIndex
+	 *            the column that has been changed
+	 */
+	protected void fireEditingStopped(Object value, Object previousValue, int rowIndex, int viewColumnIndex) {
+		if ((rowIndex < 0) || (viewColumnIndex < 0)) {
+			return;
+		}
+		Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
+		TableEditionEvent e = new TableEditionEvent(this, value, rowIndex, viewColumnIndex, id.toString(), previousValue);
+		for (Object element : this.editionListeners) {
+			((TableEditorListener) element).editingStopped(e);
+		}
+	}
+
+	/**
+	 * Notifies the edition listeners that the edition will stop.
+	 * 
+	 * @param value
+	 *            the new value
+	 * @param previousValue
+	 *            the old value
+	 * @param rowIndex
+	 *            the row that has been changed
+	 * @param viewColumnIndex
+	 *            the column that has been changed
+	 * @throws com.ontimize.gui.table.EditingVetoException
+	 */
+	protected void fireEditingWillStop(Object value, Object previousValue, int rowIndex, int viewColumnIndex) throws com.ontimize.gui.table.EditingVetoException {
+		if ((rowIndex < 0) || (viewColumnIndex < 0)) {
+			return;
+		}
+		Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
+		TableEditionEvent e = new TableEditionEvent(this, value, rowIndex, viewColumnIndex, id.toString(), previousValue);
+
+		for (Object element : this.editionListeners) {
+			((TableEditorListener) element).editingWillStop(e);
+		}
+	}
+
+	/**
+	 * Notifies the edition listeners that the edition has been cancel.
+	 * 
+	 * @param rowIndex
+	 *            the row that has been changed
+	 * @param viewColumnIndex
+	 *            the column that has been changed
+	 */
+	protected void fireEditingCancelled(int rowIndex, int viewColumnIndex) {
+		if ((rowIndex < 0) || (viewColumnIndex < 0)) {
+			return;
+		}
+		Object id = this.table.getColumnModel().getColumn(viewColumnIndex).getIdentifier();
+		TableEditionEvent e = new TableEditionEvent(this, null, rowIndex, viewColumnIndex, id.toString());
+
+		for (Object element : this.editionListeners) {
+			((TableEditorListener) element).editingCanceled(e);
+		}
+	}
+
+	/**
+	 * Adds a {@link #TableEditorListener} to the table.
+	 * 
+	 * @param listener
+	 */
+	public void addTableEditorListener(TableEditorListener listener) {
+		if (listener != null) {
+			this.editionListeners.add(listener);
+		}
+	}
+
+	/**
+	 * Removes a {@link #TableEditorListener} from the table.
+	 * 
+	 * @param listener
+	 *            the listener to remove
+	 */
+	public void removeTableEditorListener(TableEditorListener listener) {
+		if (listener != null) {
+			this.editionListeners.remove(listener);
+		}
+	}
+
+	/**
+	 * Sets all the editable columns determined by the <code>Table</code> definition.
+	 *
+	 * @see #setEditableColumn(String , boolean )
+	 */
+	private void setEditableColumns() {
+		for (int i = 0; i < this.editableColumns.size(); i++) {
+			boolean bUpdateEntity = this.editableColumnsUpdateEntity.contains(this.editableColumns.get(i));
+			this.setEditableColumn((String) this.editableColumns.get(i), bUpdateEntity);
+		}
+	}
+
+	public List getEditableColumns() {
+		return this.editableColumns;
+	}
+
+	/**
+	 * Sets whether the table header will adjusts its size automatically.
+	 * 
+	 * @param autoFixHead
+	 *            true if the table header should auto adjust
+	 */
+	public void setAutoFixHead(boolean autoFixHead) {
+		this.autoFixHead = autoFixHead;
+		if ((this.table != null) && (this.table.getModel() instanceof TableSorter)) {
+			((TableSorter) this.table.getModel()).setFitHeadSize(this.autoFixHead);
+		}
+	}
+
+	/**
+	 * Sets whether or not the visible columns can be configured by the user.
+	 * 
+	 * @param allowConfiguration
+	 *            true if the visible columns configuration should be enabled, false otherwise
+	 */
+	public void setVisibleColsConfigurationAllowed(boolean allowConfiguration) {
+		this.allowSetupVisibleColumns = allowConfiguration;
+		if (this.buttonVisibleColsSetup != null) {
+			this.buttonVisibleColsSetup.setVisible(allowConfiguration);
+		}
+		if (this.buttonVisibleColsSetup != null) {
+			this.buttonVisibleColsSetup.setEnabled(allowConfiguration);
+		}
+	}
+
+	protected CellRenderer.CellRendererColorManager cellRendererColorManager = null;
+
+	/**
+	 * Sets the color manager for all the {@link CellRenderer} contained by the table.
+	 * 
+	 * @param colorManager
+	 *            the new color manager
+	 */
+	public void setCellRendererColorManager(CellRenderer.CellRendererColorManager colorManager) {
+		this.cellRendererColorManager = colorManager;
+		Vector cols = this.getAttributeList();
+		for (Object col : cols) {
+			TableColumn tc = this.getJTable().getColumn(col);
+			if (tc != null) {
+				TableCellRenderer rend = tc.getCellRenderer();
+				if (rend instanceof CellRenderer) {
+					((CellRenderer) rend).setCellRendererColorManager(colorManager);
+				} else if (rend instanceof ComboReferenceCellRenderer) {
+					((ComboReferenceCellRenderer) rend).setCellRendererColorManager(colorManager);
+				}
+			}
+		}
+		TableCellRenderer[] rends = this.getDefaultRenderers();
+		for (TableCellRenderer rend : rends) {
+			if (rend instanceof CellRenderer) {
+				((CellRenderer) rend).setCellRendererColorManager(colorManager);
+			}
+		}
+	}
+
+	protected CellRenderer.CellRendererFontManager cellRendererFontManager = null;
+
+	/**
+	 * Sets the font manager for all the {@link CellRenderer} contained by the table.
+	 * 
+	 * @param fontManager
+	 */
+	public void setCellRendererFontManager(CellRenderer.CellRendererFontManager fontManager) {
+		this.cellRendererFontManager = fontManager;
+		Vector cols = this.getAttributeList();
+		for (Object col : cols) {
+			TableColumn tc = this.getJTable().getColumn(col);
+			if (tc != null) {
+				TableCellRenderer rend = tc.getCellRenderer();
+				if (rend instanceof CellRenderer) {
+					((CellRenderer) rend).setCellRendererFontManager(fontManager);
+				}
+			}
+		}
+		TableCellRenderer[] rends = this.getDefaultRenderers();
+		for (TableCellRenderer rend : rends) {
+			if (rend instanceof CellRenderer) {
+				((CellRenderer) rend).setCellRendererFontManager(fontManager);
+			}
+		}
+	}
+
+	/**
+	 * Deletes the specified sorting and the filtering preference.
+	 * 
+	 * @param confName
+	 *            the name given to the configuration when saved
+	 */
+	protected void deteleFilterOrderConfiguration(String confName) {
+
+		String sPreferenceKey = this.getFilterOrderConfPreferenceKey(confName);
+		// If name is not null then save the preference
+		String sKey = this.getFilterOrderConfigurationPreferenceKey();
+		Application ap = ApplicationManager.getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+		if ((prefs != null) && (confName != null)) {
+			prefs.setPreference(this.getUser(), sPreferenceKey, null);
+			String pref = prefs.getPreference(this.getUser(), sKey);
+			if (pref != null) {
+				Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+				if (tokens.contains(confName)) {
+					tokens.remove(confName);
+					String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
+					ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
+					ap.getPreferences().savePreferences();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Saves the table filter configuration.
+	 * 
+	 * @param confName
+	 *            the name given to the configuration
+	 */
+	protected void saveOrderFilterConfiguration(String confName) {
+		this.saveFilterOrderConfiguration(confName, false);
+	}
+
+	/**
+	 * Saves the table filter configuration with a name, and optionally the column position and widths.
+	 * 
+	 * @param confName
+	 *            the name given to the configuration;
+	 * @param savePositionAndWidth
+	 *            if true, column position and width will be saved
+	 */
+	protected void saveFilterOrderConfiguration(String confName, boolean savePositionAndWidth) {
+		if (this.dynamicTable && !this.dynamicPivotable) {
+			// Dynamic tables have not preferences of order and filters
+			return;
+		}
+
+		TableSorter ts = (TableSorter) this.table.getModel();
+		String[] colOrd = this.getOrderColumns();
+		boolean[] asce = this.getAscendents();
+		Hashtable hFilter = ts.getFilters();
+		// since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
+		if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
+			hFilter = new Hashtable();
+		}
+		Hashtable hFilter2 = new Hashtable();
+		Enumeration enumKeys = hFilter.keys();
+		while (enumKeys.hasMoreElements()) {
+			Object oKey = enumKeys.nextElement();
+			Object oValue = hFilter.get(oKey);
+			if (oValue instanceof TableSorter.Filter) {
+				TableSorter.Filter v = (TableSorter.Filter) oValue;
+				Object[] oValues = v.values;
+				for (int i = 0; i < oValues.length; i++) {
+					if (oValues[i] instanceof java.util.Date) {
+						oValues[i] = new FilterDate(((java.util.Date) oValues[i]).getTime());
+					}
+				}
+			}
+			hFilter2.put(oKey, oValue);
+		}
+		if (confName == null) {
+			this.defaultFilter = hFilter;
+		}
+
+		String sValue = null;
+		String sPreferenceKey = this.getFilterOrderConfPreferenceKey(confName);
+		String col = null;
+		String sAscent = null;
+		if ((colOrd != null) && (colOrd.length > 0)) {
+			col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
+			Vector aux = new Vector();
+			for (boolean element : asce) {
+				if (element) {
+					aux.add(Boolean.TRUE);
+				} else {
+					aux.add(Boolean.FALSE);
+				}
+			}
+			sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
+		}
+		sValue = col + ";" + sAscent;
+
+		if (savePositionAndWidth) {
+			sValue = sValue + ";" + this.createColumnPositionAndWidthPreference();
+		} else {
+			sValue = sValue + ";" + null;
+		}
+
+		if (hFilter != null) {
+			try {
+				ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+				ObjectOutputStream out = new ObjectOutputStream(bOut);
+				out.writeObject(hFilter2);
+				out.flush();
+				String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
+				out.close();
+				sValue = sValue + ";" + s;
+				Application ap = ApplicationManager.getApplication();
+				if (ap.getPreferences() != null) {
+					ap.getPreferences().setPreference(this.getUser(), sPreferenceKey, sValue);
+					ap.getPreferences().savePreferences();
+				}
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+			}
+		} else {
+			if (this.parentForm != null) {
+				Application ap = ApplicationManager.getApplication();
+				if (ap.getPreferences() != null) {
+					ap.getPreferences().setPreference(this.getUser(), sPreferenceKey, sValue);
+					ap.getPreferences().savePreferences();
+				}
+			}
+		}
+
+		// If name is not null then save the preference
+		String sKey = this.getFilterOrderConfigurationPreferenceKey();
+		Application ap = ApplicationManager.getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+		if ((prefs != null) && (confName != null)) {
+			String pref = prefs.getPreference(this.getUser(), sKey);
+			if (pref != null) {
+				Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+				if (!tokens.contains(confName)) {
+					tokens.add(confName);
+					String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
+					ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
+					ap.getPreferences().savePreferences();
+				}
+			} else {
+				String sNew = confName;
+				ap.getPreferences().setPreference(this.getUser(), sKey, sNew);
+				ap.getPreferences().savePreferences();
+			}
+		}
+	}
+
+	/**
+	 * Get the value of the table preference, optionally with the position and with of the columns
+	 * 
+	 * @param savePositionAndWidth
+	 *            if true, column position and width will added to value
+	 */
+	protected String getValueFilterOrderConfiguration(boolean savePositionAndWidth) {
+		String sValue = null;
+		if (this.dynamicTable && !this.dynamicPivotable) {
+			// Dynamic tables have not preferences of order and filters
+			return sValue;
+		}
+
+		TableSorter ts = (TableSorter) this.table.getModel();
+		String[] colOrd = this.getOrderColumns();
+		boolean[] asce = this.getAscendents();
+		Hashtable hFilter = ts.getFilters();
+		// since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
+		if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
+			hFilter = new Hashtable();
+		}
+		Hashtable hFilter2 = new Hashtable();
+		Enumeration enumKeys = hFilter.keys();
+		while (enumKeys.hasMoreElements()) {
+			Object oKey = enumKeys.nextElement();
+			Object oValue = hFilter.get(oKey);
+			if (oValue instanceof TableSorter.Filter) {
+				TableSorter.Filter v = (TableSorter.Filter) oValue;
+				Object[] oValues = v.values;
+				for (int i = 0; i < oValues.length; i++) {
+					if (oValues[i] instanceof java.util.Date) {
+						oValues[i] = new FilterDate(((java.util.Date) oValues[i]).getTime());
+					}
+				}
+			}
+			hFilter2.put(oKey, oValue);
+		}
+
+		String col = null;
+		String sAscent = null;
+		if ((colOrd != null) && (colOrd.length > 0)) {
+			col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
+			Vector aux = new Vector();
+			for (boolean element : asce) {
+				if (element) {
+					aux.add(Boolean.TRUE);
+				} else {
+					aux.add(Boolean.FALSE);
+				}
+			}
+			sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
+		}
+		sValue = col + ";" + sAscent;
+
+		if (savePositionAndWidth) {
+			sValue = sValue + ";" + this.createColumnPositionAndWidthPreference();
+		} else {
+			sValue = sValue + ";" + null;
+		}
+
+		if (hFilter != null) {
+
+			try {
+				ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+				ObjectOutputStream out;
+				out = new ObjectOutputStream(bOut);
+				out.writeObject(hFilter2);
+				out.flush();
+				String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
+				out.close();
+				sValue = sValue + ";" + s;
+				return sValue;
+			} catch (IOException e) {
+				Table.logger.error("Error retrieving filter data. ", e);
+				return sValue;
+			}
+
+		} else {
+			return sValue;
+		}
+	}
+
+	protected ExtendedJPopupMenu	menuOrderFilterSetup					= null;
+
+	protected ActionListener		sortFilterOrderItemListener				= null;
+
+	protected ActionListener		orderFilterSetupDeleteItemsListener		= null;
+
+	protected ActionListener		addShareFilterSetupItemsListener		= null;
+
+	protected ActionListener		obtainShareElementMessageItemListener	= null;
+
+	protected ActionListener		stopSharingElementItemListener			= null;
+
+	protected ActionListener		removeTargetSharedElementItemListener	= null;
+
+	protected ActionListener		editSharingElementItemListenes			= null;
+
+	protected ActionListener		addTargetToSharedElementItemListener	= null;
+
+	protected ActionListener		loadFilterSharedElementItemListener		= null;
+
+	protected JMenuItem				menuDefaultOrderSetup					= new JMenuItem("table.load_default_configuration");
+
+	protected JMenuItem				menuSaveDefaultOrderConfiguration		= new JMenuItem("table.save_as_default");
+
+	protected JMenuItem				menuSave								= new JMenuItem("save");
+
+	protected static String			loadDefaultConfigurationKey				= "table.load_default_configuration";
+
+	protected static String			saveAsDefaultConfigurationKey			= "table.save_as_default";
+
+	/**
+	 * Class that contains a TableButton and a JButton into a JPanel..
+	 */
+	protected static String			saveKey									= "save";
+
+	class AuxPanel extends JPanel implements MenuElement {
+
+		JButton		button			= null;
+
+		TableButton	tableButton1	= null;
+
+		TableButton	tableButton2	= null;
+
+		TableButton	tableButton3	= null;
+
+		TableButton	tableButtonI	= null;
+
+		public AuxPanel(TableButton tableButton1, JButton jButton) {
+			this.tableButton1 = tableButton1;
+			this.button = jButton;
+			this.setLayout(new GridBagLayout());
+			this.setOpaque(false);
+			this.add(tableButton1, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(jButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+			this.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
+
+		public AuxPanel(TableButton tableButton1, TableButton tableButton2, JButton jButton) {
+			this.tableButton1 = tableButton1;
+			this.tableButton2 = tableButton2;
+			this.button = jButton;
+			this.setLayout(new GridBagLayout());
+			this.setOpaque(false);
+			this.add(jButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton1, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton2, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
+
+		public AuxPanel(TableButton tableButton1, TableButton tableButton2, TableButton tableButtonI, JButton jButton) {
+			this.tableButton1 = tableButton1;
+			this.tableButton2 = tableButton2;
+			this.tableButtonI = tableButtonI;
+			this.button = jButton;
+			this.setLayout(new GridBagLayout());
+			this.setOpaque(false);
+			this.add(tableButtonI, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(jButton, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton1, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton2, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
+
+		public AuxPanel(TableButton tableButton1, TableButton tableButton2, TableButton tableButton3, TableButton tableButtonI, JButton jButton) {
+			this.tableButton1 = tableButton1;
+			this.tableButton2 = tableButton2;
+			this.tableButton3 = tableButton3;
+			this.tableButtonI = tableButtonI;
+			this.button = jButton;
+			this.setLayout(new GridBagLayout());
+			this.setOpaque(false);
+			this.add(tableButtonI, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(jButton, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton1, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton2, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(tableButton3, new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
+
+		/**
+		 * Empty
+		 */
+		@Override
+		public void menuSelectionChanged(boolean isIncluded) {
+			// m.menuSelectionChanged(isIncluded);
+		}
+
+		/**
+		 * Empty
+		 */
+		@Override
+		public void processMouseEvent(MouseEvent e, MenuElement[] path, MenuSelectionManager manager) {
+			// m.processMouseEvent(e,path,manager);
+		}
+
+		/**
+		 * Empty
+		 */
+		@Override
+		public void processKeyEvent(KeyEvent e, MenuElement[] path, MenuSelectionManager manager) {
+			// m.processKeyEvent(e,path,manager);
+		}
+
+		/**
+		 * Returns the first MenuElement
+		 */
+		@Override
+		public MenuElement[] getSubElements() {
+			return new MenuElement[0];
+		}
+
+		/**
+		 * Returns this
+		 */
+		@Override
+		public Component getComponent() {
+			return this;
+		}
+
+	}
+
+	/**
+	 * Method call by the listener of the TableButton that manages the saving of the filter configuration. Creates the menu corresponding to the stored configurations and displays
+	 * it.
+	 * 
+	 * @param e
+	 *            the event
+	 */
+	protected void configureFilterOrder(ActionEvent e) {
+		Application ap = ApplicationManager.getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+		if (prefs == null) {
+			return;
+		}
+		// Configuration window
+		if (this.menuOrderFilterSetup == null) {
+			this.menuOrderFilterSetup = new ExtendedJPopupMenu();
+			if (this.buttonSaveFilterOrderSetup != null) {
+				((TableButtonPopupble) this.buttonSaveFilterOrderSetup).setMenu(this.menuOrderFilterSetup);
+			}
+			this.menuSave.addActionListener(e1 -> {
+				// Ask
+				Object s = MessageDialog.showInputMessage(SwingUtilities.getWindowAncestor(Table.this), "table.enter_configuration_name", Table.this.resourcesFile);
+				if (s != null) {
+					String str = s.toString();
+					int i = JOptionPane.showConfirmDialog((Component) e1.getSource(),
+							ApplicationManager.getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS, Table.this.resourcesFile));
+					if (i == JOptionPane.YES_OPTION) {
+						Table.this.saveFilterOrderConfiguration(str, true);
+					} else if (i == JOptionPane.NO_OPTION) {
+						Table.this.saveFilterOrderConfiguration(str, false);
+					} else {
+						return;
+					}
+				}
+			});
+
+			this.menuDefaultOrderSetup.addActionListener(e1 -> Table.this.loadFilterOrderConfiguration(null));
+			this.menuSaveDefaultOrderConfiguration.addActionListener(e1 -> {
+				int i = JOptionPane.showConfirmDialog((Component) e1.getSource(), ApplicationManager.getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS, Table.this.resourcesFile));
+				if (i == JOptionPane.YES_OPTION) {
+					Table.this.saveFilterOrderConfiguration(null, true);
+				} else if (i == JOptionPane.NO_OPTION) {
+					Table.this.saveFilterOrderConfiguration(null, false);
+				} else {
+					return;
+				}
+			});
+			this.sortFilterOrderItemListener = e1 -> {
+				if (e1.getSource() instanceof JButton) {
+					Table.this.menuOrderFilterSetup.setVisible(false);
+					Table.this.loadFilterOrderConfiguration(((JButton) e1.getSource()).getActionCommand());
+				}
+			};
+
+			this.orderFilterSetupDeleteItemsListener = e1 -> {
+				if (e1.getSource() instanceof JButton) {
+					Window w = SwingUtils.getWindowAncestor((Component) e1.getSource());
+					// SwingUtilities.getWindowAncestor(((Component)
+					// e.getSource())).setVisible(false);
+					if (MessageDialog.showQuestionMessage(w, ApplicationManager.getTranslation(Table.M_WOULD_YOU_LIKE_TO_DELETE_THIS_CONFIGURATION_OF_FILTER))) {
+						Table.this.deteleFilterOrderConfiguration(((JButton) e1.getSource()).getActionCommand());
+						Table.this.menuOrderFilterSetup.setVisible(false);
+					}
+				}
+			};
+
+			if (this.shareRemoteReferenceFilters) {
+				this.addShareFilterSetupItemsListener = e2 -> {
+					if (e2.getSource() instanceof JButton) {
+						try {
+							Point p = ((Component) e2.getSource()).getLocationOnScreen();
+							// SwingUtilities.getWindowAncestor(((Component)
+							// e.getSource())).setVisible(false);
+							String filterName = ((TableButton) e2.getSource()).getActionCommand();
+							Window w = SwingUtils.getWindowAncestor((Component) e2.getSource());
+							FormAddSharedReference f = new FormAddSharedReference(w, true, ApplicationManager.getApplication().getReferenceLocator(),
+									Table.this.getFilterOrderConfigurationValue(filterName), Table.this.getFilterOrderConfPreferenceKey(null),
+									((ClientReferenceLocator) ApplicationManager.getApplication().getReferenceLocator()).getUser(), "", filterName, false, p);
+							if (f.getButtonOptionResult()) {
+								Table.this.deteleFilterOrderConfiguration(filterName);
+							}
+							f = null;
+
+						} catch (Exception e1) {
+							Table.logger.error(null, e1);
+						}
+					}
+				};
+			}
+
+			if (!ApplicationManager.useOntimizePlaf) {
+				this.menuOrderFilterSetup.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
+			}
+		}
+
+		if (prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(null)) != null) {
+			this.menuDefaultOrderSetup.setEnabled(true);
+		} else {
+			this.menuDefaultOrderSetup.setEnabled(false);
+		}
+
+		this.menuSave.setText(ApplicationManager.getTranslation(Table.saveKey, this.resourcesFile));
+		this.menuSaveDefaultOrderConfiguration.setText(ApplicationManager.getTranslation(Table.saveAsDefaultConfigurationKey, this.resourcesFile));
+		this.menuDefaultOrderSetup.setText(ApplicationManager.getTranslation(Table.loadDefaultConfigurationKey, this.resourcesFile));
+
+		Component[] c = this.menuOrderFilterSetup.getComponents();
+		for (int i = 0; (c != null) && (i < c.length); i++) {
+			if (c[i] instanceof JPanel) {
+				Component[] c2 = ((JPanel) c[i]).getComponents();
+				for (Component element : c2) {
+					if (element instanceof RolloverButton) {
+						((RolloverButton) element).removeActionListener(this.sortFilterOrderItemListener);
+					} else if (element instanceof JButton) {
+						((JButton) element).removeActionListener(this.orderFilterSetupDeleteItemsListener);
+					}
+				}
+				((JPanel) c[i]).removeAll();
+			}
+		}
+
+		this.menuOrderFilterSetup.removeAll();
+		// By default
+
+		this.menuOrderFilterSetup.add(this.menuDefaultOrderSetup);
+
+		// Now all the others
+		String sKey = this.getFilterOrderConfigurationPreferenceKey();
+		String pref = prefs.getPreference(this.getUser(), sKey);
+		Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+		if (this.shareRemoteReferenceFilters) {
+			this.showShareFilterTableList(tokens);
+		} else {
+			for (int i = 0; i < tokens.size(); i++) {
+				if (i == 0) {
+					this.menuOrderFilterSetup.addSeparator();
+				}
+				final String token = (String) tokens.get(i);
+				JButton menu = new RolloverButton(token) {
+
+					@Override
+					public Dimension getPreferredSize() {
+						Dimension d = super.getPreferredSize();
+						d.height = 22;
+						return d;
+					}
+
+					@Override
+					public boolean isFocusTraversable() {
+						return false;
+					}
+
+					@Override
+					public boolean isRequestFocusEnabled() {
+						return false;
+					}
+				};
+				menu.setActionCommand(token);
+				menu.addActionListener(this.sortFilterOrderItemListener);
+				menu.setForeground(Color.blue.darker());
+				menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
+
+				TableButton b = new TableButton();
+				b.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
+				b.setToolTipText(ApplicationManager.getTranslation("table.delete_this_configuration", this.resourcesFile));
+				b.setActionCommand(token);
+
+				b.addActionListener(this.orderFilterSetupDeleteItemsListener);
+				JPanel p = new AuxPanel(b, menu);
+
+				this.menuOrderFilterSetup.add(p);
+
+			}
+
+			if (tokens.size() > 0) {
+				this.menuOrderFilterSetup.addSeparator();
+			}
+		}
+
+		this.menuOrderFilterSetup.add(this.menuSaveDefaultOrderConfiguration);
+		this.menuOrderFilterSetup.add(this.menuSave);
+
+		this.menuOrderFilterSetup.show((Component) e.getSource(), 0, ((Component) e.getSource()).getHeight() + 1);
+	}
+
+	protected void configurePivotDynamicFilterOrder(ActionEvent e) {
+
+	}
+
+	protected void showShareFilterTableList(Vector tokens) {
+
+		this.obtainShareElementMessageItemListener = e -> {
+			try {
+				int shareId = Integer.parseInt(e.getActionCommand());
+				int sessionID = Table.this.locator.getSessionId();
+				IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME,
+						sessionID);
+				String message = remoteReference.getSharedElementMessage(shareId, sessionID);
+				if (!message.isEmpty()) {
+
+					Toast.showMessage(Table.this, message, null, 1500);
+
+				} else {
+					JOptionPane.showMessageDialog(Table.this, ApplicationManager.getTranslation("shareRemote.message_empty"),
+							ApplicationManager.getTranslation("shareRemote.message_dialog"), JOptionPane.INFORMATION_MESSAGE);
+				}
+			} catch (Exception ex) {
+				Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
+				MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.not_retrive_message");
+			}
+		};
+
+		this.stopSharingElementItemListener = e -> {
+
+			Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
+
+			if (MessageDialog.showQuestionMessage(w, ApplicationManager.getTranslation(Table.M_WOULD_YOU_LIKE_TO_DELETE_THIS_SHARE_FILTER))) {
+				try {
+					int shareId = Integer.parseInt(e.getActionCommand());
+					int sessionID = Table.this.locator.getSessionId();
+					IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator)
+							.getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
+					SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
+					Application ap = ApplicationManager.getApplication();
+					ApplicationPreferences prefs = ap.getPreferences();
+
+					if (prefs != null) {
+
+						String confName = sharedItem.getName();
+
+						prefs.setPreference(Table.this.getUser(), Table.this.getFilterOrderConfPreferenceKey(sharedItem.getName()), sharedItem.getContentShare());
+
+						String sKey = Table.this.getFilterOrderConfigurationPreferenceKey();
+						String pref = prefs.getPreference(Table.this.getUser(), sKey);
+
+						if (pref != null) {
+							Vector tokens1 = ApplicationManager.getTokensAt(pref, ";");
+							if (!tokens1.contains(confName)) {
+								tokens1.add(confName);
+								String sNew1 = ApplicationManager.vectorToStringSeparateBySemicolon(tokens1);
+								prefs.setPreference(Table.this.getUser(), sKey, sNew1);
+							}
+						} else {
+							String sNew2 = confName;
+							prefs.setPreference(Table.this.getUser(), sKey, sNew2);
+						}
+						prefs.savePreferences();
+					}
+					remoteReference.deleteSharedItem(shareId, sessionID);
+				} catch (Exception ex) {
+					Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
+					MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.error_deleting_shared_element");
+				}
+			}
+		};
+
+		this.editSharingElementItemListenes = e -> {
+
+			try {
+				Point p = ((Component) e.getSource()).getLocationOnScreen();
+				// SwingUtilities.getWindowAncestor(((Component)
+				// e.getSource())).setVisible(false);
+				int shareId = Integer.parseInt(e.getActionCommand());
+				int sessionID = Table.this.locator.getSessionId();
+				IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME,
+						sessionID);
+				SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
+				String filterContent = null;
+				int i = JOptionPane.showConfirmDialog(Table.this, ApplicationManager.getTranslation(Table.SAVE_WIDTH_POSITION_COLUMNS, Table.this.resourcesFile));
+				if (i == JOptionPane.YES_OPTION) {
+					filterContent = Table.this.getValueFilterOrderConfiguration(true);
+				} else if (i == JOptionPane.NO_OPTION) {
+					filterContent = Table.this.getValueFilterOrderConfiguration(false);
+				} else {
+					return;
+				}
+
+				FormUpdateSharedReference f = new FormUpdateSharedReference(SwingUtilities.getWindowAncestor(Table.this), true, Table.this.locator, p, sharedItem);
+				if (f.getUpdateStatus()) {
+					String nameUpdate = f.getName();
+					String contentShareUpdate = filterContent;
+					String messageUpdate = (String) f.getMessage();
+
+					remoteReference.updateSharedItem(shareId, contentShareUpdate, messageUpdate, nameUpdate, sessionID);
+				}
+			} catch (Exception ex) {
+				Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_retrive_message"), ex);
+				MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.not_retrive_message");
+			}
+
+		};
+
+		this.addTargetToSharedElementItemListener = e -> {
+
+			try {
+				int shareId = Integer.parseInt(e.getActionCommand());
+				int sessionID = Table.this.locator.getSessionId();
+				Point p = ((Component) e.getSource()).getLocationOnScreen();
+				// SwingUtilities.getWindowAncestor(((Component)
+				// e.getSource())).setVisible(false);
+				IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME,
+						sessionID);
+				ListDataField listDataField = Table.this.createAndConfigureTargetUser();
+				List<String> oldTargetList = remoteReference.getTargetSharedItemsList(shareId, sessionID);
+				listDataField.setValue(new Vector<String>(oldTargetList));
+				Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
+				FormAddUserSharedReference f = new FormAddUserSharedReference(w, true, Table.this.locator, listDataField);
+				f.setLocation(p);
+				f.setVisible(true);
+
+				if (f.getUpdateStatus()) {
+					List<String> targetList = new ArrayList<String>();
+					if (listDataField.getValue() != null) {
+						for (Object oActual : (Vector) listDataField.getValue()) {
+							targetList.add(oActual.toString());
+						}
+					}
+					remoteReference.editTargetSharedElement(shareId, targetList, sessionID);
+				}
+
+			} catch (Exception ex) {
+				Table.logger.error(ApplicationManager.getTranslation("shareRemote.error_adding_target_user"), ex);
+				MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.error_adding_target_user");
+			}
+
+		};
+
+		this.loadFilterSharedElementItemListener = e -> {
+			try {
+				int shareId = Integer.parseInt(e.getActionCommand());
+				int sessionID = Table.this.locator.getSessionId();
+				IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME,
+						sessionID);
+				SharedElement sharedItem = remoteReference.getSharedItem(shareId, sessionID);
+				Table.this.loadShareFilterOrderConfiguration(sharedItem);
+			} catch (Exception ex) {
+				Table.logger.error(ApplicationManager.getTranslation("shareRemote.error_loading_shared_filter"), ex);
+				MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.error_loading_shared_filter");
+			}
+
+		};
+
+		this.removeTargetSharedElementItemListener = e -> {
+			try {
+				int shareId = Integer.parseInt(e.getActionCommand());
+				int sessionID = Table.this.locator.getSessionId();
+				IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) Table.this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME,
+						sessionID);
+				EntityResult erToret = remoteReference.deleteTargetSharedItem(shareId, sessionID);
+				if (erToret.getCode() == EntityResult.OPERATION_WRONG) {
+					Table.logger.error("{}", ApplicationManager.getTranslation("shareRemote.not_delete_target"), erToret.getMessage());
+					MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.not_delete_target");
+				}
+			} catch (Exception ex) {
+				Table.logger.error(ApplicationManager.getTranslation("shareRemote.not_delete_target"), ex);
+				MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this), "shareRemote.not_delete_target");
+			}
+		};
+
+		try {
+			EntityReferenceLocator loc = ApplicationManager.getApplication().getReferenceLocator();
+			IShareRemoteReference shareReference = (IShareRemoteReference) ((UtilReferenceLocator) loc).getRemoteReference(IShareRemoteReference.REMOTE_NAME, loc.getSessionId());
+
+			for (int i = 0; i < tokens.size(); i++) {
+
+				if (i == 0) {
+					this.menuOrderFilterSetup.addSeparator();
+				}
+
+				final String token = (String) tokens.get(i);
+				this.showNonSharedElement(token);
+
+				if ((i + 1) == tokens.size()) {
+					this.menuOrderFilterSetup.addSeparator();
+				}
+
+			}
+
+			// LIST SHARED BY ME
+			this.showSharedElement();
+			// LIST SHARED WITH ME
+			this.showSharedElementUserTarget();
+
+		} catch (Exception e) {
+			if (Table.logger.isDebugEnabled()) {
+				Table.logger.debug(null, e);
+			} else {
+				Table.logger.info("Preference sharing system not available");
+			}
+		}
+	}
+
+	protected void showSharedElement() {
+		try {
+
+			String shareKey = this.getFilterOrderConfPreferenceKey(null);
+			String username = ((ClientReferenceLocator) Table.this.locator).getUser();
+			int sessionID = Table.this.locator.getSessionId();
+
+			IShareRemoteReference remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
+			List<HashMap<String, Object>> result = remoteReference.getSourceSharedElementMenuList(username, shareKey, sessionID);
+
+			// if (!result.isEmpty()){
+			// this.menuOrderFilterSetup.addSeparator();
+			// }
+
+			for (Map<String, Object> actualPreference : result) {
+
+				int shareKeyId = (Integer) actualPreference.get(IShareRemoteReference.SHARE_KEY_STRING);
+				String filterName = (String) actualPreference.get(IShareRemoteReference.SHARE_NAME_STRING);
+
+				JButton menu = new RolloverButton(filterName) {
+
+					@Override
+					public Dimension getPreferredSize() {
+						Dimension d = super.getPreferredSize();
+						d.height = 22;
+						return d;
+					}
+
+					@Override
+					public boolean isFocusTraversable() {
+						return false;
+					}
+
+					@Override
+					public boolean isRequestFocusEnabled() {
+						return false;
+					}
+				};
+
+				menu.setActionCommand(Integer.toString(shareKeyId));
+				menu.addActionListener(this.loadFilterSharedElementItemListener);
+				menu.setForeground(Color.blue.darker());
+				menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
+
+				TableButton b1 = new TableButton();
+				b1.setIcon(ImageManager.getIcon(ImageManager.INFO_16));
+				b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.obtain_message", this.resourcesFile));
+				b1.setActionCommand(Integer.toString(shareKeyId));
+				b1.addActionListener(this.obtainShareElementMessageItemListener);
+
+				TableButton b2 = new TableButton();
+				b2.setIcon(ImageManager.getIcon(ImageManager.EDIT));
+				b2.setToolTipText(ApplicationManager.getTranslation("shareRemote.edit_share_element", this.resourcesFile));
+				b2.setActionCommand(Integer.toString(shareKeyId));
+				b2.addActionListener(this.editSharingElementItemListenes);
+
+				TableButton b3 = new TableButton();
+				b3.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARED_DELETE));
+				b3.setToolTipText(ApplicationManager.getTranslation("shareRemote.delete_share_element", this.resourcesFile));
+				b3.setActionCommand(Integer.toString(shareKeyId));
+				b3.addActionListener(this.stopSharingElementItemListener);
+
+				TableButton bI = new TableButton();
+				bI.setIcon(ImageManager.getIcon(ImageManager.USERS_EDIT));
+				bI.setToolTipText(ApplicationManager.getTranslation("shareRemote.add_target_element", this.resourcesFile));
+				bI.setActionCommand(Integer.toString(shareKeyId));
+				bI.addActionListener(this.addTargetToSharedElementItemListener);
+
+				JPanel p = new AuxPanel(b1, b2, b3, bI, menu);
+				this.menuOrderFilterSetup.add(p);
+
+			}
+
+			if (!result.isEmpty()) {
+				this.menuOrderFilterSetup.addSeparator();
+			}
+
+		} catch (Exception e) {
+			Table.logger.error("shareRemote.cannot_obtain_shared_element", e);
+		}
+
+	}
+
+	protected void showSharedElementUserTarget() {
+
+		try {
+			if (this.locator == null) {
+				this.locator = ApplicationManager.getApplication().getReferenceLocator();
+			}
+			String shareKey = this.getFilterOrderConfPreferenceKey(null);
+			String username = ((ClientReferenceLocator) Table.this.locator).getUser();
+			int sessionID = Table.this.locator.getSessionId();
+
+			IShareRemoteReference remoteReference;
+			remoteReference = (IShareRemoteReference) ((UtilReferenceLocator) this.locator).getRemoteReference(IShareRemoteReference.REMOTE_NAME, sessionID);
+
+			List<HashMap<String, Object>> result = remoteReference.getTargetSharedElementMenuList(username, shareKey, sessionID);
+
+			for (Map<String, Object> actualPreference : result) {
+
+				String filterName = (String) actualPreference.get(IShareRemoteReference.SHARE_NAME_STRING);
+
+				JButton menu = new RolloverButton(filterName) {
+
+					@Override
+					public Dimension getPreferredSize() {
+						Dimension d = super.getPreferredSize();
+						d.height = 22;
+						return d;
+					}
+
+					@Override
+					public boolean isFocusTraversable() {
+						return false;
+					}
+
+					@Override
+					public boolean isRequestFocusEnabled() {
+						return false;
+					}
+				};
+
+				int shareKeyId = (Integer) actualPreference.get(IShareRemoteReference.SHARE_KEY_STRING);
+				int shareTargetKey = (Integer) actualPreference.get(IShareRemoteReference.SHARE_TARGET_KEY_STRING);
+
+				menu.setActionCommand(Integer.toString(shareKeyId));
+				menu.addActionListener(this.loadFilterSharedElementItemListener);
+				menu.setForeground(Color.blue.darker());
+				menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
+
+				TableButton b1 = new TableButton();
+				b1.setIcon(ImageManager.getIcon(ImageManager.INFO_16));
+				b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.obtain_message", this.resourcesFile));
+				b1.setActionCommand(Integer.toString(shareKeyId));
+				b1.addActionListener(this.obtainShareElementMessageItemListener);
+
+				TableButton b2 = new TableButton();
+				b2.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARED_DELETE));
+				b2.setToolTipText(ApplicationManager.getTranslation("shareRemote.delete_target_share_element", this.resourcesFile));
+				b2.setActionCommand(Integer.toString(shareTargetKey));
+				b2.addActionListener(this.removeTargetSharedElementItemListener);
+
+				JPanel p = new AuxPanel(b1, b2, menu);
+				this.menuOrderFilterSetup.add(p);
+
+			}
+
+			if (!result.isEmpty()) {
+				this.menuOrderFilterSetup.addSeparator();
+			}
+
+		} catch (Exception e) {
+			Table.logger.error("Error obtaining elements shared with the user.", e);
+		}
+
+	}
+
+	protected ListDataField createAndConfigureTargetUser() throws Exception {
+		Hashtable h = new Hashtable();
+		h.put(DataField.ATTR, IShareRemoteReference.SHARE_USER_TARGET_STRING);
+		h.put(DataField.TEXT_STR, ApplicationManager.getTranslation(IShareRemoteReference.SHARE_USER_TARGET_STRING));
+		h.put(DataField.LABELPOSITION, "top");
+		h.put(DataField.DIM, "text");
+		h.put(DataField.EXPAND, "yes");
+		h.put("rows", "5");
+		ListDataField listDataField = new ListDataField(h);
+		return listDataField;
+	}
+
+	protected void showNonSharedElement(String token) {
+		JButton menu = new RolloverButton(token) {
+
+			@Override
+			public Dimension getPreferredSize() {
+				Dimension d = super.getPreferredSize();
+				d.height = 22;
+				return d;
+			}
+
+			@Override
+			public boolean isFocusTraversable() {
+				return false;
+			}
+
+			@Override
+			public boolean isRequestFocusEnabled() {
+				return false;
+			}
+		};
+		menu.setActionCommand(token);
+		menu.addActionListener(this.sortFilterOrderItemListener);
+		menu.setForeground(Color.blue.darker());
+		menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
+
+		TableButton b1 = new TableButton();
+		b1.setIcon(ImageManager.getIcon(ImageManager.DATA_SHARE_ACTION));
+		b1.setToolTipText(ApplicationManager.getTranslation("shareRemote.share_filter", this.resourcesFile));
+		b1.setActionCommand(token);
+		b1.addActionListener(this.addShareFilterSetupItemsListener);
+
+		TableButton b2 = new TableButton();
+		b2.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
+		b2.setToolTipText(ApplicationManager.getTranslation("table.delete_this_configuration", this.resourcesFile));
+		b2.setActionCommand(token);
+		b2.addActionListener(this.orderFilterSetupDeleteItemsListener);
+
+		JPanel p = new AuxPanel(b1, b2, menu);
+		this.menuOrderFilterSetup.add(p);
+
+	}
+
+	/**
+	 * Loads the configuration which name is passed as parameter. If the filter configuration cannot be found, loads the default one, if exists.
+	 * 
+	 * @param filterName
+	 */
+	public void loadFilterOrderConfiguration(String filterName) {
+		Application ap = ApplicationManager.getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+
+		if (prefs == null) {
+			return;
+		}
+		String sf = prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName));
+		if (sf != null) {
+			Vector cols = ApplicationManager.getTokensAt(sf, ";");
+			if (cols.size() >= 2) {
+				String col = (String) cols.get(0);
+				String asc = (String) cols.get(1);
+				try {
+					if (!"null".equals(col)) {
+						// Search if there are multiple columns
+
+						if (col.indexOf(":") >= 0) {
+							Vector otherCols = ApplicationManager.getTokensAt(col, ":");
+							Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+							if (otherCols.size() != ascends.size()) {
+								Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols, ascends);
+							} else {
+								this.resetOrder();
+								for (int i = 0; i < otherCols.size(); i++) {
+									String c = (String) otherCols.get(i);
+									String a = (String) ascends.get(i);
+									boolean ascb = ApplicationManager.parseStringValue(a, false);
+									this.sortByWithoutReset(c, ascb);
+								}
+							}
+						} else {
+							boolean ascb = ApplicationManager.parseStringValue(asc, false);
+							this.sortBy(col, ascb);
+						}
+					} else {
+						this.resetOrder();
+					}
+					if (cols.size() >= 3) {
+						((TableSorter) this.table.getModel()).resetGroup();
+						// Check if it is groupping or filter
+						String f = (String) cols.get(2);
+						int index = 3;
+						if (!f.startsWith("BASE64")) {
+							// Load position and columns width
+							if (!"null".equals(f)) {
+								this.applyColumnPositonAndPreferences(f);
+								if (filterName == null) {
+									this.prefWidthAndPosApply = true;
+								}
+							}
+							f = (String) cols.get(3);
+							index = 4;
+						}
+						if (cols.size() > index) {
+							for (int i = index; i < cols.size(); i++) {
+								f = f + ";" + cols.get(i);
+							}
+						}
+						byte[] bytes = null;
+						if (f.startsWith("BASE64")) {
+							f = f.substring("BASE64".length());
+						}
+
+						bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+						ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
+						ObjectInputStream in = new ObjectInputStream(bIn);
+						Object o = in.readObject();
+						if (o instanceof Hashtable) {
+							// To avoid serialization problems
+							Hashtable hNews = new Hashtable();
+							Hashtable g = (Hashtable) o;
+							Enumeration enumKeys = g.keys();
+							while (enumKeys.hasMoreElements()) {
+								Object oKey = enumKeys.nextElement();
+								Object oValue = g.get(oKey);
+								if (oValue instanceof TableSorter.Filter) {
+									TableSorter.Filter v = (TableSorter.Filter) oValue;
+									Object[] oValues = v.values;
+									for (int i = 0; i < oValues.length; i++) {
+										if (oValues[i] instanceof FilterDate) {
+											oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
+										}
+									}
+								}
+								hNews.put(oKey, oValue);
+							}
+							this.applyFilter(hNews);
+						}
+					}
+				} catch (Exception e) {
+					Table.logger.error(null, e);
+					prefs.setPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName), null);
+				}
+			}
+		}
+	}
+
+	public void loadShareFilterOrderConfiguration(SharedElement shareElement) {
+
+		String sf = shareElement.getContentShare();
+		String filterName = shareElement.getName();
+
+		Vector cols = ApplicationManager.getTokensAt(sf, ";");
+		if (cols.size() >= 2) {
+			String col = (String) cols.get(0);
+			String asc = (String) cols.get(1);
+			try {
+				if (!"null".equals(col)) {
+					// Search if there are multiple columns
+
+					if (col.indexOf(":") >= 0) {
+						Vector otherCols = ApplicationManager.getTokensAt(col, ":");
+						Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+						if (otherCols.size() != ascends.size()) {
+							Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols, ascends);
+						} else {
+							this.resetOrder();
+							for (int i = 0; i < otherCols.size(); i++) {
+								String c = (String) otherCols.get(i);
+								String a = (String) ascends.get(i);
+								boolean ascb = ApplicationManager.parseStringValue(a, false);
+								this.sortByWithoutReset(c, ascb);
+							}
+						}
+					} else {
+						boolean ascb = ApplicationManager.parseStringValue(asc, false);
+						this.sortBy(col, ascb);
+					}
+				} else {
+					this.resetOrder();
+				}
+				if (cols.size() >= 3) {
+					((TableSorter) this.table.getModel()).resetGroup();
+					// Check if it is groupping or filter
+					String f = (String) cols.get(2);
+					int index = 3;
+					if (!f.startsWith("BASE64")) {
+						// Load position and columns width
+						if (!"null".equals(f)) {
+							this.applyColumnPositonAndPreferences(f);
+							if (filterName == null) {
+								this.prefWidthAndPosApply = true;
+							}
+						}
+						f = (String) cols.get(3);
+						index = 4;
+					}
+					if (cols.size() > index) {
+						for (int i = index; i < cols.size(); i++) {
+							f = f + ";" + cols.get(i);
+						}
+					}
+					byte[] bytes = null;
+					if (f.startsWith("BASE64")) {
+						f = f.substring("BASE64".length());
+					}
+
+					bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+					ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
+					ObjectInputStream in = new ObjectInputStream(bIn);
+					Object o = in.readObject();
+					if (o instanceof Hashtable) {
+						// To avoid serialization problems
+						Hashtable hNews = new Hashtable();
+						Hashtable g = (Hashtable) o;
+						Enumeration enumKeys = g.keys();
+						while (enumKeys.hasMoreElements()) {
+							Object oKey = enumKeys.nextElement();
+							Object oValue = g.get(oKey);
+							if (oValue instanceof TableSorter.Filter) {
+								TableSorter.Filter v = (TableSorter.Filter) oValue;
+								Object[] oValues = v.values;
+								for (int i = 0; i < oValues.length; i++) {
+									if (oValues[i] instanceof FilterDate) {
+										oValues[i] = new java.util.Date(((FilterDate) oValues[i]).longValue());
+									}
+								}
+							}
+							hNews.put(oKey, oValue);
+						}
+						this.applyFilter(hNews);
+					}
+				}
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+				// prefs.setPreference(this.getUser(),
+				// this.getFilterOrderConfPreferenceKey(filterName), null);
+			}
+		}
+
+	}
+
+	public String getFilterOrderConfigurationValue(String filterName) {
+
+		String toRet = null;
+
+		Application ap = ApplicationManager.getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+
+		if (prefs == null) {
+			return toRet;
+		}
+
+		String sf = prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName));
+		if (sf != null) {
+			toRet = sf;
+		}
+
+		return toRet;
+	}
+
+	protected EditorManager cellEditorManager = null;
+
+	/**
+	 * Sets an {@link EditorManager} to the present <code>Table</code>.
+	 * 
+	 * @param manager
+	 */
+	public void setEditorManager(EditorManager manager) {
+		this.cellEditorManager = manager;
+	}
+
+	/**
+	 * Returns the {@link EditorManager} configured in the present table.
+	 * 
+	 * @return
+	 */
+	public EditorManager getEditorManager() {
+		return this.cellEditorManager;
+	}
+
+	protected RendererManager cellRendererManager = null;
+
+	/**
+	 * Sets the RendererManager, which provides the renderes depending on the object type that must be renderer.
+	 * 
+	 * @param manager
+	 * @see RendererManager
+	 */
+	public void setRendererManager(RendererManager manager) {
+		this.cellRendererManager = manager;
+	}
+
+	/**
+	 * Returns the {@link RendererManager} configured for this table.
+	 * 
+	 * @return
+	 */
+	public RendererManager getRendererManager() {
+		return this.cellRendererManager;
+	}
+
+	/**
+	 * Establishes the initial parameters for the {@link TableCellEditor} components <p> The method must be called to prepare all editors implementing <lu>
+	 * <li>{@link ReferenceComponent}</li> <li>{@link Internationalization}</li> <li>{@link AccessForm}</li> <li>{@link CachedComponent}</li> </lu>
+	 * 
+	 * @param editor
+	 */
+	public void prepareEditor(TableCellEditor editor) {
+		if (editor instanceof ReferenceComponent) {
+			EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
+			((ReferenceComponent) editor).setReferenceLocator(locator);
+		}
+		if (editor instanceof Internationalization) {
+			((Internationalization) editor).setComponentLocale(this.locale);
+			((Internationalization) editor).setResourceBundle(this.resourcesFile);
+		}
+		if (editor instanceof AccessForm) {
+			((AccessForm) editor).setParentForm(this.parentForm);
+		}
+		if (editor instanceof CachedComponent) {
+			if (this.parentForm != null) {
+				EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
+				if (locator == null) {
+					Table.logger.warn("Cannot set CacheManager to the editor {},  because locator is NULL", editor.getClass());
+				} else {
+					CacheManager.getDefaultCacheManager(locator).addCachedComponent((CachedComponent) editor);
+					((CachedComponent) editor).setCacheManager(CacheManager.getDefaultCacheManager(locator));
+				}
+			} else {
+				Table.logger.warn("Cannot set CacheManager to the editor {}, because parent form is NULL", editor.getClass());
+			}
+		}
+	}
+
+	/**
+	 * Establishes the initial parameters for the {@link TableCellRenderer} components <p> The method must be called to prepare all renderes implementing <lu>
+	 * <li>{@link CellRenderer}</li> <li>{@link ReferenceComponent}</li> <li>{@link Internationalization}</li> <li>{@link AccessForm}</li> <li>{@link CachedComponent}</li> </lu>
+	 * 
+	 * @param renderer
+	 */
+	public void prepareRenderer(TableCellRenderer renderer) {
+		if (renderer instanceof CellRenderer) {
+			((CellRenderer) renderer).setCellRendererColorManager(this.cellRendererColorManager);
+			((CellRenderer) renderer).setCellRendererFontManager(this.cellRendererFontManager);
+		}
+
+		if (renderer instanceof ReferenceComponent) {
+			EntityReferenceLocator buscador = this.parentForm.getFormManager().getReferenceLocator();
+			((ReferenceComponent) renderer).setReferenceLocator(buscador);
+		}
+		if (renderer instanceof Internationalization) {
+			((Internationalization) renderer).setComponentLocale(this.locale);
+			((Internationalization) renderer).setResourceBundle(this.resourcesFile);
+		}
+		if (renderer instanceof AccessForm) {
+			((AccessForm) renderer).setParentForm(this.parentForm);
+		}
+		if (renderer instanceof CachedComponent) {
+			if (this.parentForm != null) {
+				EntityReferenceLocator buscador = this.parentForm.getFormManager().getReferenceLocator();
+				if (buscador == null) {
+					Table.logger.debug("Cannot set CacheManager to the editor " + renderer.getClass() + ", because locator is NULL");
+				} else {
+					CacheManager.getDefaultCacheManager(buscador).addCachedComponent((CachedComponent) renderer);
+					((CachedComponent) renderer).setCacheManager(CacheManager.getDefaultCacheManager(buscador));
+				}
+			} else {
+				Table.logger.debug("Cannot set CacheManager to the editor " + renderer.getClass() + ", because parent form is NULL");
+			}
+		}
+
+	}
+
+	/**
+	 * Returns true if the table detail form is created.
+	 * 
+	 * @return true if the table detail form is created
+	 */
+	public boolean isDetailFormCreated() {
+		return this.detailForm != null;
+	}
+
+	/**
+	 * Sets the default filter to the table. The default filter can be configured in the preferences.
+	 */
+	protected void setDefaultFilter() {
+		if (this.defaultFilter instanceof Hashtable) {
+			this.applyFilter((Hashtable) this.defaultFilter);
+		}
+	}
+
+	/**
+	 * Installs the button that manages the calculated columns configuration in the table.
+	 */
+	protected void installCalculedColsButton() {
+		if (Table.createCalculatedButton && (MathExpressionParserFactory.getInstance() != null)) {
+			this.buttonCalculatedColumns = new TableButton();
+			if (this.buttonCalculatedColumns instanceof TableComponent) {
+				((TableComponent) this.buttonCalculatedColumns).setKey(Table.BUTTON_CALCULATED_COL);
+			}
+
+			Icon icon = ImageManager.getIcon(ImageManager.TABLE_CALCULATEDCOLS);
+			if (icon != null) {
+				this.buttonCalculatedColumns.setIcon(icon);
+			} else {
+				this.buttonCalculatedColumns.setText("CalculatedCols");
+			}
+			this.buttonCalculatedColumns.addActionListener(e -> Table.this.showCalculatorWindow(e.getSource()));
+			this.addComponentToControls(this.buttonCalculatedColumns);
+		}
+	}
+
+	/**
+	 * Shows the calculator window
+	 * 
+	 * @param source
+	 */
+	protected void showCalculatorWindow(Object source) {
+		// ColumnCalculatorWindow.showCalculatorWindow((Component) source,
+		// this);
+		CalculatedColumnDialog.showCalculatorWindow((Component) source, this);
+	}
+
+	/**
+	 * Installs the Report Button
+	 */
+	protected void installReportButton() {
+		if (this.checkOk("BHVM")) {
+			if (!com.ontimize.report.ReportManager.isReportsEnabled()) {
+				return;
+			}
+			this.buttonReports = new TableButtonSelection();
+			this.buttonReports.setKey(Table.BUTTON_REPORT);
+			ImageIcon pageIcon = ImageManager.getIcon(ImageManager.TABLE_REPORTS);
+			if (pageIcon != null) {
+				this.buttonReports.setIcon(pageIcon);
+			} else {
+				this.buttonReports.setText("Reports");
+			}
+			this.buttonReports.setEnabled(false);
+			this.buttonReports.setMargin(new Insets(0, 0, 0, 0));
+			this.controlsPanel.add(this.buttonReports);
+			this.buttonReports.addActionListener(e -> {
+				Cursor oldCursor = Table.this.buttonReports.getCursor();
+				try {
+					Table.this.buttonReports.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					Table.this.showCustomReportsWindow();
+				} finally {
+					Table.this.buttonReports.setCursor(oldCursor);
+				}
+			});
+
+			if (this.dynamicTable) {
+				this.buttonReports.getPreferredSize().width = this.buttonReports.getPreferredSize().width - this.buttonReports.getMenuButton().getPreferredSize().width;
+				this.buttonReports.getMenuButton().setVisible(false);
+			} else {
+				this.buttonReports.addActionMenuListener(e -> {
+					Table.this.createReportSetupMenu();
+
+					Table.this.menuReportSetup.show(Table.this.buttonReports, 0, Table.this.buttonReports.getHeight());
+				});
+			}
+		}
+	}
+
+	/**
+	 * Returns the configured reports for this table stored in the application preferences.
+	 * 
+	 * @return
+	 */
+	protected java.util.List getConfigurationReport() {
+		ArrayList arrayList = new ArrayList();
+		try {
+			Application ap = this.parentForm.getFormManager().getApplication();
+			String preferenceKey = this.getCustomReportPreferenceKey();
+			ApplicationPreferences prefs = ap.getPreferences();
+			if ((preferenceKey != null) && (prefs != null)) {
+				String p = prefs.getPreference(this.getUser(), preferenceKey);
+				if (p != null) {
+					StringTokenizer st = new StringTokenizer(p, ";");
+					while (st.hasMoreTokens()) {
+						String token = st.nextToken();
+						int index = token.indexOf(":");
+						if (index > 0) {
+							String sName = token.substring(0, index);
+							arrayList.add(sName);
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+		}
+		return arrayList;
+	}
+
+	/**
+	 * Class that implement an action listener that shows the custom report window with the selected report. The selected report corresponds to the comand of the action.
+	 */
+	protected class ListenerItem implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Object o = e.getSource();
+			if (o instanceof AbstractButton) {
+				String command = ((AbstractButton) o).getActionCommand();
+				Table.this.showCustomReportsWindow(command);
+			}
+			Table.this.menuReportSetup.setVisible(false);
+		}
+
+	}
+
+	/**
+	 * Class that implement an action listener that deletes the selected report. The selected report corresponds to the command of the action.
+	 */
+
+	protected class DeleteItemListener implements ActionListener {
+
+		protected String			DELETE_KEY	= "REPORT_DELETE_KEY";
+
+		protected ResourceBundle	bundle		= null;
+
+		public DeleteItemListener(ResourceBundle resource) {
+			this.bundle = resource;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Object o = e.getSource();
+			if (o instanceof AbstractButton) {
+				int i = JOptionPane.showConfirmDialog((Component) o, ApplicationManager.getTranslation(this.DELETE_KEY, this.bundle), "", JOptionPane.YES_NO_OPTION);
+				if (i == JOptionPane.OK_OPTION) {
+					String command = ((AbstractButton) o).getActionCommand();
+					Table.this.deleteConfigurationReport(command);
+				}
+			}
+			Table.this.menuReportSetup.setVisible(false);
+		}
+
+		public void setResourceBundle(ResourceBundle bundle) {
+			this.bundle = bundle;
+		}
+
+	}
+
+	protected ListenerItem listener = null;
+
+	private void deleteConfigurationReport(String conf) {
+		try {
+			Application ap = this.parentForm.getFormManager().getApplication();
+			String preferenceKey = this.getCustomReportPreferenceKey();
+			ApplicationPreferences prefs = ap.getPreferences();
+			if ((preferenceKey != null) && (prefs != null)) {
+				String p = prefs.getPreference(this.getUser(), preferenceKey);
+				String pout = "";
+				if (p != null) {
+					StringTokenizer st = new StringTokenizer(p, ";");
+					while (st.hasMoreTokens()) {
+						String token = st.nextToken();
+						int index = token.indexOf(":");
+						if (index > 0) {
+							String sName = token.substring(0, index);
+							if (!sName.equalsIgnoreCase(conf)) {
+								pout += pout.length() == 0 ? token : ";" + token;
+							}
+						}
+					}
+					prefs.setPreference(this.getUser(), preferenceKey, pout);
+					prefs.savePreferences();
+				}
+			}
+		} catch (Exception e) {
+			Table.logger.error(null, e);
+		}
+	}
+
+	protected DeleteItemListener deleteListener = null;
+
+	/**
+	 * Creates the report setup menu, and sets it to the menuReportSetup variable.
+	 */
+	protected void createReportSetupMenu() {
+		if (this.menuReportSetup == null) {
+			this.menuReportSetup = new JPopupMenu();
+			this.buttonReports.setMenu(this.menuReportSetup);
+			this.listener = new ListenerItem();
+			this.deleteListener = new DeleteItemListener(this.resourcesFile);
+		}
+
+		java.util.List list = this.getConfigurationReport();
+		int originalSize = list.size();
+
+		for (int i = this.menuReportSetup.getComponentCount() - 1; i >= 0; i--) {
+			Object o = this.menuReportSetup.getComponent(i);
+			if (o instanceof JPanel) {
+				JPanel jPanel = (JPanel) o;
+				JButton item = (JButton) jPanel.getComponent(0);
+				String sKey = item.getActionCommand();
+				if (!list.contains(sKey)) {
+					this.menuReportSetup.remove(i);
+				} else {
+					list.remove(sKey);
+				}
+			} else {
+				this.menuReportSetup.remove(i);
+			}
+		}
+
+		if (originalSize != 0) {
+			for (Object element : list) {
+				JPanel panel = new JPanel(new GridBagLayout());
+				JButton item = new MenuButton((String) element);
+				item.addActionListener(this.listener);
+				panel.add(item, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+				ImageIcon icon = ImageManager.getIcon(ImageManager.RECYCLER);
+				item.setMargin(new Insets(0, 0, 0, 0));
+				JButton delete = new MenuButton(icon);
+				delete.setActionCommand((String) element);
+				delete.addActionListener(this.deleteListener);
+				delete.setMargin(new Insets(0, 0, 0, 0));
+				panel.add(delete,
+						new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.VERTICAL, new Insets(0, 0, 0, 0), 0, 0));
+				this.menuReportSetup.add(panel);
+			}
+		} else {
+			JLabel label = new JLabel(ApplicationManager.getTranslation("table.no_stored_report_templates", this.resourcesFile));
+			this.menuReportSetup.add(label);
+		}
+	}
+
+	protected static class FilterDate implements Serializable {
+
+		public static final long	serialVersionUID	= 1509416594978732908L;
+
+		long						l					= -1;
+
+		static transient DateFormat	dateFormat			= DateFormat.getDateInstance(DateFormat.SHORT);
+
+		public FilterDate(long l) {
+			this.l = l;
+		}
+
+		public long longValue() {
+			return this.l;
+		}
+
+		@Override
+		public String toString() {
+			return FilterDate.dateFormat.format(new java.util.Date(this.l));
+		}
+
+	}
+
+	/**
+	 * Creates the preference according to the current table configuration.
+	 * 
+	 * @return the String that defines this preference
+	 */
+	protected String createColumnPositionAndWidthPreference() {
+		Vector cols = this.getVisibleColumns();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.table.getColumnCount(); i++) {
+			String n = this.table.getColumnName(i);
+			if (cols.contains(n)) {
+				TableColumn tc = this.table.getColumn(n);
+				sb.append(n);
+				sb.append("=" + tc.getWidth() + ":" + i);
+				tc.setPreferredWidth(tc.getWidth());
+				sb.append("|");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Saves the columns color and width as table preference.
+	 */
+	public void saveColumnsPositionAndWith() {
+		Application ap = this.parentForm.getFormManager().getApplication();
+		if (ap.getPreferences() != null) {
+			ap.getPreferences().setPreference(this.getUser(), this.getColumnsPosAndOrderPreferenceKey(), this.getColumnsPositionAndWith());
+			ap.getPreferences().savePreferences();
+		}
+	}
+
+	protected String getColumnsPositionAndWith() {
+		Vector cols = this.getVisibleColumns();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.table.getColumnCount(); i++) {
+			String n = this.table.getColumnName(i);
+			if (cols.contains(n)) {
+				TableColumn tc = this.table.getColumn(n);
+				sb.append(n);
+				sb.append("=" + tc.getWidth() + ":" + i);
+				tc.setPreferredWidth(tc.getWidth());
+				sb.append(";");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Saves the operations passed as parameter in the preferences. The parameter keys must be column names and the values, the operations described in the <code>Table</code>.
+	 * 
+	 * @param operations
+	 *            contains the operations to store
+	 */
+	public void saveOperations(Map<Object, Object> operations) {
+		TableModel model = this.table.getModel();
+		if ((model != null) && (model instanceof TableSorter)) {
+			Enumeration enu = operations.keys();
+			StringBuilder sb = new StringBuilder();
+			while (enu.hasMoreElements()) {
+				String nameColumn = (String) enu.nextElement();
+				sb.append(nameColumn);
+				String sValue = (String) operations.get(nameColumn);
+				sb.append("=" + sValue + ";");
+			}
+			Application ap = this.parentForm.getFormManager().getApplication();
+			if (ap.getPreferences() != null) {
+				ap.getPreferences().setPreference(this.getUser(), this.getOperationPreferenceKey(), sb.toString());
+				ap.getPreferences().savePreferences();
+			}
+		}
+	}
+
+	/**
+	 * Applies the operations stored in the preferences file to the table.
+	 *
+	 * @see TableSorter#setOperationColumns
+	 */
+	public void applyOperations() {
+		Hashtable hOperations = null;
+		Application ap = this.parentForm.getFormManager().getApplication();
+		ApplicationPreferences prefs = ap.getPreferences();
+		String sf = prefs.getPreference(this.getUser(), this.getOperationPreferenceKey());
+		if (sf != null) {
+			hOperations = new Hashtable();
+			StringTokenizer st = new StringTokenizer(sf, ";");
+			while (st.hasMoreTokens()) {
+				String t = st.nextToken();
+				int iIg = t.indexOf('=');
+				if (iIg < 0) {
+					continue;
+				}
+				String col = t.substring(0, iIg);
+				String ope = t.substring(iIg + 1);
+				hOperations.put(col, ope);
+			}
+			TableModel model = this.table.getModel();
+			if ((model != null) && (model instanceof TableSorter)) {
+				((TableSorter) model).setOperationColumns(hOperations);
+			}
+		}
+	}
+
+	/**
+	 * Saves the current visible controls configuration in the preferences.
+	 */
+	public void saveVisibleControlsConfiguration() {
+		Application ap = this.parentForm.getFormManager().getApplication();
+		if (ap.getPreferences() != null) {
+			ap.getPreferences().setPreference(this.getUser(), this.getVisibleControlsPreferenceKey(), Boolean.toString(this.controlsPanel.isVisible()));
+			ap.getPreferences().savePreferences();
+		}
+	}
+
+	public void saveControlPanelConfiguration() {
+		Application ap = this.parentForm.getFormManager().getApplication();
+		if (ap.getPreferences() != null) {
+			ap.getPreferences().setPreference(this.getUser(), this.getControlPanelPreferenceKey(), this.controlsPanel.getButtonPosition());
+			ap.getPreferences().savePreferences();
+		}
+
+	}
+
+	protected boolean prefWidthAndPosApply = false;
+
+	/**
+	 * Ensures that the {@link #setWidthAndPositionColumns()} method only is called once.
+	 * 
+	 * @return true if all was ok, false otherwise
+	 */
+	protected boolean evaluateColumnsWidthAndPosition() {
+		if (this.prefWidthAndPosApply) {
+			return true;
+		}
+		this.prefWidthAndPosApply = this.setWidthAndPositionColumns();
+		return this.prefWidthAndPosApply;
+	}
+
+	/**
+	 * Sets the column width and position to the values stored in the preferences.
+	 * 
+	 * @return true if all was ok, false otherwise
+	 */
+	protected boolean setWidthAndPositionColumns() {
+		if (this.table == null) {
+			return false;
+		}
+		if (this.parentForm == null) {
+			return false;
+		}
+		if (this.parentForm.getFormManager() == null) {
+			return false;
+		}
+		Application ap = this.parentForm.getFormManager().getApplication();
+		if (ap == null) {
+			return false;
+		}
+		if (ap.getPreferences() != null) {
+			String p = ap.getPreferences().getPreference(this.getUser(), this.getColumnsPosAndOrderPreferenceKey());
+			if (p == null) {
+				return true;
+			}
+			StringTokenizer st = new StringTokenizer(p, ";");
+			while (st.hasMoreTokens()) {
+				String t = st.nextToken();
+				int iIg = t.indexOf('=');
+				if (iIg < 0) {
+					continue;
+				}
+				int iDP = t.indexOf(':');
+				if (iDP < 0) {
+					continue;
+				}
+				String col = t.substring(0, iIg);
+				String sWidth = t.substring(iIg + 1, iDP);
+				String pos = t.substring(iDP + 1);
+				if (!this.isVisibleColumn(col)) {
+					continue;
+				}
+				try {
+					TableColumn tc = this.table.getColumn(col);
+					if (tc != null) {
+						tc.setPreferredWidth(Integer.parseInt(sWidth));
+						tc.setWidth(Integer.parseInt(sWidth));
+						this.table.moveColumn(this.table.convertColumnIndexToView(tc.getModelIndex()), Integer.parseInt(pos));
+					}
+				} catch (Exception e) {
+					Table.logger.error(null, e);
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Applies the position and column preferences past as parameter.
+	 * 
+	 * @param preference
+	 *            the preference value to set
+	 */
+	protected void applyColumnPositonAndPreferences(String preference) {
+		Vector visibleCols = new Vector();
+		if (preference == null) {
+			return;
+		}
+		StringTokenizer st = new StringTokenizer(preference, "|");
+		while (st.hasMoreTokens()) {
+			String t = st.nextToken();
+			int iIg = t.indexOf('=');
+			if (iIg < 0) {
+				continue;
+			}
+			int iDP = t.indexOf(':');
+			if (iDP < 0) {
+				continue;
+			}
+			String col = t.substring(0, iIg);
+			String sWidth = t.substring(iIg + 1, iDP);
+			String pos = t.substring(iDP + 1);
+			visibleCols.add(col);
+			try {
+				TableColumn tc = this.table.getColumn(col);
+				if (tc != null) {
+					tc.setMaxWidth(Integer.MAX_VALUE);
+					tc.setPreferredWidth(Integer.parseInt(sWidth));
+					tc.setWidth(Integer.parseInt(sWidth));
+					this.table.moveColumn(this.table.convertColumnIndexToView(tc.getModelIndex()), Integer.parseInt(pos));
+				}
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+			}
+		}
+		this.setVisibleColumns(visibleCols, false);
+	}
+
+	/**
+	 * Returns the key that will be used to identify the preference that will save the operations applied to the different columns.
+	 * 
+	 * @return the preference key
+	 */
+	protected String getOperationPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? Table.OPERATION_PREFERENCE + "_" + f.getArchiveName() + "_" + this.entity : Table.OPERATION_PREFERENCE + "_" + this.entity;
+	}
+
+	/**
+	 * Returns the key that will be used to identify the preference that will save the columns position and order.
+	 * 
+	 * @return the preference key
+	 */
+	protected String getColumnsPosAndOrderPreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.TABLE_COLS_POSITION_SIZE + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_COLS_POSITION_SIZE + "_" + this.entity;
+	}
+
+	/**
+	 * Provides a reference to the table ScrollPane
+	 * 
+	 * @return a refrence to the table scroll pane
+	 */
+	public JScrollPane getJScrollPane() {
+		return this.scrollPane;
+	}
+
+	protected com.ontimize.report.ReportUtils ru = null;
+
+	/**
+	 * Returns the key that will be used to identify the preference that will save the custom reports associated to this table.
+	 * 
+	 * @return the preference key
+	 */
+	protected String getCustomReportPreferenceKey() {
+		if (!this.dynamicPivotable) {
+			Form f = this.parentForm;
+			return f != null ? BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS + "_" + f
+					.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS + "_" + this.entity;
+		} else {
+			return BasicApplicationPreferences.TABLE_CONF_REPORT_CONFIGURATIONS_DYNAMIC_PIVOT_TABLE + "_" + this.dynamicPivotTableForm + "_" + this.dynamicPivotTableEntity;
+		}
+	}
+
+	/**
+	 * Shows the custom reports windows, when the table is not empty.
+	 */
+	public void showCustomReportsWindow() {
+		if (this.isEmpty()) {
+			return;
+		}
+		// TODO change the values to show using the renderers if exist
+		Hashtable hData = new Hashtable();
+		if (Table.renderReportValues) {
+			hData = (Hashtable) this.getValueToReport();
+		} else {
+			hData = (Hashtable) this.getShownValue();
+		}
+		// Hashtable hData = getValueToExport(false, false);
+		Application ap = null;
+		if (this.parentForm != null) {
+			ap = this.parentForm.getFormManager().getApplication();
+		} else {
+			ap = ApplicationManager.getApplication();
+		}
+		if (this.ru == null) {
+			this.ru = new com.ontimize.report.ReportUtils(EntityResultUtils.createTableModel(hData, this.reportCols), null, this.getResourceBundle(), null, this.entity,
+					this.getUser(), this.getCustomReportPreferenceKey(), ap != null ? ap.getPreferences() : null);
+		} else {
+			this.ru.setModel(EntityResultUtils.createTableModel(hData, this.reportCols));
+		}
+		this.ru.setResourceBundle(this.getResourceBundle());
+		DefaultReportDialog reportDialog = this.ru.createDefaultDialog(this, this.lInfoFilter.getText());
+		if (this.dynamicTable && !this.dynamicPivotable) {
+			if (reportDialog.getLoadButton() != null) {
+				reportDialog.getLoadButton().setVisible(false);
+			}
+			if (reportDialog.getSaveButton() != null) {
+				reportDialog.getSaveButton().setVisible(false);
+			}
+		}
+		this.ru.showDefaultReportDialog(reportDialog, null);
+	}
+
+	/**
+	 * Shows the custom reports windows, when the table is not empty.
+	 * 
+	 * @param configuration
+	 *            the report description
+	 */
+	public void showCustomReportsWindow(String configuration) {
+		if (this.isEmpty()) {
+			return;
+		}
+
+		Hashtable hData = new Hashtable();
+		if (Table.renderReportValues) {
+			hData = (Hashtable) this.getValueToReport();
+		} else {
+			hData = (Hashtable) this.getShownValue();
+		}
+		Vector vVisible = this.getOriginallyVisibleColumns();
+		Application ap = this.parentForm.getFormManager().getApplication();
+		if (this.ru == null) {
+			this.ru = new com.ontimize.report.ReportUtils(EntityResultUtils.createTableModel(hData, vVisible), null, this.getResourceBundle(), null, this.entity, this.getUser(),
+					this.getCustomReportPreferenceKey(), ap.getPreferences());
+		} else {
+			this.ru.setModel(EntityResultUtils.createTableModel(hData, vVisible));
+		}
+		this.ru.setResourceBundle(this.getResourceBundle());
+		this.ru.showDefaultReportDialog(this, this.lInfoFilter.getText(), configuration);
+
+	}
+
+	/**
+	 * Returns a String with the information of all the filters that are being applied to the table. This String will be stored in the preferences in order to recover the filter
+	 * configuration later.
+	 * 
+	 * @return an empty String when no filters set
+	 */
+	protected String getFilterInfo() {
+		Hashtable hFilters = ((TableSorter) this.getJTable().getModel()).getFilters();
+		boolean lastFilterOr = ((TableSorter) this.getJTable().getModel()).lastFilterOr();
+		if (hFilters.isEmpty() || lastFilterOr) {
+			return "";
+		}
+		StringBuilder sb = new StringBuilder();
+		Enumeration enumKeys = hFilters.keys();
+		int i = 0;
+		while (enumKeys.hasMoreElements()) {
+			Object oKey = enumKeys.nextElement();
+			sb.append(ApplicationManager.getTranslation((String) oKey, this.resourcesFile));
+			sb.append(" '" + hFilters.get(oKey) + "'");
+			if (i < (hFilters.size() - 1)) {
+				sb.append(", ");
+			}
+			i++;
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Updates the text in the table that shows the current filter status,which shows the columns that are being filtered and the values that are being applied to those columns.
+	 */
+	protected void updateFilterInfo() {
+		String s = this.getFilterInfo();
+		if ((s != null) && (s.length() > 0)) {
+			this.lInfoFilter.setText(ApplicationManager.getTranslation("table.filter", this.resourcesFile) + ": " + s);
+		} else {
+			this.lInfoFilter.setText("");
+		}
+		this.lInfoFilter.setToolTipText(this.lInfoFilter.getText());
+	}
+
+	/**
+	 * Returns the view index of the column specified.
+	 * 
+	 * @param columnName
+	 * @return
+	 */
+	public int getColumnIndex(String columnName) {
+		try {
+			return ((EJTable) this.table).getColumnIndex(columnName);
+		} catch (Exception ex) {
+			Table.logger.trace(null, ex);
+			return -1;
+		}
+	}
+
+	/**
+	 * Adjusts the height of all rows to the contents inside them.
+	 */
+	protected void evaluatePreferredRowsHeight() {
+		if ((this.table != null) && (this.table instanceof EJTable)) {
+			if (((EJTable) this.table).isFitRowsHeight()) {
+				((EJTable) this.table).fitRowHeight();
+			}
+
+			int rowCount = this.table.getRowCount();
+			for (int i = 0; i < rowCount; i++) {
+				int rowHeight = this.table.getRowHeight(i);
+				this.blockedTable.setRowHeight(i, rowHeight);
+			}
+			// this.blockedTable.setRowHeight(17);
+		}
+
+	}
+
+	public static final String	BUTTON_PIVOTTABLE	= "pivottablebutton";
+
+	protected TableButton		buttonPivotTable	= null;
+
+	protected JDialog			dPivot				= null;
+
+	/**
+	 * Installs the button that provides pivot functionallity in the control panel.
+	 */
+	protected void installPivotTableButton() {
+		this.buttonPivotTable = new TableButton();
+		this.buttonPivotTable.setKey(Table.BUTTON_PIVOTTABLE);
+
+		ImageIcon pivotIcon = ImageManager.getIcon(ImageManager.TABLE_PIVOT);
+		if (pivotIcon != null) {
+			this.buttonPivotTable.setIcon(pivotIcon);
+		} else {
+			this.buttonPivotTable.setText("Pivot");
+		}
+		this.buttonPivotTable.setEnabled(true);
+		this.buttonPivotTable.setMargin(new Insets(0, 0, 0, 0));
+		this.controlsPanel.add(this.buttonPivotTable);
+		this.buttonPivotTable.addActionListener(e -> {
+			String columPosAndWith = Table.this.getColumnsPositionAndWith();
+			Map<?, ?> rederersMap = new HashMap(Table.this.getMapRenderersForColumns());
+			if ((Table.this.dPivot == null) || Table.this.dynamicTable) {
+				Window w = SwingUtilities.getWindowAncestor(Table.this);
+				Table.this.dPivot = PivotTableUtils.createPivotDialog(w,
+						EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), Table.this.resourcesFile,
+						Table.this.getDetailWindowParameters(), columPosAndWith);
+				ApplicationManager.center(Table.this.dPivot);
+				Table.this.setPivotTablePreferences(Table.this.dPivot);
+			}
+			((PivotTableUtils.PivotDialog) Table.this.dPivot)
+					.setModel(EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), true);
+			((PivotTableUtils.PivotDialog) Table.this.dPivot).setOriginalColPosAndWith(columPosAndWith);
+			((PivotTableUtils.PivotDialog) Table.this.dPivot).setRenderersForColumns(rederersMap);
+			Table.this.dPivot.setVisible(true);
+		});
+
+	}
+
+	protected Map<?, ?> getMapRenderersForColumns() {
+		Map<String, Object> toRet = new HashMap<String, Object>();
+		for (Object s : Table.this.getTableSorter().getColumnNames()) {
+			String columnName = (String) s;
+			Object cellRenderer = Table.this.getRendererForColumn((String) s);
+			if (cellRenderer != null) {
+				toRet.put(columnName, cellRenderer);
+			}
+		}
+		return toRet;
+
+	}
+
+	protected Hashtable getDetailWindowParameters() {
+		Hashtable param = new Hashtable();
+		param.put("entity", "entity");
+		param.put("dynamic", "yes");
+		param.put("translateheader", "yes");
+		// if (this.dynamicPivotable) {
+		if (this.getParentForm() != null) {
+			param.put(Table.D_PIVOT_TABLE_PREFERENCES_FORM, this.getParentForm().getArchiveName());
+		} else {
+			if (this.dynamicPivotTableForm != null) {
+				param.put(Table.D_PIVOT_TABLE_PREFERENCES_FORM, this.dynamicPivotTableForm);
+			}
+		}
+
+		if (this.dynamicPivotTableEntity != null) {
+			param.put(Table.D_PIVOT_TABLE_PREFERENCES_ENTITY, this.dynamicPivotTableEntity);
+		} else {
+			param.put(Table.D_PIVOT_TABLE_PREFERENCES_ENTITY, this.getEntityName());
+		}
+
+		// }
+		if (this.parameters.contains("headerheight")) {
+			param.put("headerheight", this.parameters.get("headerheight"));
+		}
+		if (this.parameters.contains("headerfont")) {
+			param.put("headerfont", this.parameters.get("headerfont"));
+		}
+		if (this.parameters.contains("headerfg")) {
+			param.put("headerfg", this.parameters.get("headerfg"));
+		}
+		if (this.parameters.contains("headerbg")) {
+			param.put("headerbg", this.parameters.get("headerbg"));
+		}
+		if (this.parameters.contains("fontshadowcolor")) {
+			param.put("fontshadowcolor", this.parameters.get("fontshadowcolor"));
+		}
+		if (this.parameters.contains("headerbgimage")) {
+			param.put("headerbgimage", this.parameters.get("headerbgimage"));
+		}
+		if (this.parameters.contains("headerborder")) {
+			param.put("headerborder", this.parameters.get("headerborder"));
+		}
+		if (this.parameters.contains("headerlastcolumnborder")) {
+			param.put("headerlastcolumnborder", this.parameters.get("headerlastcolumnborder"));
+		}
+		if (this.parameters.contains("headerfirstcolumnborder")) {
+			param.put("headerfirstcolumnborder", this.parameters.get("headerfirstcolumnborder"));
+		}
+		if (this.parameters.contains("border")) {
+			param.put("border", this.parameters.get("border"));
+		}
+		if (this.parameters.contains("percentage")) {
+			param.put("percentage", this.parameters.get("percentage"));
+		}
+
+		return param;
+	}
+
+	/**
+	 * Adds the fuctionallity of manage preferences to the pivot table dialog.
+	 * 
+	 * @param pivotDialog
+	 *            the dialog that contains the pivot table
+	 */
+	protected void setPivotTablePreferences(JDialog pivotDialog) {
+		if (!this.dynamicTable) {
+			if ((pivotDialog != null) && (pivotDialog instanceof PivotDialog)) {
+				PivotDialog pD = (PivotDialog) pivotDialog;
+
+				JButton preferencesButton = new JButton();
+
+				ImageIcon saveTableFilterIcon = ImageManager.getIcon(ImageManager.SAVE_TABLE_FILTER);
+				if (saveTableFilterIcon != null) {
+					preferencesButton.setMargin(new Insets(2, 2, 2, 2));
+					preferencesButton.setIcon(new ImageIcon(saveTableFilterIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_DEFAULT)));
+				} else {
+					preferencesButton.setText("P");
+				}
+				pD.addButton(preferencesButton);
+				preferencesButton.addActionListener(e -> Table.this.menuPivotTablePreferences(e));
+			}
+		}
+	}
+
+	/**
+	 * Returns the key that will be used to identify the preference that will save the pivot table configuration.
+	 * 
+	 * @param configurationName
+	 *            the name of the concrete configuration
+	 * @return the preference key for the specified configuration
+	 */
+	protected String getPivotTablePreferenceKey(String configurationName) {
+		if ((configurationName == null) || (configurationName.length() == 0)) {
+			Form f = this.parentForm;
+			return f != null ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f
+					.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity;
+		} else {
+			Form f = this.parentForm;
+			return f != null ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f
+					.getArchiveName() + "_" + this.entity + "_" + configurationName : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity + "_" + configurationName;
+		}
+	}
+
+	/**
+	 * Returns the key that will be used to identify the preference that will save the pivot table configurations.
+	 * 
+	 * @return the preference key for the default configuration
+	 */
+	protected String getPivotTablePreferenceKey() {
+		Form f = this.parentForm;
+		return f != null ? BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + f
+				.getArchiveName() + "_" + this.entity : BasicApplicationPreferences.TABLE_CONF_PIVOT_TABLE_CONFIGURATIONS + "_" + this.entity;
+	}
+
+	protected ExtendedJPopupMenu	menuPivotTableSetup	= null;
+
+	protected JMenuItem				menuSavePivot		= new JMenuItem("save");
+
+	/**
+	 * Method called by the table pivot button listener that shows the pivot table dialog.
+	 * 
+	 * @param e
+	 */
+	protected void menuPivotTablePreferences(ActionEvent e) {
+		String prefer = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
+		if (this.menuPivotTableSetup == null) {
+			this.menuPivotTableSetup = new ExtendedJPopupMenu();
+			this.menuSavePivot.addActionListener(e1 -> {
+				Object s = MessageDialog.showInputMessage(SwingUtilities.getWindowAncestor(Table.this), "table.enter_configuration_name", Table.this.resourcesFile);
+				if (s != null) {
+					String str = s.toString();
+					Table.this.savePivotTableConfiguration(str);
+					return;
+				}
+			});
+			if (!ApplicationManager.useOntimizePlaf) {
+				this.menuPivotTableSetup.setBorder(new SoftBevelBorder(BevelBorder.RAISED));
+			}
+		} else {
+			Component[] c = this.menuPivotTableSetup.getComponents();
+			for (int i = 0; (c != null) && (i < c.length); i++) {
+				if (c[i] instanceof PreferenceItem) {
+					((PreferenceItem) c[i]).removeAllListeners();
+				}
+			}
+			this.menuPivotTableSetup.removeAll();
+		}
+
+		if (this.menuSavePivot != null) {
+			this.menuSavePivot.setText(ApplicationManager.getTranslation("save", this.getResourceBundle()));
+		}
+
+		if ((prefer != null) && (prefer.length() > 0)) {
+			StringTokenizer tokens = new StringTokenizer(prefer, ";");
+			while (tokens.hasMoreTokens()) {
+				PreferenceItem item = new PreferenceItem(tokens.nextToken());
+				this.menuPivotTableSetup.add(item);
+			}
+			this.menuPivotTableSetup.addSeparator();
+		}
+		this.menuPivotTableSetup.add(this.menuSavePivot);
+		this.menuPivotTableSetup.show((Component) e.getSource(), 0, ((Component) e.getSource()).getHeight());
+	}
+
+	protected ActionListener	prefPivotTableItemListener			= null;
+
+	protected ActionListener	deletePrefPivotTableItemListener	= null;
+
+	/**
+	 * The listener that loads a concrete pivot table configuration. Called by the pivot table setup window.
+	 */
+	protected class ListenerItemPrefPivotTable implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Table.this.loadPivotTableConfiguration(e.getActionCommand());
+			Table.this.menuPivotTableSetup.setVisible(false);
+		}
+
+	}
+
+	/**
+	 * The listener that deletes a concrete pivot table configuration. Called by the pivo table setup window.
+	 */
+	protected class ListenerItemDeletePrefPivotTable implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Table.this.deletePivotTableConfiguration(e.getActionCommand());
+			Table.this.menuPivotTableSetup.setVisible(false);
+		}
+
+	}
+
+	/**
+	 * The class that has all the pivot table management GUI
+	 */
+	protected class PreferenceItem extends JPanel {
+
+		private String		token	= null;
+
+		private JButton		menu	= null;
+
+		private TableButton	button	= null;
+
+		public PreferenceItem(String token) {
+			this.token = token;
+			this.menu = new RolloverButton(token) {
+
+				@Override
+				public Dimension getPreferredSize() {
+					Dimension d = super.getPreferredSize();
+					d.height = 22;
+					return d;
+				}
+
+				@Override
+				public boolean isFocusTraversable() {
+					return false;
+				}
+
+				@Override
+				public boolean isRequestFocusEnabled() {
+					return false;
+				}
+			};
+			this.menu.setActionCommand(token);
+			if (Table.this.prefPivotTableItemListener == null) {
+				Table.this.prefPivotTableItemListener = new ListenerItemPrefPivotTable();
+			}
+			this.menu.addActionListener(Table.this.prefPivotTableItemListener);
+			this.menu.setForeground(Color.blue.darker());
+			this.menu.setIcon(ImageManager.getIcon(ImageManager.EMPTY_16));
+
+			this.button = new TableButton();
+			this.button.setIcon(ImageManager.getIcon(ImageManager.RECYCLER));
+			this.button.setToolTipText(ApplicationManager.getTranslation("table.delete_this_configuration", Table.this.resourcesFile));
+			this.button.setActionCommand(token);
+			if (Table.this.deletePrefPivotTableItemListener == null) {
+				Table.this.deletePrefPivotTableItemListener = new ListenerItemDeletePrefPivotTable();
+			}
+			this.button.addActionListener(Table.this.deletePrefPivotTableItemListener);
+			this.setLayout(new GridBagLayout());
+			this.setOpaque(false);
+			this.add(this.button, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+			this.add(this.menu, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+			this.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
+
+		public void removeAllListeners() {
+			this.menu.removeActionListener(Table.this.deletePrefPivotTableItemListener);
+			this.button.removeActionListener(Table.this.deletePrefPivotTableItemListener);
+		}
+
+	}
+
+	/**
+	 * Load the concrete pivot table configuration.
+	 * 
+	 * @param confName
+	 *            the configuration name
+	 */
+	protected void loadPivotTableConfiguration(String confName) {
+		if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
+			String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey(confName));
+			if ((pref != null) && (pref.length() > 0)) {
+				Hashtable selection = new Hashtable();
+				StringTokenizer tokens = new StringTokenizer(pref, "|");
+				while (tokens.hasMoreTokens()) {
+					String token = tokens.nextToken();
+					int ind = token.lastIndexOf("~");
+					if (ind > 0) {
+						String key = token.substring(1, ind);
+						if (PivotTableUtils.PIVOTTABLE_ROWFIELD.equals(key) || PivotTableUtils.PIVOTTABLE_COLUMNFIELD.equals(key) || PivotTableUtils.PIVOTTABLE_DATAFIELD
+								.equals(key)) {
+							String value = token.substring(ind + 1);
+							if (PivotTableUtils.PIVOTTABLE_ROWFIELD.equals(key) && (value != null) && (value.length() > 0)) {
+								StringTokenizer pairsFixed = new StringTokenizer(value, ":");
+								ArrayList list = new ArrayList<Pair<String, Integer>>();
+								while (pairsFixed.hasMoreTokens()) {
+									String tokenFixedColumns = pairsFixed.nextToken();
+									String[] pairComp = tokenFixedColumns.split("=");
+									if (pairComp.length > 1) {
+										list.add(new Pair<String, Integer>(pairComp[0], Integer.parseInt(pairComp[1])));
+									} else {
+										list.add(pairComp[0]);
+									}
+								}
+								selection.put(key, list);
+
+							} else if ((value != null) && (value.length() > 0)) {
+								ArrayList list = new ArrayList(ApplicationManager.getTokensAt(value, ":"));
+								selection.put(key, list);
+							}
+						} else if (PivotTableUtils.PIVOTTABLE_OPERATION.equals(key) || PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS
+								.equals(key) || PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS.equals(key)) {
+							String value = token.substring(ind + 1);
+							if ((value != null) && (value.length() > 0)) {
+								selection.put(key, value);
+							}
+						}
+					}
+				}
+				((PivotDialog) this.dPivot).setSelectedColumn(selection);
+			}
+		}
+	}
+
+	/**
+	 * Deletes the pivot table configuration passed as parameter.
+	 * 
+	 * @param confName
+	 *            the configuration name
+	 */
+	protected void deletePivotTableConfiguration(String confName) {
+		PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(confName), null);
+		String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
+		if ((pref != null) && (pref.length() > 0)) {
+			StringTokenizer tokens = new StringTokenizer(pref, ";");
+			StringBuilder buffer = new StringBuilder();
+			while (tokens.hasMoreTokens()) {
+				String tok = tokens.nextToken();
+				if (!confName.equals(tok)) {
+					buffer.append(tok);
+					if (tokens.hasMoreTokens()) {
+						buffer.append(";");
+					}
+				}
+			}
+			PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(), buffer.toString());
+		}
+	}
+
+	/**
+	 * Saves the current pivot table configuration.
+	 * 
+	 * @param confName
+	 *            the configuration name
+	 */
+	protected void savePivotTableConfiguration(String confName) {
+		if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
+			Hashtable h = ((PivotDialog) this.dPivot).getSelectedColumn();
+			StringBuilder buffer = new StringBuilder();
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_ROWFIELD)) {
+				List<Pair> fixedColumnWidth = ((PivotDialog) this.dPivot).getFixedColumnWidth();
+				buffer.append("~" + PivotTableUtils.PIVOTTABLE_ROWFIELD + "~");
+				for (int i = 0; i < fixedColumnWidth.size(); i++) {
+					Pair<String, Integer> p = fixedColumnWidth.get(i);
+					buffer.append(p.getFirst());
+					buffer.append("=");
+					buffer.append(p.getSecond());
+					if (i != (fixedColumnWidth.size() - 1)) {
+						buffer.append(":");
+					}
+				}
+				buffer.append("|");
+			}
+
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_COLUMNFIELD)) {
+				Object o = h.get(PivotTableUtils.PIVOTTABLE_COLUMNFIELD);
+				if (o instanceof ArrayList) {
+					ArrayList list = (ArrayList) o;
+					buffer.append("~" + PivotTableUtils.PIVOTTABLE_COLUMNFIELD + "~");
+					for (int i = 0; i < list.size(); i++) {
+						buffer.append(list.get(i));
+						if (i != (list.size() - 1)) {
+							buffer.append(":");
+						}
+					}
+					buffer.append("|");
+				}
+			}
+
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_DATAFIELD)) {
+				Object o = h.get(PivotTableUtils.PIVOTTABLE_DATAFIELD);
+				if (o instanceof ArrayList) {
+					ArrayList list = (ArrayList) o;
+					buffer.append("~" + PivotTableUtils.PIVOTTABLE_DATAFIELD + "~");
+					for (int i = 0; i < list.size(); i++) {
+						buffer.append(list.get(i));
+						if (i != (list.size() - 1)) {
+							buffer.append(":");
+						}
+					}
+					buffer.append("|");
+				}
+			}
+
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_OPERATION)) {
+				Object o = h.get(PivotTableUtils.PIVOTTABLE_OPERATION);
+				if (o instanceof String) {
+					String list = (String) o;
+					buffer.append("~" + PivotTableUtils.PIVOTTABLE_OPERATION + "~");
+					buffer.append(list);
+					buffer.append("|");
+				}
+			}
+
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS)) {
+				Object o = h.get(PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS);
+				if (o instanceof String) {
+					String list = (String) o;
+					buffer.append("~" + PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS + "~");
+					buffer.append(list);
+					buffer.append("|");
+				}
+			}
+
+			if (h.containsKey(PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS)) {
+				Object o = h.get(PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS);
+				if (o instanceof String) {
+					String list = (String) o;
+					buffer.append("~" + PivotTableUtils.PIVOTTABLE_FORMAT_OPTIONS + "~");
+					buffer.append(list);
+					buffer.append("|");
+				}
+			}
+
+			// Check if exists this name
+			String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey());
+			boolean insert = true;
+			if (pref != null) {
+				StringTokenizer tokens = new StringTokenizer(pref, ";");
+				while (tokens.hasMoreElements()) {
+					String token = tokens.nextToken().trim();
+					if (confName.equals(token)) {
+						// Ask the user if replace the preference
+						boolean replace = MessageDialog.showQuestionMessage(Table.this, "pivottable.preference_name_exists", this.resourcesFile);
+						if (!replace) {
+							return;
+						} else {
+							insert = false;
+							break;
+						}
+					}
+				}
+
+				if (insert) {
+					StringBuilder buff = new StringBuilder(pref);
+					buff.append(";");
+					buff.append(confName);
+					pref = buff.toString();
+				}
+			} else {
+				pref = confName;
+			}
+
+			PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(confName), buffer.toString());
+			PreferenceUtils.savePreference(this.getPivotTablePreferenceKey(), pref);
+		}
+	}
+
+	private static boolean	check		= false;
+
+	private static boolean	checkOKBHVM	= false;
+
+	private static boolean	checkOKZOZP	= false;
+
+	private static boolean	checkOKQENA	= false;
+
+	private boolean checkOk(String code) {
+		if (!Table.check) {
+			Table.checkOKBHVM = CheckLComponent.checkOk("BHVM");
+			Table.checkOKZOZP = CheckLComponent.checkOk("ZOZP");
+			Table.checkOKQENA = CheckLComponent.checkOk("QENA");
+			Table.check = true;
+		}
+
+		if ("BHVM".equals(code)) {
+			return Table.checkOKBHVM;
+		}
+
+		if ("ZOZP".equals(code)) {
+			return Table.checkOKZOZP;
+		}
+
+		if ("QENA".equals(code)) {
+			return Table.checkOKQENA;
+		}
+		return false;
+	}
+
+	public static class QuickFieldText extends JTextField {
+
+		/**
+		 * The name of class. Used by L&F to put UI properties.
+		 *
+		 * @since 5.2062EN
+		 */
+		public static final String	QUICKFILTER_NAME	= "Table.QuickFilter";
+
+		public static boolean		paintFindText		= true;
+
+		protected String			emptyText;
+
+		protected Font				emptyFont;
+
+		protected ResourceBundle	bundle;
+
+		public static int			timeDelay			= 500;
+
+		protected boolean			selectAll			= false;
+
+		public QuickFieldText() {
+			super(10);
+			this.emptyText = Table.FIND_MESSAGE;
+			super.setOpaque(ApplicationManager.useOntimizePlaf ? false : true);
+			this.setName(QuickFieldText.QUICKFILTER_NAME);
+			this.addFocusListener(new FocusAdapter() {
+				@Override
+				public void focusGained(FocusEvent e) {
+					if (QuickFieldText.this.selectAll) {
+						QuickFieldText.this.selectAll();
+					}
+				}
+			});
+		}
+
+		@Override
+		public String getName() {
+			return QuickFieldText.QUICKFILTER_NAME;
+		}
+
+		@Override
+		public Dimension getMinimumSize() {
+			return this.getPreferredSize();
+		}
+
+		public void setEmptyText(String text) {
+			this.emptyText = text;
+		}
+
+		public String getEmptyText() {
+			return this.emptyText;
+		}
+
+		@Override
+		public void setOpaque(boolean isOpaque) {
+			if (isOpaque) {
+				super.setOpaque(isOpaque);
+			}
+		}
+
+		public boolean isSelectAll() {
+			return this.selectAll;
+		}
+
+		public void setSelectAll(boolean selectAll) {
+			this.selectAll = selectAll;
+		}
+
+		public void setResourceBundle(ResourceBundle resource) {
+			this.bundle = resource;
+			if (this.bundle != null) {
+				this.createFormatter(DateDataField.getSameCountryLocale(this.bundle.getLocale()));
+			}
+		}
+
+		protected void createFormatter(Locale locale) {
+			if (!DateFormatCache.containsDateFormat(locale)) {
+				this.createNewFormatter(locale);
+			} else {
+				QuickFieldText.format = DateFormatCache.getDateFormat(locale);
+			}
+		}
+
+		protected void createNewFormatter(Locale l) {
+			if (l != null) {
+				SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getDateInstance(DateFormat.MEDIUM, l);
+				dateFormat.setLenient(false);
+				GregorianCalendar calendar = new GregorianCalendar(l);
+				calendar.setLenient(false);
+				dateFormat.setCalendar(calendar);
+				// Set the patter using the locale
+				DateFormatSymbols symbols = new DateFormatSymbols(l);
+				symbols.setLocalPatternChars("GyMdkHmsSEDFwWahKz");
+				dateFormat.setDateFormatSymbols(symbols);
+
+				QuickFieldText.format = dateFormat;
+				// Initialize the date
+				// this.buildPattern();
+				// dateFormat.applyPattern(datePattern);
+				DateFormatCache.addDateFormat(l, dateFormat);
+			}
+		}
+
+		protected void clearFind(Graphics g) {
+			if (this.hasFocus()) {
+				Rectangle alloc = this.getBounds();
+				if ((alloc.width > 0) && (alloc.height > 0)) {
+					alloc.x = alloc.y = 0;
+					Insets insets = this.getInsets();
+					alloc.x += insets.left;
+					alloc.y += insets.top;
+					alloc.width -= insets.left + insets.right;
+					alloc.height -= insets.top + insets.bottom;
+					g.clearRect(alloc.x, alloc.y, alloc.width, alloc.height);
+				}
+			}
+		}
+
+		protected void paintFind(Graphics g) {
+			Rectangle alloc = this.getBounds();
+			if ((alloc.width > 0) && (alloc.height > 0)) {
+				alloc.x = alloc.y = 0;
+				Insets insets = this.getInsets();
+				alloc.x += insets.left;
+				alloc.y += insets.top;
+				alloc.width -= insets.left + insets.right;
+				alloc.height -= insets.top + insets.bottom;
+				if (!this.hasFocus()) {
+					g.setColor(Color.black);
+					Font f = this.emptyFont == null ? this.getFont().deriveFont(Font.PLAIN, this.getFont().getSize() - 2) : this.emptyFont;
+					g.setFont(f);
+					g.drawString(ApplicationManager.getTranslation(this.emptyText, this.bundle), alloc.x, alloc.height);
+				}
+			}
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			this.clearFind(g);
+			super.paintComponent(g);
+			if ((this.getDocument().getLength() == 0) && (!this.hasFocus()) && QuickFieldText.paintFindText) {
+				this.paintFind(g);
+			}
+		}
+
+		// @Override
+		// public void paint(Graphics g) {
+		// this.clearFind(g);
+		// super.paint(g);
+		// if ((this.getDocument().getLength() == 0) && (this.hasFocus() ==
+		// false) && QuickFieldText.paintFindText) {
+		// this.paintFind(g);
+		// }
+		// }
+
+		public void setEmptyFont(Font emptyFont) {
+			this.emptyFont = emptyFont;
+		}
+
+		public static Format				format	= new SimpleDateFormat("dd/MM/yyyy");
+
+		protected QuickFilterActionListener	target	= new QuickFilterActionListener();
+
+		protected Timer						timer	= null;
+
+		public void executeFilter(String text, Table table) {
+			if (this.timer == null) {
+				this.timer = new Timer(0, this.target);
+				this.timer.setInitialDelay(QuickFieldText.timeDelay);
+			}
+
+			if (this.timer.isRunning()) {
+				this.timer.stop();
+				if (this.target.table != null) {
+					if (!this.target.table.equals(table)) {
+						this.target.applyFilter();
+					}
+				}
+			}
+
+			this.target.setTableFilter(table, text);
+			this.timer.start();
+		}
+
+		public Timer getTimer() {
+			return this.timer;
+		}
+
+		public void setTimer(Timer timer) {
+			this.timer = timer;
+		}
+
+		public Vector getTextsToTranslate() {
+			return null;
+		}
+
+		public void setComponentLocale(Locale l) {
+
+		}
+
+	}
+
+	protected static class QuickFilterActionListener implements ActionListener {
+
+		protected Table		table	= null;
+
+		protected String	text	= null;
+
+		public void setTableFilter(Table newTable, String newText) {
+			this.table = newTable;
+			this.text = newText;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			this.table.getQuickFilter().getTimer().stop();
+			if ((this.table.getPageFetcher() != null) && this.table.getPageFetcher().isPageableEnabled() && !this.table.isQuickFilterLocal()) {
+				try {
+					this.table.getQuickFilter().setEnabled(false);
+					this.executeQuery();
+				} finally {
+					this.table.getQuickFilter().setEnabled(true);
+				}
+			} else {
+				this.applyFilter();
+			}
+		}
+
+		protected String createResultText() {
+			StringBuilder queryText = new StringBuilder();
+
+			if ((this.text != null) && (this.text.length() > 0)) {
+				if (!this.text.startsWith("*")) {
+					queryText.append("*");
+				}
+				queryText.append(this.text);
+				if (!this.text.endsWith("*")) {
+					queryText.append("*");
+				}
+			}
+
+			return queryText.toString().replace('*', '%');
+		}
+
+		protected BasicExpression createExpression(boolean isNumber) {
+			String resultText = this.createResultText();
+
+			BasicExpression filterExpression = null;
+			List<String> cols = this.table.getQuickFilterColumns();
+			Vector calculedColumns = this.table.getCalculatedColumns();
+
+			Hashtable<String, Integer> columnSQLTypes = this.table.getColumnSQLTypes();
+
+			for (String currentColumn : cols) {
+				if ((calculedColumns != null) && calculedColumns.contains(currentColumn)) {
+					continue;
+				}
+				if ((columnSQLTypes != null) && columnSQLTypes.containsKey(currentColumn)) {
+					Integer sqlType = columnSQLTypes.get(currentColumn);
+					switch (sqlType) {
+						case java.sql.Types.VARCHAR:
+						case java.sql.Types.LONGVARCHAR:
+						case java.sql.Types.LONGNVARCHAR:
+						case java.sql.Types.NCHAR:
+						case java.sql.Types.NVARCHAR:
+							break;
+						case java.sql.Types.NCLOB:
+						case java.sql.Types.CLOB:
+							if (Table.quickFilterClobExclude) {
+								continue;
+							}
+							break;
+						case java.sql.Types.TINYINT:
+						case java.sql.Types.SMALLINT:
+						case java.sql.Types.INTEGER:
+						case java.sql.Types.BIGINT:
+						case java.sql.Types.FLOAT:
+						case java.sql.Types.REAL:
+						case java.sql.Types.DOUBLE:
+						case java.sql.Types.NUMERIC:
+						case java.sql.Types.DECIMAL:
+							if (!isNumber) {
+								continue;
+							}
+							break;
+						default:
+							continue;
+					}
+				}
+
+				BasicField bF = new BasicField(currentColumn);
+				BasicExpression expression = new BasicExpression(bF, BasicOperator.LIKE_OP, resultText);
+				if (filterExpression == null) {
+					filterExpression = expression;
+				} else {
+					filterExpression = new BasicExpression(filterExpression, BasicOperator.OR_OP, expression);
+				}
+			}
+			return filterExpression;
+		}
+
+		protected boolean isNumber(String text) {
+			try {
+				Number object = NumberFormat.getInstance().parse(text);
+				return true;
+			} catch (ParseException e) {
+				Table.logger.trace("Check in quickfilter-> It's not number: " + text, e);
+			}
+			return false;
+		}
+
+		public void executeQuery() {
+			Cursor c = this.table.getCursor();
+			Cursor cQuickfilter = this.table.getQuickFilter().getCursor();
+			try {
+				this.table.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				this.table.getQuickFilter().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				boolean dateFilter = false;
+				boolean excludeDate = false;
+
+				PageFetcher pageFetcher = this.table.getPageFetcher();
+				pageFetcher.setOffset(0);
+				pageFetcher.changePageSize(false);
+
+				if ((this.text == null) || (this.text.length() == 0)) {
+					pageFetcher.setFilterExpression(null);
+					pageFetcher.refreshCurrentPageInThread();
+					return;
+				}
+
+				boolean isNumber = this.isNumber(this.text);
+
+				excludeDate = !Table.checkFormatDate(this.text);
+
+				if (!excludeDate) {
+					try {
+						QuickFieldText.format.parseObject(this.text);
+						dateFilter = true;
+					} catch (ParseException e1) {
+						Table.logger.trace(null, e1);
+					}
+				}
+
+				BasicExpression filterExpression = this.createExpression(isNumber);
+				pageFetcher.setFilterExpression(filterExpression);
+				pageFetcher = this.table.getPageFetcher();
+				pageFetcher.refreshCurrentPageInThread();
+			} catch (Exception e1) {
+				Table.logger.error(null, e1);
+			} finally {
+				this.table.setCursor(c);
+				this.table.getQuickFilter().setCursor(cQuickfilter);
+			}
+		}
+
+		public void applyFilter() {
+			Cursor c = this.table.getCursor();
+			Cursor cQuickfilter = this.table.getQuickFilter().getCursor();
+			try {
+				this.table.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				this.table.getQuickFilter().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				boolean dateFilter = false;
+				boolean excludeDate = false;
+
+				TableSorter sorter = (TableSorter) this.table.getJTable().getModel();
+				if ((this.text == null) || (this.text.length() == 0)) {
+					sorter.resetFilter();
+					return;
+				}
+
+				excludeDate = !Table.checkFormatDate(this.text);
+
+				if (!excludeDate) {
+					try {
+						QuickFieldText.format.parseObject(this.text);
+						dateFilter = true;
+					} catch (ParseException e) {
+						Table.logger.trace(null, e);
+					}
+				}
+
+				if ((this.text != null) && (this.text.length() > 0)) {
+					if (!this.text.startsWith("*")) {
+						this.text = "*" + this.text;
+					}
+					if (!this.text.endsWith("*")) {
+						this.text = this.text + "*";
+					}
+				}
+
+				Vector cols = this.table.getVisibleColumns();
+				Hashtable filters = new Hashtable();
+				SimpleFilter filter = new SimpleFilter(this.text);
+
+				for (Object col : cols) {
+					String currentColumn = (String) col;
+					for (int j = 0; j < sorter.getColumnCount(); j++) {
+						if (currentColumn.equals(sorter.getColumnName(j))) {
+							Class columnClass = sorter.getColumnClass(j);
+							if (dateFilter) {
+								if ((columnClass != null) && Date.class.isAssignableFrom(columnClass)) {
+									filters.put(currentColumn, filter);
+								}
+							} else if (excludeDate) {
+								if ((columnClass != null) && !Date.class.isAssignableFrom(columnClass)) {
+									filters.put(currentColumn, filter);
+								}
+							} else {
+								filters.put(currentColumn, filter);
+							}
+							continue;
+						}
+					}
+				}
+				sorter.applyFilter(filters, true);
+
+			} catch (Exception e) {
+				Table.logger.error(null, e);
+			} finally {
+				this.table.setCursor(c);
+				this.table.getQuickFilter().setCursor(cQuickfilter);
+			}
+		}
+
+	}
+
+	public void setQuickFilterValue(String text) {
+		if (this.quickFilterText != null) {
+			this.quickFilterText.setText(text);
+		}
+	}
+
+	public QuickFieldText getQuickFilter() {
+		return this.quickFilterText;
+	}
+
+	/**
+	 * Get the configuration parameters. If this is a dynamic table this method updates the parameters with the new column configuration. When the value changes, the columns
+	 * configuration changes too, and so, there is a difference between the configuration in the xml (that says that there are no columns) and the information that is being
+	 * displayed in the GUI (which has the value in the hashtable). Some Table tools, such and the PrintTable button, creates a new Table from the parameters configuration, and
+	 * then adds the values in the previous Table to the new one, provoking a configuration mismatch.
+	 * 
+	 * @return
+	 */
+	protected Hashtable getParameters() {
+		if (this.dynamicTable) {
+			Hashtable newParameters = (Hashtable) this.parameters.clone();
+			String cols = ApplicationManager.vectorToStringSeparateBySemicolon(this.attributes);
+			newParameters.put(Table.COLS, cols);
+			newParameters.put(Table.VISIBLE_COLS, cols);
+			return newParameters;
+		}
+		return this.parameters;
+	}
+
+	public int getMinRowHeight() {
+		return this.minRowHeight;
+	}
+
+	public void setMinRowHeight(int height) {
+		this.minRowHeight = height;
+	}
+
+	public int getPrintingFontSize() {
+		return this.fontSize;
+	}
+
+	/**
+	 * Get the required columns to insert. This method must be used only if inserting row exist
+	 * 
+	 * @return
+	 */
+	public Vector getRequieredCols() {
+		return this.vrequiredCols;
+	}
+
+	/**
+	 * @param insert
+	 * @deprecated Use setInsertInDatabase
+	 */
+	@Deprecated
+	public void setInsertInDataBase(boolean insert) {
+		this.setInsertInDatabase(insert);
+	}
+
+	public void setInsertInDatabase(boolean insert) {
+		this.dataBaseInsert = insert;
+		if (insert) {
+			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
+		} else {
+			this.editableColumnsUpdateEntity = new Vector();
+		}
+	}
+
+	/**
+	 * @deprecated Use setRemoveInDatabase
+	 */
+	@Deprecated
+	public void setRemoveInDataBase(boolean insert) {
+		this.setRemoveInDatabase(insert);
+	}
+
+	public void setRemoveInDatabase(boolean remove) {
+		this.dataBaseRemove = remove;
+		if (remove) {
+			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
+		} else {
+			this.editableColumnsUpdateEntity = new Vector();
+		}
+	}
+
+	/**
+	 * Enabled/disabled updating the changes in the database when the user change the values stored in those.
+	 * 
+	 * @param update
+	 */
+	public void setUpdateInDatabase(boolean update) {
+		if (update) {
+			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
+		} else {
+			this.editableColumnsUpdateEntity = new Vector();
+		}
+	}
+
+	public boolean isDataBaseInsert() {
+		return this.dataBaseInsert;
+	}
+
+	public boolean isInsertingEnabled() {
+		if (this.getJTable().getModel() instanceof TableSorter) {
+			return ((TableSorter) this.getJTable().getModel()).isInsertingEnabled();
+		}
+		return false;
+	}
+
+	@Override
+	public void addInsertTableInsertRowListener(InsertTableInsertRowListener l) {
+		this.insertTableInsertRowListenerList.add(InsertTableInsertRowListener.class, l);
+	}
+
+	@Override
+	public void removeInsertTableInsertRowListener(InsertTableInsertRowListener l) {
+		this.insertTableInsertRowListenerList.remove(InsertTableInsertRowListener.class, l);
+	}
+
+	@Override
+	public void fireInsertTableInsertRowChange(InsertTableInsertRowEvent insertTableInsertRowEvent) {
+		Object aobj[] = this.insertTableInsertRowListenerList.getListenerList();
+		for (int i = aobj.length - 2; i >= 0; i -= 2) {
+			if (aobj[i] == InsertTableInsertRowListener.class) {
+				((InsertTableInsertRowListener) aobj[i + 1]).insertTableInsertRowChange(insertTableInsertRowEvent);
+			}
+		}
+	}
+
+	public TableSorter getTableSorter() {
+		if (this.getJTable().getModel() instanceof TableSorter) {
+			return (TableSorter) this.getJTable().getModel();
+		}
+		return null;
+	}
+
+	public int getColPress() {
+		return this.colPress;
+	}
+
+	public void checkInsertingRowValue() throws Exception {
+		Vector vreq = this.getRequieredCols();
+		for (int i = 0; i < vreq.size(); i++) {
+			Object col = vreq.elementAt(i);
+			Object value = this.getInsertingData().get(col);
+			if ((value == null) || value.equals("")) {
+				throw new Exception("table.insertingrequiredfieldserror");
+			}
+		}
+	}
+
+	protected Hashtable getInsertingData() {
+		if (this.isInsertingEnabled()) {
+			TableSorter model = this.getTableSorter();
+			Hashtable data = model.getInsertingData();
+
+			if ((this.getCalculatedColumns() != null) && (this.getCalculatedColumns().size() > 0)) {
+				int rowIndex = model.getRowCount() - 1;
+				if (model.isInsertingRow(rowIndex)) {
+					Hashtable calculatedRowData = model.getCalculatedRowData(rowIndex);
+					if (calculatedRowData != null) {
+						data.putAll(calculatedRowData);
+					}
+				}
+			}
+			return data;
+		}
+		return null;
+	}
+
+	protected void executeInsertRow() {
+		if (((TableSorter) this.getJTable().getModel()).isInsertingRow(this.getJTable().getSelectedRow())) {
+			try {
+				// If there is not an active insertion
+				if (!this.inserting) {
+					this.checkInsertingRowValue();
+					try {
+						Hashtable insertingRowData = this.getInsertingData();
+						if (this.isDataBaseInsert()) {
+							Entity ent = ApplicationManager.getApplication().getReferenceLocator().getEntityReference(this.getEntityName());
+							EntityResult rs = ent.insert(insertingRowData, ApplicationManager.getApplication().getReferenceLocator().getSessionId());
+							if (rs.getCode() == EntityResult.OPERATION_WRONG) {
+								throw new Exception(rs.getMessage());
+							}
+							if (rs.getCode() == EntityResult.OPERATION_SUCCESSFUL_SHOW_MESSAGE) {
+								this.getParentForm().message(rs.getMessage(), Form.INFORMATION_MESSAGE);
+							}
+							Enumeration en = rs.keys();
+							while (en.hasMoreElements()) {
+								Object key = en.nextElement();
+								insertingRowData.put(key, rs.get(key));
+							}
+						}
+						this.addRow(insertingRowData);
+						this.enableInsert();
+						this.fireInsertTableInsertRowChange(new InsertTableInsertRowEvent(this, insertingRowData));
+						this.getTableSorter().clearInsertingRow(this.getParentKeyValues());
+					} finally {
+						this.inserting = false;
+					}
+				}
+				// Insert the row
+				// getJTable().changeSelection(getJTable().getRowCount() - 1, 0,
+				// false, false);
+			} catch (Exception ex) {
+				Table.logger.error(null, ex);
+				this.getParentForm().message(ex.getMessage(), Form.ERROR_MESSAGE, ex);
+			}
+		}
+	}
+
+	protected void registerKeyListeners() {
+		this.getJTable().addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyTyped(KeyEvent e) {
+				super.keyTyped(e);
+				if (Table.this.inserting) {
+					return;
+				}
+				if ((e.getKeyCode() == KeyEvent.VK_ESCAPE) || (e.getKeyChar() == KeyEvent.VK_ESCAPE)) {
+					if (Table.this.getJTable().getSelectedRow() == (Table.this.getJTable().getRowCount() - 1)) {
+						TableSorter sorter = Table.this.getTableSorter();
+						sorter.clearInsertingRow(Table.this.getParentKeyValues());
+						sorter.fireTableChanged(new TableModelEvent(sorter, sorter.getRowCount() - 1));
+					}
+				}
+			}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				super.keyPressed(e);
+				if (Table.this.inserting) {
+					return;
+				}
+				// if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+				// executeInsertRow();
+				// getJTable().changeSelection(getJTable().getRowCount() - 1, 0,
+				// false, false);
+				// }
+			}
+		});
+	}
+
+	public boolean isTranslateHeader() {
+		return this.translateHeader;
+	}
+
+	public PageFetcher getPageFetcher() {
+		return this.pageFetcher;
+	}
+
+	@Override
+	public int getTemplateDataType() {
+		return ITemplateField.DATA_TYPE_TABLE;
+	}
+
+	@Override
+	public Object getTemplateDataValue() {
+		return this.getValueToExport(false, false);
+	}
+
+	protected Map<Object, Object> retrieveOnSetValueData() {
+		if (this.hOnSetValueSetFunction == null) {
+			this.hOnSetValueSetFunction = this.parseFunction(this.hOnSetValueSetEquivalences);
+		}
+		Map<Object, Object> data = new HashMap<>();
+		for (Object element : this.onsetvaluesetAttributes) {
+			String at = (String) element;
+			String columnName = (String) this.hOnSetValueSetEquivalences.get(at);
+			String function = (String) this.hOnSetValueSetFunction.get(at);
+			Object value = ((TableSorter) this.getJTable().getModel()).getColumnOperation(columnName, function);
+			if (value != null) {
+				data.put(columnName, value);
+			}
+		}
+		return data;
+	}
+
+	protected void updateOnSetValueSetAttributes(Map<Object, Object> data) {
+		if ((this.parentForm != null) && (data != null)) {
+			for (Object at : this.onsetvaluesetAttributes) {
+				Object oValue = data.get(this.hOnSetValueSetEquivalences.get(at));
+				this.parentForm.setDataFieldValue(at, oValue);
+				Table.logger.debug("Setting field value: {} -> {}", at, oValue);
+			}
+		}
+	}
+
+	protected Map<Object, Object> parseFunction(Map<Object, Object> equivalences) {
+		Map<Object, Object> functionEquivalences = new HashMap<>();
+		Enumeration enumeration = equivalences.keys();
+		while (enumeration.hasMoreElements()) {
+			Object attr = enumeration.nextElement();
+			String valueToParse = (String) equivalences.get(attr);
+			String columnIdentifier;
+			String function = ExtendedTableModel.SUM_OPERATION;
+
+			if (valueToParse.indexOf("(") >= 0) {
+				function = valueToParse.substring(0, valueToParse.indexOf("(")).trim();
+				columnIdentifier = valueToParse.substring(valueToParse.indexOf("(") + 1, valueToParse.lastIndexOf(")")).trim();
+			} else {
+				columnIdentifier = valueToParse;
+				int columnIndex = -1;
+				for (int i = 0; i < this.getTableSorter().getColumnCount(); i++) {
+					if (columnIdentifier.equals(this.getTableSorter().getColumnName(i))) {
+						columnIndex = i;
+						break;
+					}
+				}
+
+				if (columnIndex < 0) {
+					function = ExtendedTableModel.SUM_OPERATION;
+				} else {
+					Class columnClass = this.getTableSorter().getColumnClass(columnIndex);
+					if (Number.class.isAssignableFrom(columnClass)) {
+						function = ExtendedTableModel.SUM_OPERATION;
+					} else if (String.class.isAssignableFrom(columnClass)) {
+						function = ExtendedTableModel.CONCAT_OPERATION;
+					}
+				}
+			}
+			equivalences.put(attr, columnIdentifier);
+			functionEquivalences.put(attr, function);
+		}
+		return functionEquivalences;
+	}
+
+	@Override
+	public Font getFont() {
+		Font font = super.getFont();
+		if (font == null) {
+			return this.getContentPane().getFont();
+		}
+		return font;
+	}
+
+	/**
+	 * Pattern to format the field contents. Null if the <code>format</code> parameter is missing. Also wrappers the content of the <code>dateformat</code> parameter.
+	 *
+	 * @since Ontimize 5.4.3
+	 */
+	protected FormatPattern formatPattern = null;
+
+	public FormatPattern getDetailFormatPattern() {
+		return this.formatPattern;
+	}
+
+	protected void configureDetailFormat(Map<Object, Object> parameters) {
+		String oFormat = ParseUtils.getString((String) parameters.get(Table.DETAIL_FORMAT), null);
+		if (oFormat != null) {
+			this.formatPattern = new FormatPattern(oFormat);
+
+			String oDateFormat = ParseUtils.getString((String) parameters.get(Table.DETAIL_DATE_FORMAT), null);
+			if (oDateFormat != null) {
+				this.formatPattern.setDateFormat(oDateFormat);
+			}
+		}
+	}
+
+	protected void configureInsertTitleKey(Map<Object, Object> parameters) {
+		this.insertTitleKey = ParseUtils.getString((String) parameters.get(Table.INSERT_TITLE_KEY), "insert");
+	}
+
+	protected String insertTitleKey;
+
+	public String getInsertTitleKey() {
+		return this.insertTitleKey;
+	}
+
+	public Hashtable<String, Integer> getColumnSQLTypes() {
+		return this.hColumnSQLTypes;
+	}
+
+	public boolean isQuickFilterLocal() {
+		return this.quickFilterLocal;
+	}
+
+	public boolean isQueryRowsModifiable() {
+		return this.queryRowsModifiable;
+	}
+
+	public void setQueryRowsModifiable(boolean queryRowsModifiable) {
+		this.queryRowsModifiable = queryRowsModifiable;
+	}
+
+	@Override
+	public void interactionManagerModeChanged(InteractionManagerModeEvent e) {
+		if (this.insertMode && (InteractionManager.INSERT == e.getInteractionManagerMode())) {
+			this.setEnabled(true);
+			this.operationInMemory = true;
+			if (this.memoryEntity == null) {
+				StringBuilder buffer = new StringBuilder("$LocalProxy$");
+				buffer.append(UUID.randomUUID());
+				buffer.append("$");
+				buffer.append(this.entity);
+				this.memoryEntity = buffer.toString();
+			}
+		} else {
+			this.operationInMemory = false;
+
+		}
+	}
+
+	public boolean isOperationInMemory() {
+		return this.operationInMemory;
+	}
+
+	public int getDetailTitleMaxSize() {
+		return this.detailTitleMaxSize;
+	}
+
+	public void setDetailTitleMaxSize(int detailTitleMaxSize) {
+		this.detailTitleMaxSize = detailTitleMaxSize;
+	}
+
+	public boolean isFitRowHeight() {
+		return this.fitRowHeight;
 	}
 
 	public void setFitRowHeight(boolean fitRowHeight) {
@@ -19010,37 +18556,37 @@ public class Table extends JRootPane
 
 	public static class CalculatedCellListModel extends DefaultListModel {
 
-        public CalculatedCellListModel() {
-            super();
+		public CalculatedCellListModel() {
+			super();
 
-            for (String name : Table.getRendererMap().keySet()) {
-                super.addElement(new com.ontimize.gui.table.Table.SelectableRenderCell(name));
+			for (String name : Table.getRendererMap().keySet()) {
+				super.addElement(new com.ontimize.gui.table.Table.SelectableRenderCell(name));
 
-            }
-        }
+			}
+		}
 
-    }
+	}
 
-    public ListModel getCalculatedColumnsRender() {
-        return this.renderListModel;
-    }
+	public ListModel getCalculatedColumnsRender() {
+		return this.renderListModel;
+	}
 
-    public static Map<String, CellRenderer> getRendererMap() {
-        initRendererMap();
-        return Table.rendererMap;
-    }
+	public static Map<String, CellRenderer> getRendererMap() {
+		Table.initRendererMap();
+		return Table.rendererMap;
+	}
 
-    public static class SelectableRenderCell extends SelectableItem {
+	public static class SelectableRenderCell extends SelectableItem {
 
-        public SelectableRenderCell(Object value) {
-            super(value);
-        }
+		public SelectableRenderCell(Object value) {
+			super(value);
+		}
 
-        @Override
-        public String toString() {
-            return ApplicationManager.getTranslation((String) this.getValue());
-        }
+		@Override
+		public String toString() {
+			return ApplicationManager.getTranslation((String) this.getValue());
+		}
 
-    }
+	}
 
 }

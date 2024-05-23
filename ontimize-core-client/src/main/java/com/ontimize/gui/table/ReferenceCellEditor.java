@@ -14,8 +14,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Types;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Vector;
 
@@ -33,9 +35,6 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.Form;
 import com.ontimize.gui.ReferenceComponent;
@@ -43,7 +42,10 @@ import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.field.AccessForm;
 import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.util.ParseTools;
 import com.ontimize.util.ParseUtils;
 
@@ -80,13 +82,13 @@ public class ReferenceCellEditor extends StringCellEditor
 
     protected ResourceBundle resources = null;
 
-    protected Vector columns = new Vector(2, 2);
+    protected List<Object> columns = new Vector(2, 2);
 
-    protected Hashtable valuesKeys = null;
+    protected Map<Object, Object> valuesKeys = null;
 
-    protected Vector colsSet = null;
+    protected List<String> colsSet = null;
 
-    protected Hashtable colsSetTypes;
+    protected Map<Object, Object> colsSetTypes;
 
     protected boolean codeNumber = false;
 
@@ -100,7 +102,7 @@ public class ReferenceCellEditor extends StringCellEditor
     /**
      * Configuration parameters.
      * <p>
-     * @param parameters the hashtable with parameters
+     * @param parameters the map with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
      *        <tr>
@@ -134,7 +136,7 @@ public class ReferenceCellEditor extends StringCellEditor
      *        </tr>
      *        </Table>
      */
-    public ReferenceCellEditor(Hashtable parameters) {
+    public ReferenceCellEditor(Map<Object, Object> parameters) {
         super(parameters);
         Object entity = parameters.get("entity");
         if (entity == null) {
@@ -276,12 +278,12 @@ public class ReferenceCellEditor extends StringCellEditor
         }
     }
 
-    public Vector getKeys() {
+    public List<Object> getKeys() {
         return this.table.getKeys();
     }
 
-    public Vector getColumnsToSet() {
-        return this.colsSet != null ? this.colsSet : this.table.getKeys();
+    public List<Object> getColumnsToSet() {
+        return this.colsSet != null ? new ArrayList<>(this.colsSet) : this.table.getKeys();
     }
 
     @Override
@@ -379,8 +381,8 @@ public class ReferenceCellEditor extends StringCellEditor
                 int selectedRow = ReferenceCellEditor.this.table.getSelectedRow();
                 if (selectedRow >= 0) {
                     ReferenceCellEditor.this.valuesKeys = ReferenceCellEditor.this.table.getRowKeys(selectedRow);
-                    Hashtable hData = ReferenceCellEditor.this.table.getRowData(selectedRow);
-                    Vector columnsToSet = ReferenceCellEditor.this.getColumnsToSet();
+                    Map<Object, Object> hData = ReferenceCellEditor.this.table.getRowData(selectedRow);
+                    List<Object> columnsToSet = ReferenceCellEditor.this.getColumnsToSet();
                     for (int i = 0; i < columnsToSet.size(); i++) {
                         if (hData.containsKey(columnsToSet.get(i))) {
                             ReferenceCellEditor.this.valuesKeys.put(columnsToSet.get(i),
@@ -404,13 +406,13 @@ public class ReferenceCellEditor extends StringCellEditor
         }
     }
 
-    public Hashtable getValuesKeys() {
+    public Map<Object, Object> getValuesKeys() {
         return this.valuesKeys;
     }
 
     @Override
-    public Hashtable getSetData(boolean useNullValues) {
-        Hashtable setData = new Hashtable(this.valuesKeys);
+    public Map<Object, Object> getSetData(boolean useNullValues) {
+    	Map<Object, Object> setData = new HashMap<>(this.valuesKeys);
         if ((this.colsSet != null) && useNullValues) {
             // If the data does not contains some of the columns to set then
             // update the data with NullValue objects
@@ -429,8 +431,8 @@ public class ReferenceCellEditor extends StringCellEditor
     }
 
     @Override
-    public List getSetColumns() {
-        return this.getColumnsToSet();
+    public List<Object> getSetColumns() {
+        return new ArrayList<>(this.getColumnsToSet());
     }
 
     protected void processingAction(boolean oneResultIsNotShown) {
@@ -454,7 +456,7 @@ public class ReferenceCellEditor extends StringCellEditor
         // Execute the query
         try {
             Entity entity = this.locator.getEntityReference(this.entityName);
-            Hashtable filter = new Hashtable();
+            Map<Object, Object> filter = new HashMap<>();
 
             // If value is asterisk or null then no filter is needed
             if ((oValue != null) && !oValue.toString().equals(this.ASTERISK)) {
@@ -483,9 +485,9 @@ public class ReferenceCellEditor extends StringCellEditor
                         Form.ERROR_MESSAGE);
             } else {
                 if (oneResultIsNotShown && (res.calculateRecordNumber() == 1)) {
-                    Hashtable hData = res.getRecordValues(0);
-                    this.valuesKeys = new Hashtable();
-                    Vector columnsToSet = this.table.getKeys();
+                	Map<?, ?> hData = res.getRecordValues(0);
+                    this.valuesKeys = new HashMap<>();
+                    List<Object> columnsToSet = this.table.getKeys();
                     for (int i = 0; i < columnsToSet.size(); i++) {
                         if (hData.containsKey(columnsToSet.get(i))) {
                             this.valuesKeys.put(columnsToSet.get(i), hData.get(columnsToSet.get(i)));

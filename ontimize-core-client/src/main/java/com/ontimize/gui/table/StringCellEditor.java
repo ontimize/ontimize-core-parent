@@ -2,6 +2,7 @@ package com.ontimize.gui.table;
 
 import java.awt.Component;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JTable;
 
@@ -9,11 +10,11 @@ import com.ontimize.gui.field.TextDataField;
 
 public class StringCellEditor extends CellEditor {
 
-    public StringCellEditor(Hashtable parameters) {
+    public StringCellEditor(Map<Object, Object> parameters) {
         super(parameters.get(CellEditor.COLUMN_PARAMETER), StringCellEditor.initializeDataField(parameters));
     }
 
-    protected static TextDataField initializeDataField(Hashtable parameters) {
+    protected static TextDataField initializeDataField(Map<Object, Object> parameters) {
         TextDataField tdf = new TextDataField(parameters);
         if (tdf.getDataField() instanceof TextDataField.EJTextField) {
             ((TextDataField.EJTextField) tdf.getDataField()).setCaretPositionOnFocusLost(false);

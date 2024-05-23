@@ -15,10 +15,11 @@ import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
@@ -28,8 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.field.FormComponent;
 import com.ontimize.gui.field.IdentifiedElement;
+import com.ontimize.jee.common.security.MenuPermission;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.MenuPermission;
 import com.ontimize.util.ParseUtils;
 
 /**
@@ -39,303 +40,271 @@ import com.ontimize.util.ParseUtils;
  * @author Imatia Innovation
  */
 public class ApToolBarSeparator extends JToolBar.Separator implements FormComponent, IdentifiedElement, SecureElement,
-        Freeable, Transferable, DragGestureListener, DragSourceListener {
+Freeable, Transferable, DragGestureListener, DragSourceListener {
 
-    private static final Logger logger = LoggerFactory.getLogger(ApToolBarSeparator.class);
+	private static final Logger logger = LoggerFactory.getLogger(ApToolBarSeparator.class);
 
-    protected int width = 6;
+	protected int width = 6;
 
-    protected int high = ApplicationToolBar.DEFAULT_BUTTON_SIZE;
+	protected int high = ApplicationToolBar.DEFAULT_BUTTON_SIZE;
 
-    protected boolean toolbarFix = false;
+	protected boolean toolbarFix = false;
 
-    /**
-     * The reference to attribute. By default, null.
-     */
-    protected String attribute = null;
+	/**
+	 * The reference to attribute. By default, null.
+	 */
+	protected String attribute = null;
 
-    protected MenuPermission visiblePermission = null;
+	protected MenuPermission visiblePermission = null;
 
-    protected DragSource source;
-
-    /**
-     * The class constructor. Inits parameters and permissions.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
-     */
-    public ApToolBarSeparator(Hashtable parameters) {
-        this.init(parameters);
-        this.initPermissions();
-        this.source = new DragSource();
-        this.source.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_MOVE, this);
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-        return this.getPreferredSize();
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-        return this.getPreferredSize();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        Dimension d = super.getPreferredSize();
-        Container c = this.getParent();
-        if ((c != null) && (c instanceof ApplicationToolBar)) {
-            ApplicationToolBar toolBar = (ApplicationToolBar) c;
-            if (((JToolBar) c).getOrientation() == SwingConstants.HORIZONTAL) {
-                if (this.toolbarFix && toolBar.isToolbarHeightFix()) {
-                    d.height = toolBar.getHeight();
-                } else {
-                    d.height = this.high;
-                }
-                d.width = this.width;
-            } else {
-                d.height = this.width;
-                if (this.toolbarFix) {
-                    d.width = toolBar.getHeight();
-                } else {
-                    d.width = this.high != -1 ? this.high : d.height;
-                }
-            }
-        }
-        return d;
-    }
-
-    // protected void paintComponent(Graphics g) {
-    // super.paintComponent(g);
-    // Container c = this.getParent();
-    // if (c != null && c instanceof JToolBar) {
-    // if (((JToolBar) c).getOrientation() == JToolBar.HORIZONTAL) {
-    // g.setColor(Color.darkGray);
-    // int x = (int) ((this.getWidth() / 2.0) - 1.0);
-    // g.drawLine(x, 2, x, this.getHeight() - 2);
-    // g.setColor(Color.white);
-    // g.drawLine(x + 1, 2, x + 1, this.getHeight() - 2);
-    // } else {
-    // g.setColor(Color.darkGray);
-    // int y = (int) ((this.getHeight() / 2.0) - 1.0);
-    // g.drawLine(2, y, this.getWidth() - 2, y);
-    // g.setColor(Color.white);
-    // g.drawLine(2, y + 1, this.getWidth() - 2, y + 1);
-    // }
-    // }
-    // }
-
-    @Override
-    public Object getConstraints(LayoutManager layout) {
-        return null;
-    }
-
-    @Override
-    public void setResourceBundle(ResourceBundle resource) {
-
-    }
-
-    @Override
-    public void setComponentLocale(Locale l) {
-    }
-
-    @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector(0);
-        return v;
-    }
-
-    @Override
-    public Object getAttribute() {
-        return this.attribute;
-    }
+	protected DragSource source;
 
     /**
-     * Initializes parameters and selects the bundle equals to class {@link ResourceBundle}, adding a
-     * suffix to basic file name.
-     * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
-     *        <p>
-     *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
-     *        <tr>
-     *        <td><b>attribute</td>
-     *        <td><b>values</td>
-     *        <td><b>default</td>
-     *        <td><b>required</td>
-     *        <td><b>meaning</td>
-     *        </tr>
-     *        <tr>
-     *        <td>attr</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>The attribute for component.</td>
-     *        </tr>
-     *        <tr>
-     *        <td>width</td>
-     *        <td></td>
-     *        <td></td>
-     *        <td>no</td>
-     *        <td>Separator width in pixels.</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>opaque</td>
-     *        <td>yes/no</td>
-     *        <td>yes</td>
-     *        <td>no</td>
-     *        <td>The opacity condition for the separator.</td>
-     *        </tr>
-     *
-     *        <tr>
-     *        <td>toolbarsize</td>
-     *        <td>yes/no</td>
-     *        <td>no</td>
-     *        <td>no</td>
-     *        <td>The separator is fixed to toolbar size.</td>
-     *        </tr>
-     *
-     *        </TABLE>
-     */
-    @Override
-    public void init(Hashtable parameters) {
+	 * The class constructor. Inits parameters and permissions. <p>
+	 * 
+	 * @param parameters
+	 *            the <code>Map</code> with parameters
+	 */
+	public ApToolBarSeparator(Map<Object, Object> parameters) {
+		this.init(parameters);
+		this.initPermissions();
+		this.source = new DragSource();
+		this.source.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_MOVE, this);
+	}
 
-        Object attr = parameters.get("attr");
-        if (attr != null) {
-            this.attribute = attr.toString();
-        } else {
-            this.attribute = "aptoolbarseparator";
-        }
+	@Override
+	public Dimension getMinimumSize() {
+		return this.getPreferredSize();
+	}
 
-        Object width = parameters.get("width");
-        if (width != null) {
-            try {
-                this.width = Integer.parseInt(width.toString());
-            } catch (Exception e) {
-                ApToolBarSeparator.logger.error("Error 'width' parameter", e);
-            }
-        }
+	@Override
+	public Dimension getMaximumSize() {
+		return this.getPreferredSize();
+	}
 
-        if (!ParseUtils.getBoolean((String) parameters.get("opaque"), true)) {
-            this.setOpaque(false);
-        }
+	@Override
+	public Dimension getPreferredSize() {
+		Dimension d = super.getPreferredSize();
+		Container c = this.getParent();
+		if ((c != null) && (c instanceof ApplicationToolBar)) {
+			ApplicationToolBar toolBar = (ApplicationToolBar) c;
+			if (((JToolBar) c).getOrientation() == SwingConstants.HORIZONTAL) {
+				if (this.toolbarFix && toolBar.isToolbarHeightFix()) {
+					d.height = toolBar.getHeight();
+				} else {
+					d.height = this.high;
+				}
+				d.width = this.width;
+			} else {
+				d.height = this.width;
+				if (this.toolbarFix) {
+					d.width = toolBar.getHeight();
+				} else {
+					d.width = this.high != -1 ? this.high : d.height;
+				}
+			}
+		}
+		return d;
+	}
 
-        this.toolbarFix = ParseUtils.getBoolean((String) parameters.get("toolbarsize"), false);
+	// protected void paintComponent(Graphics g) {
+	// super.paintComponent(g);
+	// Container c = this.getParent();
+	// if (c != null && c instanceof JToolBar) {
+	// if (((JToolBar) c).getOrientation() == JToolBar.HORIZONTAL) {
+	// g.setColor(Color.darkGray);
+	// int x = (int) ((this.getWidth() / 2.0) - 1.0);
+	// g.drawLine(x, 2, x, this.getHeight() - 2);
+	// g.setColor(Color.white);
+	// g.drawLine(x + 1, 2, x + 1, this.getHeight() - 2);
+	// } else {
+	// g.setColor(Color.darkGray);
+	// int y = (int) ((this.getHeight() / 2.0) - 1.0);
+	// g.drawLine(2, y, this.getWidth() - 2, y);
+	// g.setColor(Color.white);
+	// g.drawLine(2, y + 1, this.getWidth() - 2, y + 1);
+	// }
+	// }
+	// }
 
-        if (ApplicationToolBar.DEFAULT_TOOLBAR_HEIGHT != -1) {
-            this.high = ApplicationToolBar.DEFAULT_TOOLBAR_HEIGHT;
-        }
+	@Override
+	public Object getConstraints(LayoutManager layout) {
+		return null;
+	}
 
-    }
+	@Override
+	public void setResourceBundle(ResourceBundle resource) {
 
-    @Override
-    public void setVisible(boolean vis) {
-        if (ApplicationManager.CHECK_VISIBLE_PERMISSION_ON_TOOLBAR_COMPONENTS) {
-            ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-            if (manager != null) {
-                if (this.visiblePermission == null) {
-                    this.visiblePermission = new MenuPermission("visible", this.attribute, true);
-                }
-                try {
-                    // Check to show
-                    if (vis) {
-                        manager.checkPermission(this.visiblePermission);
-                    }
-                    super.setVisible(vis);
-                } catch (Exception e) {
-                    if (ApplicationManager.DEBUG_SECURITY) {
-                        ApToolBarSeparator.logger.debug(this.getClass().toString() + ": " + e.getMessage(), e);
-                    }
-                }
-            } else {
-                super.setVisible(vis);
-            }
-        } else {
-            super.setVisible(vis);
-        }
-    }
+	}
 
-    @Override
-    public void initPermissions() {
-        if (ApplicationManager.getClientSecurityManager() != null) {
-            ClientSecurityManager.registerSecuredElement(this);
-        }
-        if (ApplicationManager.CHECK_VISIBLE_PERMISSION_ON_TOOLBAR_COMPONENTS) {
-            ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
-            if (this.visiblePermission == null) {
-                this.visiblePermission = new MenuPermission("visible", this.attribute, true);
-            }
-            try {
-                manager.checkPermission(this.visiblePermission);
-            } catch (Exception e) {
-                super.setVisible(false);
-                if (ApplicationManager.DEBUG_SECURITY) {
-                    ApToolBarSeparator.logger.debug(this.getClass().toString() + ": " + e.getMessage(), e);
-                }
-            }
-        }
-    }
+	@Override
+	public void setComponentLocale(Locale l) {
+	}
+
+	@Override
+	public List<String> getTextsToTranslate() {
+		List<String> v = new ArrayList<>(0);
+		return v;
+	}
+
+	@Override
+	public Object getAttribute() {
+		return this.attribute;
+	}
 
     /**
-     * The restricted condition. By default, false.
-     */
-    protected boolean restricted = false;
+	 * Initializes parameters and selects the bundle equals to class {@link ResourceBundle}, adding a suffix to basic file name. <p>
+	 * 
+	 * @param parameters
+	 *            the <code>Map</code> with parameters <p> <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX> <tr> <td><b>attribute</td> <td><b>values</td>
+	 *            <td><b>default</td> <td><b>required</td> <td><b>meaning</td> </tr> <tr> <td>attr</td> <td></td> <td></td> <td>no</td> <td>The attribute for component.</td> </tr>
+	 *            <tr> <td>width</td> <td></td> <td></td> <td>no</td> <td>Separator width in pixels.</td> </tr>
+	 *
+	 *            <tr> <td>opaque</td> <td>yes/no</td> <td>yes</td> <td>no</td> <td>The opacity condition for the separator.</td> </tr>
+	 *
+	 *            <tr> <td>toolbarsize</td> <td>yes/no</td> <td>no</td> <td>no</td> <td>The separator is fixed to toolbar size.</td> </tr>
+	 *
+	 *            </TABLE>
+	 */
+	@Override
+	public void init(Map<Object, Object> parameters) {
 
-    @Override
-    public boolean isRestricted() {
-        return this.restricted;
-    }
+		Object attr = parameters.get("attr");
+		if (attr != null) {
+			this.attribute = attr.toString();
+		} else {
+			this.attribute = "aptoolbarseparator";
+		}
 
-    @Override
-    public void free() {
-        // TODO Auto-generated method stub
+		Object width = parameters.get("width");
+		if (width != null) {
+			try {
+				this.width = Integer.parseInt(width.toString());
+			} catch (Exception e) {
+				ApToolBarSeparator.logger.error("Error 'width' parameter", e);
+			}
+		}
 
-    }
+		if (!ParseUtils.getBoolean((String) parameters.get("opaque"), true)) {
+			this.setOpaque(false);
+		}
 
-    @Override
-    public DataFlavor[] getTransferDataFlavors() {
-        try {
-            return new DataFlavor[] { new DataFlavor(
-                    DataFlavor.javaJVMLocalObjectMimeType + ";class=\"" + ApToolBarSeparator.class.getName() + "\"") };
-        } catch (ClassNotFoundException e) {
-            logger.error(null, e);
-        }
-        return null;
-    }
+		this.toolbarFix = ParseUtils.getBoolean((String) parameters.get("toolbarsize"), false);
 
-    @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-        return true;
-    }
+		if (ApplicationToolBar.DEFAULT_TOOLBAR_HEIGHT != -1) {
+			this.high = ApplicationToolBar.DEFAULT_TOOLBAR_HEIGHT;
+		}
 
-    @Override
-    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        return this;
-    }
+	}
 
-    @Override
-    public void dragGestureRecognized(DragGestureEvent dge) {
-        this.source.startDrag(dge, DragSource.DefaultMoveDrop, this, this);
-    }
+	@Override
+	public void setVisible(boolean vis) {
+		if (ApplicationManager.CHECK_VISIBLE_PERMISSION_ON_TOOLBAR_COMPONENTS) {
+			ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+			if (manager != null) {
+				if (this.visiblePermission == null) {
+					this.visiblePermission = new MenuPermission("visible", this.attribute, true);
+				}
+				try {
+					// Check to show
+					if (vis) {
+						manager.checkPermission(this.visiblePermission);
+					}
+					super.setVisible(vis);
+				} catch (Exception e) {
+					if (ApplicationManager.DEBUG_SECURITY) {
+						ApToolBarSeparator.logger.debug(this.getClass().toString() + ": " + e.getMessage(), e);
+					}
+				}
+			} else {
+				super.setVisible(vis);
+			}
+		} else {
+			super.setVisible(vis);
+		}
+	}
 
-    @Override
-    public void dragEnter(DragSourceDragEvent dsde) {
-    }
+	@Override
+	public void initPermissions() {
+		if (ApplicationManager.getClientSecurityManager() != null) {
+			ClientSecurityManager.registerSecuredElement(this);
+		}
+		if (ApplicationManager.CHECK_VISIBLE_PERMISSION_ON_TOOLBAR_COMPONENTS) {
+			ClientSecurityManager manager = ApplicationManager.getClientSecurityManager();
+			if (this.visiblePermission == null) {
+				this.visiblePermission = new MenuPermission("visible", this.attribute, true);
+			}
+			try {
+				manager.checkPermission(this.visiblePermission);
+			} catch (Exception e) {
+				super.setVisible(false);
+				if (ApplicationManager.DEBUG_SECURITY) {
+					ApToolBarSeparator.logger.debug(this.getClass().toString() + ": " + e.getMessage(), e);
+				}
+			}
+		}
+	}
 
-    @Override
-    public void dragOver(DragSourceDragEvent dsde) {
-    }
+	/**
+	 * The restricted condition. By default, false.
+	 */
+	protected boolean restricted = false;
 
-    @Override
-    public void dropActionChanged(DragSourceDragEvent dsde) {
-    }
+	@Override
+	public boolean isRestricted() {
+		return this.restricted;
+	}
 
-    @Override
-    public void dragExit(DragSourceEvent dse) {
-    }
+	@Override
+	public void free() {
+		// TODO Auto-generated method stub
 
-    @Override
-    public void dragDropEnd(DragSourceDropEvent dsde) {
-    }
+	}
+
+	@Override
+	public DataFlavor[] getTransferDataFlavors() {
+		try {
+			return new DataFlavor[] { new DataFlavor(
+					DataFlavor.javaJVMLocalObjectMimeType + ";class=\"" + ApToolBarSeparator.class.getName() + "\"") };
+		} catch (ClassNotFoundException e) {
+			ApToolBarSeparator.logger.error(null, e);
+		}
+		return null;
+	}
+
+	@Override
+	public boolean isDataFlavorSupported(DataFlavor flavor) {
+		return true;
+	}
+
+	@Override
+	public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+		return this;
+	}
+
+	@Override
+	public void dragGestureRecognized(DragGestureEvent dge) {
+		this.source.startDrag(dge, DragSource.DefaultMoveDrop, this, this);
+	}
+
+	@Override
+	public void dragEnter(DragSourceDragEvent dsde) {
+	}
+
+	@Override
+	public void dragOver(DragSourceDragEvent dsde) {
+	}
+
+	@Override
+	public void dropActionChanged(DragSourceDragEvent dsde) {
+	}
+
+	@Override
+	public void dragExit(DragSourceEvent dse) {
+	}
+
+	@Override
+	public void dragDropEnd(DragSourceDropEvent dsde) {
+	}
 
 }

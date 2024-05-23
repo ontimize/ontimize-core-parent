@@ -13,8 +13,11 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.actions.RedoAction;
 import com.ontimize.gui.actions.UndoAction;
+import com.ontimize.gui.field.SelectionListDataField.SelectableItem;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.util.JEPUtils;
 import com.ontimize.util.math.MathExpressionParser;
@@ -61,7 +65,7 @@ public class JCalculatedExpression extends JPanel {
     /**
      * List of all components that conform the JCalculatedExpression
      */
-    protected List componentList = new Vector();
+    protected List<Object> componentList = new ArrayList<>();
 
     /**
      * The reference to the <code>UndoManager</code>.
@@ -249,7 +253,7 @@ public class JCalculatedExpression extends JPanel {
      * Recovers the list of available fields to use into the mathematical expression.
      * @return a <code>List</code> of elements.
      */
-    public List getAvailableFields() {
+    public List<?> getAvailableFields() {
         if (this.availableFieldsList != null) {
             return ((CustomListModel) this.availableFieldsList.getModel()).getListData();
         }
@@ -291,7 +295,7 @@ public class JCalculatedExpression extends JPanel {
      * expression of the editor.
      * @param values A list with the values.
      */
-    public void setAvailableFields(List values) {
+    public void setAvailableFields(List<?> values) {
         if (this.availableFieldsList != null) {
             ((CustomListModel) this.availableFieldsList.getModel()).setListData(values);
         }
@@ -338,8 +342,8 @@ public class JCalculatedExpression extends JPanel {
 
         // Change the column names if exist for a component with the
         // original and translated text
-        List listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
-        Hashtable hColumnPositions = new Hashtable();
+        List<Object> listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
+        Map<Object, Object> hColumnPositions = new HashMap<>();
         for (int i = 0; i < listData.size(); i++) {
             String columnName = null;
             Object obj = listData.get(i);
@@ -355,15 +359,14 @@ public class JCalculatedExpression extends JPanel {
         }
 
         if (!hColumnPositions.isEmpty()) {
-            Enumeration columnNames = hColumnPositions.keys();
-            List indices = new ArrayList();
-            while (columnNames.hasMoreElements()) {
-                String colName = (String) columnNames.nextElement();
-                int[] positions = (int[]) hColumnPositions.get(colName);
+        	List<ColumnPosition> indices = new ArrayList<>();
+        	for(Entry<Object, Object> entry:hColumnPositions.entrySet()) {
+        		String colName = (String) entry.getKey();
+                int[] positions = (int[]) entry.getValue();
                 for (int i = 0; i < positions.length; i++) {
                     indices.add(new ColumnPosition(colName, positions[i]));
                 }
-            }
+        	}
 
             // this indices must be sort
             Collections.sort(indices);
@@ -381,7 +384,7 @@ public class JCalculatedExpression extends JPanel {
         if ((colName != null) && (expression != null)) {
             Pattern pattern = Pattern.compile("(^|[^0-9 ^A-Z ^a-z ^_]|\\s)" + colName + "([^0-9 ^A-Z ^a-z ^_]|$|\\s)");
             Matcher matcher = pattern.matcher(expression);
-            List indices = new ArrayList();
+            List<Integer> indices = new ArrayList<>();
             int start = 0;
             while (matcher.find(start)) {
                 start = matcher.start();
@@ -483,18 +486,16 @@ public class JCalculatedExpression extends JPanel {
      * @param columns List of available fields that can be used into the expression.
      * @return
      */
-    public static MathExpressionParser createParser(String expr, List columns) {
+    public static MathExpressionParser createParser(String expr, List<?> columns) {
 
         MathExpressionParser parser = MathExpressionParserFactory.getInstance();
         parser.setTraverse(ApplicationManager.DEBUG);
-        Hashtable custom = JEPUtils.getCustomFunctions();
-        Enumeration keys = custom.keys();
-        while (keys.hasMoreElements()) {
-            String key = (String) keys.nextElement();
-            try {
-                parser.addFunction(key, custom.get(key));
-            } catch (java.lang.NoSuchMethodError e) {
-                JCalculatedExpression.logger.error(e.getMessage(), e);
+        Map<Object, Object> custom = JEPUtils.getCustomFunctions();
+        for(Entry<Object, Object> entry:custom.entrySet()) {
+        	try {
+                parser.addFunction((String)entry.getKey(), entry.getValue());
+            } catch (java.lang.NoSuchMethodError exc) {
+                JCalculatedExpression.logger.error(exc.getMessage(), exc);
             }
         }
 
@@ -587,7 +588,7 @@ public class JCalculatedExpression extends JPanel {
      *        of all components of the JCalculatedExpression.
      * @return a <code>JList</code> component.
      */
-    protected JList createList(List values, boolean addToGroup) {
+    protected JList createList(List<Object> values, boolean addToGroup) {
         JList listSwing = null;
         if ((values != null) && !values.isEmpty()) {
             listSwing = new JList(new CustomListModel(values));
@@ -626,27 +627,27 @@ public class JCalculatedExpression extends JPanel {
 
     protected static class CustomListModel extends AbstractListModel {
 
-        protected List values;
+        protected List<Object> values;
 
         public CustomListModel() {
-            this.values = new Vector();
+            this.values = new ArrayList<>();
         }
 
-        public CustomListModel(List list) {
+        public CustomListModel(List<Object> list) {
             this.values = list;
         }
 
-        public void setListData(List values) {
-            this.values = values;
+        public void setListData(List<?> values) {
+            this.values = new ArrayList<>(values);
         }
 
-        public List getListData() {
+        public List<Object> getListData() {
             return this.values;
         }
 
         public void addElement(Object element) {
             if (this.values == null) {
-                this.values = new Vector();
+                this.values = new ArrayList<>();
             }
             this.values.add(element);
             this.fireIntervalAdded(this, this.values.size() - 1, this.values.size() - 1);

@@ -1,8 +1,13 @@
 package com.ontimize.gui.field;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -13,9 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.Form;
-import com.ontimize.gui.SearchValue;
 import com.ontimize.gui.ValueChangeListener;
 import com.ontimize.gui.ValueEvent;
+import com.ontimize.jee.common.gui.SearchValue;
 import com.ontimize.util.JEPUtils;
 import com.ontimize.util.math.MathExpressionParser;
 import com.ontimize.util.math.MathExpressionParserFactory;
@@ -51,7 +56,7 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
     /**
      * An instance of attribute fields.
      */
-    protected Vector attributeFields = new Vector();
+    protected List<String> attributeFields = new ArrayList<>();
 
     /**
      * An instance of parser for mathematical operation.
@@ -62,7 +67,7 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
     /**
      * A 2x2 Vector for required fields.
      */
-    protected Vector requiredFields = new Vector(2, 2);
+    protected List<Object> requiredFields = new Vector<>(2, 2);
 
     /**
      * A reference for associated fields.
@@ -70,10 +75,10 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
     protected String source = null;
 
     /**
-     * The class constructor. Calls to <code>super()</code> with <code>Hashtable</code> parameters and
+     * The class constructor. Calls to <code>super()</code> with <code>Map</code> parameters and
      * parses operation.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters. New parameters are added:
+     * @param parameters the <code>Map</code> with parameters. New parameters are added:
      *
      *
      *        <p>
@@ -113,16 +118,14 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
      *        </tr>
      *        </TABLE>
      */
-    public CalculatedDataField(Hashtable parameters) {
+    public CalculatedDataField(Map<Object, Object> parameters) {
         super(parameters);
-        Hashtable custom = JEPUtils.getCustomFunctions();
-        Enumeration keys = custom.keys();
-        while (keys.hasMoreElements()) {
-            String key = (String) keys.nextElement();
-            try {
-                this.parser.addFunction(key, custom.get(key));
-            } catch (java.lang.NoSuchMethodError e) {
-                CalculatedDataField.logger.error(e.getMessage(), e);
+        Map<Object, Object> custom = JEPUtils.getCustomFunctions();
+        for(Entry<Object, Object> entry:custom.entrySet()) {
+        	try {
+                this.parser.addFunction((String)entry.getKey(), entry.getValue());
+            } catch (java.lang.NoSuchMethodError exc) {
+                CalculatedDataField.logger.error(exc.getMessage(), exc);
             }
         }
         ((JTextField) this.dataField).setEnabled(false);
@@ -202,7 +205,7 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
         try {
             if (source != null) {
                 if (this.attributeFields != null) {
-                    for (Iterator iter = this.attributeFields.iterator(); iter.hasNext();) {
+                    for (Iterator<String> iter = this.attributeFields.iterator(); iter.hasNext();) {
                         String attr = (String) iter.next();
                         DataField cmp = (DataField) this.parentForm.getDataFieldReference(attr);
                         if (cmp != null) {
@@ -212,7 +215,7 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
                     }
                     this.attributeFields = ApplicationManager.getTokensAt(source, ";");
                     if (this.attributeFields != null) {
-                        for (Iterator iter = this.attributeFields.iterator(); iter.hasNext();) {
+                        for (Iterator<String> iter = this.attributeFields.iterator(); iter.hasNext();) {
                             String attr = (String) iter.next();
                             DataField cmp = (DataField) this.parentForm.getDataFieldReference(attr);
                             if (cmp != null) {
@@ -259,7 +262,7 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
 
     @Override
     public void valueChanged(ValueEvent e) {
-        Hashtable hValues = new Hashtable();
+        Map<Object, Object> hValues = new HashMap<>();
         if (this.parentForm != null) {
             for (int i = 0; i < this.attributeFields.size(); i++) {
                 Object oAttr = this.attributeFields.get(i);
@@ -306,11 +309,11 @@ public class CalculatedDataField extends RealDataField implements ValueChangeLis
     /**
      * Recalculates the value rebuilding the expression to parse it.
      * <p>
-     * @param values the <code>Hashtable</code> with values to recalculate
+     * @param values the <code>Map</code> with values to recalculate
      */
-    protected void recalculate(Hashtable values) {
+    protected void recalculate(Map<Object, Object> values) {
 
-        Enumeration enumKeys = values.keys();
+        Enumeration<Object> enumKeys = Collections.enumeration(values.keySet());
         while (enumKeys.hasMoreElements()) {
             Object oAttribute = enumKeys.nextElement();
             String sAttr = oAttribute.toString();

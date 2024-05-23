@@ -6,7 +6,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import javax.swing.JTable;
 import javax.swing.border.LineBorder;
@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.field.RealDataField;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 /**
  * Use {@link RealCellEditor}
@@ -27,7 +27,7 @@ public class RealTableCellEditor extends DefaultDataTableCellEditor {
 
     private static final Logger logger = LoggerFactory.getLogger(RealTableCellEditor.class);
 
-    protected RealDataField realDataField = new RealDataField(new Hashtable());
+    protected RealDataField realDataField = new RealDataField(new HashMap<>());
 
     public RealTableCellEditor(EntityReferenceLocator buscador, Table t) {
         super(buscador, t);

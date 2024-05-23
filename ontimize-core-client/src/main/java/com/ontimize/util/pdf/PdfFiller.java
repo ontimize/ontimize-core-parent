@@ -14,6 +14,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -42,7 +44,7 @@ import com.lowagie.text.pdf.PdfStamper;
 import com.lowagie.text.pdf.PdfString;
 import com.lowagie.text.pdf.PdfWriter;
 import com.ontimize.gui.table.Table;
-import com.ontimize.util.remote.BytesBlock;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 
 /**
  * Class that contains static methods to create PDF files filling fields for other PDF used like
@@ -256,7 +258,7 @@ public abstract class PdfFiller {
      * @param flatFields condition to delete fields
      * @throws Exception when an <code>Exception</code> occurs
      */
-    public static void fillFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Hashtable params,
+    public static void fillFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Map<Object, Object> params,
             boolean flatFields) throws Exception {
         try {
             ByteArrayOutputStream baOut = new ByteArrayOutputStream();
@@ -270,9 +272,9 @@ public abstract class PdfFiller {
             PdfReader reader = new PdfReader(buffer);
             PdfStamper stamp = new PdfStamper(reader, pdfOutputStream);
             AcroFields form = stamp.getAcroFields();
-            Enumeration e_key = params.keys();
-            while (e_key.hasMoreElements()) {
-                String field = e_key.nextElement().toString();
+            Iterator<?> e_key = params.keySet().iterator();
+            while (e_key.hasNext()) {
+                String field = e_key.next().toString();
                 Object value = params.get(field);
                 if (value != null) {
                     form.setField(field, value.toString());
@@ -289,9 +291,8 @@ public abstract class PdfFiller {
 
             if (PdfFiller.DEBUG) {
                 PdfFiller.logger.debug("-----------------pdf fields(start)------------------------------------");
-                HashMap map = form.getFields();
-                Set keySet = map.keySet();
-                Iterator it = keySet.iterator();
+                Map<?, ?> map = form.getFields();
+                Iterator<?> it = map.keySet().iterator();
                 while (it.hasNext()) {
                     Object oKey = it.next();
                     Object oValue = map.get(oKey);
@@ -381,7 +382,7 @@ public abstract class PdfFiller {
      * @param flatFields This param indicates whether original PDF fields are kept
      * @throws Exception When <code>Exception</code> occurs
      */
-    public static void fillImageFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Hashtable params,
+    public static void fillImageFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Map<Object, Object> params,
             boolean flatFields) throws Exception {
         try {
             ByteArrayOutputStream baOut = new ByteArrayOutputStream();
@@ -402,7 +403,7 @@ public abstract class PdfFiller {
 
             // Create other InputStream.
             ByteArrayInputStream pdfBytesArrayInputStream = new ByteArrayInputStream(buffer);
-            Vector fieldProps = PdfFiller.getFieldProps(pdfBytesArrayInputStream);
+            List<?> fieldProps = PdfFiller.getFieldProps(pdfBytesArrayInputStream);
             if (PdfFiller.DEBUG) {
                 PdfFiller.logger.debug("Fields " + fieldProps);
             }
@@ -544,15 +545,14 @@ public abstract class PdfFiller {
      * @param flatFields This parameter indicates whether original PDF fields are kept
      * @throws Exception When <code>Exception</code> occurs
      */
-    public static void fillTextImageFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Hashtable params,
-            Vector imagesFields, boolean flatFields) throws Exception {
-        Hashtable htextfields = new Hashtable();
-        Hashtable himagefields = new Hashtable();
-        Enumeration enumKeys;
+    public static void fillTextImageFields(InputStream pdfInputStream, OutputStream pdfOutputStream, Map<Object, Object> params,
+            List<Object> imagesFields, boolean flatFields) throws Exception {
+        Map<Object, Object> htextfields = new HashMap<>();
+        Map<Object, Object> himagefields = new HashMap<>();
         try {
-            enumKeys = params.keys();
-            while (enumKeys.hasMoreElements()) {
-                String sKey = enumKeys.nextElement().toString();
+        	Iterator    enumKeys = params.keySet().iterator();
+            while (enumKeys.hasNext()) {
+                String sKey = enumKeys.next().toString();
                 if (imagesFields.contains(sKey)) {
                     himagefields.put(sKey, params.get(sKey));
                 } else {
@@ -663,7 +663,7 @@ public abstract class PdfFiller {
             PdfWriter.getInstance(document, pdfInputStream);
             document.open();
 
-            Vector v = table.getVisibleColumns();
+            List<String> v = table.getVisibleColumns();
             int numCols = v.size();
             PdfPTable datatable = new PdfPTable(numCols);
 

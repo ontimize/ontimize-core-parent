@@ -7,20 +7,21 @@ import java.lang.reflect.Proxy;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.Vector;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.i18n.ExtendedPropertiesBundle;
-import com.ontimize.gui.i18n.IDatabaseBundleManager;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.gui.i18n.IDatabaseBundleManager;
+import com.ontimize.jee.common.locator.ErrorAccessControl;
+import com.ontimize.jee.common.locator.InitialContext;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
 import com.ontimize.jee.common.tools.proxy.AbstractInvocationDelegate;
+import com.ontimize.jee.common.util.operation.RemoteOperationManager;
+import com.ontimize.jee.common.util.share.IShareRemoteReference;
 import com.ontimize.jee.desktopclient.locator.remoteoperation.WebsocketRemoteOperationManager;
-import com.ontimize.locator.ErrorAccessControl;
-import com.ontimize.locator.InitialContext;
-import com.ontimize.locator.UtilReferenceLocator;
-import com.ontimize.util.operation.RemoteOperationManager;
-import com.ontimize.util.share.IShareRemoteReference;
 
 /**
  * The Class UtilLocatorInvocationDelegate.
@@ -230,7 +231,7 @@ public class UtilInvocationDelegate extends AbstractInvocationDelegate implement
      * @see com.ontimize.locator.UtilReferenceLocator#retrieveInitialContext(int, java.util.Hashtable)
      */
     @Override
-    public InitialContext retrieveInitialContext(int sessionId, Hashtable params) throws Exception {
+    public InitialContext retrieveInitialContext(int sessionId, Map params) throws Exception {
         // TODO By now, return empty initial context...
         return new InitialContext();
     }
@@ -291,7 +292,7 @@ public class UtilInvocationDelegate extends AbstractInvocationDelegate implement
     }
 
     @Override
-    public EntityResult changePassword(String arg0, int arg1, Hashtable arg2, Hashtable arg3) throws Exception {
+    public EntityResult changePassword(String arg0, int arg1, Map arg2, Map arg3) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }

@@ -9,11 +9,12 @@ import java.awt.LayoutManager;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JList;
 import javax.swing.border.EmptyBorder;
@@ -26,7 +27,6 @@ import javax.swing.text.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.ColorConstants;
 import com.ontimize.gui.Form;
@@ -34,8 +34,9 @@ import com.ontimize.gui.Freeable;
 import com.ontimize.gui.ValueChangeDataComponent;
 import com.ontimize.gui.ValueChangeListener;
 import com.ontimize.gui.ValueEvent;
+import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.security.FormPermission;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.FormPermission;
 import com.ontimize.util.ParseUtils;
 import com.ontimize.util.swing.JCalculatedExpression;
 import com.ontimize.util.swing.selectablelist.SelectableItem;
@@ -110,12 +111,12 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     /**
      * List that contains the name of the available fields to use into the editor of expressions.
      */
-    protected List availableFields;
+    protected List<?> availableFields;
 
     /**
-     * The vector instance for a value listener.
+     * The list instance for a value listener.
      */
-    protected Vector valueListener = new Vector();
+    protected List<Object> valueListener = new ArrayList<>();
 
     /**
      * The condition to activate field events. By default, yes.
@@ -157,7 +158,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      */
     protected SelectableItemListCellRenderer selItemRenderer;
 
-    public CalculatedExpressionDataField(Hashtable parameters) {
+    public CalculatedExpressionDataField(Map<Object, Object> parameters) {
         super();
         try {
             this.init(parameters);
@@ -184,7 +185,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     /**
      * Inits parameters.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS * FRAME=BOX>
      *        <tr>
@@ -254,7 +255,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      *        </Table>
      */
     @Override
-    public void init(Hashtable parameters) throws Exception {
+    public void init(Map<Object, Object> parameters) throws Exception {
 
         // parameter: attribute 'attr'
         Object oAttribute = parameters.get(DataField.ATTR);
@@ -342,7 +343,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     /**
      * In addition to super method, this method adds renderers and listeners to JList component.
      */
-    protected JList createList(List values) {
+    protected JList createList(List<Object> values) {
         JList list = super.createList(values, true);
         this.selItemRenderer = new SelectableItemListCellRenderer(this.resources);
         list.setCellRenderer(this.selItemRenderer);
@@ -491,7 +492,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     }
 
     @Override
-    public List getAvailableFields() {
+    public List<?> getAvailableFields() {
         if (this.availableFields != null) {
             return this.availableFields;
         }
@@ -511,10 +512,10 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     }
 
     @Override
-    public void setAvailableFields(List values) {
+    public void setAvailableFields(List<?> values) {
         if (values != null) {
             if (this.availableFields == null) {
-                this.availableFields = new Vector();
+                this.availableFields = new ArrayList<>();
             }
 
             this.availableFields = this.getSelectableItemList(values);
@@ -529,8 +530,8 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      * @param fields List of available fields names.
      * @return a list of <code>SelectableItem</code> objects.
      */
-    protected List getSelectableItemList(List fields) {
-        List list = new Vector();
+    protected List<Object> getSelectableItemList(List<?> fields) {
+        List<Object> list = new ArrayList<>();
         if ((fields != null) && !fields.isEmpty()) {
             for (int i = 0; i < fields.size(); i++) {
                 Object currentObj = fields.get(i);
@@ -546,9 +547,9 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      * the editor.
      * @return a <code>List</code> with the source fields.
      */
-    public Vector getSourceFields() {
-        Vector sourceFields = new Vector();
-        List labelComp = this.expressionPane.getLabelComponents();
+    public List<Object> getSourceFields() {
+    	List<Object> sourceFields = new ArrayList<>();
+    	List<Object> labelComp = this.expressionPane.getLabelComponents();
         if ((labelComp != null) && !labelComp.isEmpty()) {
             for (int i = 0; i < labelComp.size(); i++) {
                 Object currentObj = labelComp.get(i);
@@ -569,10 +570,10 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      * 'expression'.
      * @return a <code>List</code> with the required values.
      */
-    public Vector getRequiredFields() {
-        Vector requiredFields = new Vector();
+    public List<Object> getRequiredFields() {
+    	List<Object> requiredFields = new ArrayList<>();
         if (this.availableFieldsList != null) {
-            List listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
+            List<Object> listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
             if ((listData != null) && !listData.isEmpty()) {
                 for (int i = 0; i < listData.size(); i++) {
                     Object currentObj = listData.get(i);
@@ -593,9 +594,9 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
      * fields is used into the configuration of the 'expression'.
      * @param requiredFields List with the fields to set required.
      */
-    public void setRequiredFields(List requiredFields) {
+    public void setRequiredFields(List<String> requiredFields) {
         if ((this.availableFieldsList != null) && (requiredFields != null)) {
-            List listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
+        	List<Object> listData = ((CustomListModel) this.availableFieldsList.getModel()).getListData();
             if ((listData != null) && !listData.isEmpty()) {
                 for (int i = 0; i < listData.size(); i++) {
                     Object currentObj = listData.get(i);
@@ -715,7 +716,7 @@ public class CalculatedExpressionDataField extends JCalculatedExpression
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         return null;
     }
 

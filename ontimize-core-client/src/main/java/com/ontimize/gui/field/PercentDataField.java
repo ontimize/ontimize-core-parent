@@ -3,6 +3,7 @@ package com.ontimize.gui.field;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -11,9 +12,9 @@ import javax.swing.text.JTextComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ValueEvent;
 import com.ontimize.gui.field.document.PercentDocument;
+import com.ontimize.jee.common.db.NullValue;
 import com.ontimize.util.ParseUtils;
 
 /**
@@ -29,11 +30,11 @@ public class PercentDataField extends TextFieldDataField {
 
     /**
      * The class constructor. It initializes the parameters. By default, the right alignment and if
-     * parameter 'size' exists, its values is fixed to 3 in <code>Hashtable</code> .
+     * parameter 'size' exists, its values is fixed to 3 in <code>Map</code> .
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters from XML definition.
+     * @param parameters the <code>Map</code> with parameters from XML definition.
      */
-    public PercentDataField(Hashtable parameters) {
+    public PercentDataField(Map<Object, Object> parameters) {
         super();
         if (!parameters.containsKey("size")) {
             parameters.put("size", "3");
@@ -62,7 +63,7 @@ public class PercentDataField extends TextFieldDataField {
     /**
      * Calls to <code>super()</code> to initialize parameters.
      * <p>
-     * @param parameters <code>Hashtable</code> for initialization parameters.
+     * @param parameters <code>Map</code> for initialization parameters.
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
      *        <tr>
@@ -110,7 +111,7 @@ public class PercentDataField extends TextFieldDataField {
      *        </table>
      */
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         super.init(parameters);
 
         ((JTextField) this.dataField).setDocument(new PercentDocument());
@@ -131,8 +132,8 @@ public class PercentDataField extends TextFieldDataField {
                 int maximum = Integer.parseInt(maxintegerdigits.toString());
                 PercentDocument doc = (PercentDocument) ((JTextField) this.dataField).getDocument();
                 doc.setMaximumIntegerDigits(maximum);
-            } catch (Exception e) {
-                PercentDataField.logger.error("Error in parameter 'maxintegerdigits' ", e);
+            } catch (Exception exc) {
+                PercentDataField.logger.error("Error in parameter 'maxintegerdigits' ", exc);
             }
         }
 
@@ -142,8 +143,8 @@ public class PercentDataField extends TextFieldDataField {
                 int minimum = Integer.parseInt(mindecimaldigits.toString());
                 PercentDocument doc = (PercentDocument) ((JTextField) this.dataField).getDocument();
                 doc.setMinimumFractionDigits(minimum);
-            } catch (Exception e) {
-                PercentDataField.logger.error("Error in parameter 'mindecimaldigits' ", e);
+            } catch (Exception exc) {
+                PercentDataField.logger.error("Error in parameter 'mindecimaldigits' ", exc);
             }
         }
 
@@ -162,8 +163,8 @@ public class PercentDataField extends TextFieldDataField {
             boolean limit100 = ParseUtils.getBoolean((String) parameters.get("limit100"), true);
             PercentDocument doc = (PercentDocument) ((JTextField) this.dataField).getDocument();
             doc.setLimit100(limit100);
-        } catch (Exception e) {
-            PercentDataField.logger.error("Error in parameter 'limit100' ", e);
+        } catch (Exception exc) {
+            PercentDataField.logger.error("Error in parameter 'limit100' ", exc);
         }
 
     }

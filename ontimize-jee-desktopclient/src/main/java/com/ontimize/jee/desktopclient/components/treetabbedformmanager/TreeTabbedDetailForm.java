@@ -1,6 +1,7 @@
 package com.ontimize.jee.desktopclient.components.treetabbedformmanager;
 
 import java.awt.BorderLayout;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,6 @@ import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.BaseDetailForm;
 import com.ontimize.gui.BasicInteractionManager;
@@ -19,6 +19,7 @@ import com.ontimize.gui.Form;
 import com.ontimize.gui.InteractionManager;
 import com.ontimize.gui.button.Button;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.db.NullValue;
 import com.ontimize.jee.common.tools.ReflectionTools;
 import com.ontimize.jee.desktopclient.components.treetabbedformmanager.levelmanager.Level;
 import com.ontimize.util.FormatPattern;
@@ -33,9 +34,9 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
 
     private final Level level;
 
-    private Hashtable levelKeys;
+    private Map<Object, Object> levelKeys;
 
-    private final Hashtable levelValues;
+    private final Map<Object, Object> levelValues;
 
     public TreeTabbedDetailForm(Form form, Level level, boolean isMain, ITreeTabbedFormManager mainFormManager) {
         this.mainFormManager = mainFormManager;
@@ -103,8 +104,8 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
         }
     }
 
-    private Hashtable adaptKeys(Hashtable<Object, Object> levelKeys2) {
-        Hashtable<Object, Vector<?>> result = new Hashtable<>();
+    private Map<Object, Vector<?>> adaptKeys(Map<?, ?> levelKeys2) {
+        Map<Object, Vector<?>> result = new HashMap<>();
         for (Entry<?, ?> entry : levelKeys2.entrySet()) {
             if (entry.getValue() != null) {
                 Vector<Object> value = new Vector<>();
@@ -136,10 +137,11 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
             } else {
                 if (this.level.getDetailFormatPattern() != null) {
                     FormatPattern formatPattern = this.level.getDetailFormatPattern();
-                    descriptionText = formatPattern.parse(0, this.levelValues);
+//                    descriptionText = formatPattern.parse(0, this.levelValues);
+                    descriptionText = formatPattern.parse(this.levelValues.values().toArray());
                 } else {
                     StringBuilder buffer = new StringBuilder();
-                    Vector keys = this.form.getKeys();
+                    List<?> keys = this.form.getKeys();
                     for (Object current : keys) {
                         Object value = this.form.getDataFieldValue(current.toString());
                         if (buffer.length() > 0) {
@@ -185,10 +187,11 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
         } else {
             if (this.level.getDetailFormatPattern() != null) {
                 FormatPattern formatPattern = this.level.getDetailFormatPattern();
-                descriptionText = formatPattern.parse(0, this.levelValues);
+//                descriptionText = formatPattern.parse(0, this.levelValues);
+                descriptionText = formatPattern.parse(this.levelValues.values().toArray());
             } else {
                 StringBuilder buffer = new StringBuilder();
-                Vector keys = this.form.getKeys();
+                List<?> keys = this.form.getKeys();
                 for (Object current : keys) {
                     Object value = this.form.getDataFieldValue(current.toString());
                     if (buffer.length() > 0) {
@@ -202,7 +205,7 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
         this.mainFormManager.addFormToContainer(this, descriptionText);
     }
 
-    public Hashtable getKeysValues() {
+    public Map<Object, Object> getKeysValues() {
         return this.levelKeys;
     }
 

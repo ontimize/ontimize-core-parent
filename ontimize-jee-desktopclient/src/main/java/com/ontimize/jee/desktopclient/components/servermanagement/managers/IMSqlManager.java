@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.annotation.FormComponent;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.BasicInteractionManager;
 import com.ontimize.gui.Form;
@@ -28,6 +28,8 @@ import com.ontimize.gui.field.MemoDataField;
 import com.ontimize.gui.field.TextComboDataField;
 import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService;
 import com.ontimize.jee.common.tools.MapTools;
 import com.ontimize.jee.desktopclient.components.servermanagement.window.list.ListSql;
@@ -161,13 +163,13 @@ public class IMSqlManager extends BasicInteractionManager {
                         List<String> availableDataSources = BeansFactory.getBean(IServerManagementService.class)
                             .getAvailableDataSources();
                         if (availableDataSources == null) {
-                            IMSqlManager.this.comboConnectionName.setValues(new Vector<String>());
+                            IMSqlManager.this.comboConnectionName.setValues(new ArrayList<>());
                         } else {
-                            IMSqlManager.this.comboConnectionName.setValues(new Vector<>(availableDataSources));
+                            IMSqlManager.this.comboConnectionName.setValues(new ArrayList<>(availableDataSources));
                         }
                     } catch (Exception ex) {
                         IMSqlManager.logger.error(null, ex);
-                        IMSqlManager.this.comboConnectionName.setValues(new Vector<String>());
+                        IMSqlManager.this.comboConnectionName.setValues(new ArrayList<>());
                     }
                 }
             }).start();
@@ -212,7 +214,7 @@ public class IMSqlManager extends BasicInteractionManager {
                             IMSqlManager.this.tableResults.setValue(res);
                         } catch (Exception ex) {
                             IMSqlManager.logger.error(null, ex);
-                            EntityResult res = new EntityResult();
+                            EntityResult res = new EntityResultMapImpl();
                             Hashtable<String, String> data = new Hashtable<>();
                             data.put("EXCEPTION", ex.getClass().getName());
                             MapTools.safePut(data, "MESSAGE", ex.getMessage());

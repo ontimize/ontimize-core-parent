@@ -7,10 +7,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +35,11 @@ public class ScriptUtilities {
 
     public static final int WSCRIPT = 1;
 
-    public static ExecutionResult executeScript(String archive, Vector pa) throws Exception {
+    public static ExecutionResult executeScript(String archive, List<Object> pa) throws Exception {
         return ScriptUtilities.executeScript(archive, pa, ScriptUtilities.CSCRIPT);
     }
 
-    public static ExecutionResult executeScript(String archive, Vector parameters, int with) throws Exception {
+    public static ExecutionResult executeScript(String archive, List<Object> parameters, int with) throws Exception {
         StringBuilder param = new StringBuilder();
         for (int i = 0; i < parameters.size(); i++) {
             Object p = parameters.get(i);
@@ -86,13 +87,13 @@ public class ScriptUtilities {
                         out.write(iValue);
                     }
                     break;
-                } catch (Exception e) {
-                    ScriptUtilities.logger.trace(null, e);
+                } catch (Exception exc) {
+                    ScriptUtilities.logger.trace(null, exc);
                 }
                 try {
                     Thread.sleep(10);
-                } catch (Exception e) {
-                    ScriptUtilities.logger.trace(null, e);
+                } catch (Exception exc) {
+                    ScriptUtilities.logger.trace(null, exc);
                 }
 
             }
@@ -106,9 +107,9 @@ public class ScriptUtilities {
             }
             return new ExecutionResult(result, out.toByteArray());
 
-        } catch (Exception e) {
-            ScriptUtilities.logger.debug("Exception executing script " + archive, e);
-            throw e;
+        } catch (Exception exc) {
+            ScriptUtilities.logger.debug("Exception executing script " + archive, exc);
+            throw exc;
         } finally {
             if (bIn != null) {
                 bIn.close();
@@ -116,7 +117,7 @@ public class ScriptUtilities {
         }
     }
 
-    public Vector listAccessDBReports(String bdArchive) throws Exception {
+    public List<Object> listAccessDBReports(String bdArchive) throws Exception {
         ScriptUtilities.logger.debug("Executing request for access report list");
         URL url = this.getClass().getResource("scripts/listaccessreports.vbs");
         File f = new File(url.getFile());
@@ -127,7 +128,7 @@ public class ScriptUtilities {
         String s = res.getOuput();
         // From the beginning to the end;
         int iLast = s.lastIndexOf(";");
-        Vector vReports = new Vector();
+        List<Object> vReports = new ArrayList<>();
         if ((s.length() > 0) && (iLast >= 0)) {
             String ss = s.substring(0, iLast);
             StringTokenizer st = new StringTokenizer(ss, ";");
@@ -160,27 +161,25 @@ public class ScriptUtilities {
     }
 
     /**
-     * Prints and fills a word document replacing <code>Hashtable</code> keys by correspondent
+     * Prints and fills a word document replacing <code>Map</code> keys by correspondent
      * descriptions. Max. length for description is 255 characters.
      * @param archive The name of file
-     * @param valuesDescriptions <code>Hashtable</code> with texts and descriptions
+     * @param valuesDescriptions <code>Map</code> with texts and descriptions
      * @return true Whether document has been filled and printed correctly
      * @throws Exception When a <code>Exception</code> occurs
      */
-    public static boolean fillAndPrintWordDocument(String archive, Hashtable valuesDescriptions) throws Exception {
+    public static boolean fillAndPrintWordDocument(String archive, Map<Object, Object> valuesDescriptions) throws Exception {
 
         File f = ScriptUtilities
             .createTemporalFileForScript("com/ontimize/windows/office/scripts/fillandprintworddocument.vbs");
-        Vector parameters = new Vector();
+        List<Object> parameters = new ArrayList<>();
         if (archive.indexOf(" ") > 0) {
             archive = "\"" + archive + "\"";
         }
         parameters.add(archive);
-        Enumeration enumKeys = valuesDescriptions.keys();
-        while (enumKeys.hasMoreElements()) {
-            Object oKey = enumKeys.nextElement();
-            parameters.add(oKey);
-            parameters.add(valuesDescriptions.get(oKey));
+        for(Entry<Object, Object> entry:valuesDescriptions.entrySet()) {
+        	parameters.add(entry.getKey());
+        	parameters.add(entry.getKey());
         }
 
         ExecutionResult res = ScriptUtilities.executeScript(f.toString(), parameters, ScriptUtilities.WSCRIPT);

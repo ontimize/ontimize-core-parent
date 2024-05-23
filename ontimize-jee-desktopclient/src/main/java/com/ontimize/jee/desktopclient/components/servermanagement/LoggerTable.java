@@ -1,7 +1,9 @@
 package com.ontimize.jee.desktopclient.components.servermanagement;
 
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,27 +12,27 @@ import com.ontimize.gui.table.ExtendedTableModel;
 import com.ontimize.gui.table.Table;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService.OntimizeJEELogger;
+import com.ontimize.jee.common.util.logging.Level;
 import com.ontimize.jee.desktopclient.spring.BeansFactory;
-import com.ontimize.util.logging.Level;
 
 public class LoggerTable extends Table {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggerTable.class);
 
-    public LoggerTable(Hashtable params) throws Exception {
+    public LoggerTable(Map<Object, Object> params) throws Exception {
         super(params);
     }
 
     @Override
     protected ExtendedTableModel createExtendedTableModel() {
-        return new LoggerExtendedTableModel(new Hashtable(0), this.attributes, this.calculedColumns, true);
+        return new LoggerExtendedTableModel(new HashMap<>(0), new ArrayList<>(this.attributes), this.calculedColumns, true);
     }
 
     public class LoggerExtendedTableModel extends ExtendedTableModel {
 
-        public LoggerExtendedTableModel(Hashtable<Object, Object> hashtable, Vector columns,
-                Hashtable<Object, Object> hashtable2, boolean editable) {
-            super(hashtable, columns, hashtable2, editable, new Vector());
+        public LoggerExtendedTableModel(Map<Object, Object> map, List<Object> columns,
+                Map<Object, Object> map2, boolean editable) {
+            super(map, columns, map2, editable, new ArrayList<>());
         }
 
         @Override

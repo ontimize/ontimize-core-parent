@@ -1,10 +1,10 @@
 package com.ontimize.gui.tree;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 public class PageFetchTreeNode extends OTreeNode {
 
-    public PageFetchTreeNode(Hashtable params) {
+    public PageFetchTreeNode(Map<Object, Object> params) {
         super(params);
     }
 

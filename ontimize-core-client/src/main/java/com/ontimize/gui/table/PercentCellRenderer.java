@@ -3,6 +3,8 @@ package com.ontimize.gui.table;
 import java.awt.Component;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Vector;
@@ -13,9 +15,9 @@ import javax.swing.SwingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.i18n.Internationalization;
+import com.ontimize.jee.common.db.NullValue;
 
 /**
  * @version 1.0 23-06-2004
@@ -126,8 +128,8 @@ public class PercentCellRenderer extends CellRenderer implements Internationaliz
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        return new Vector(0);
+    public List<String> getTextsToTranslate() {
+        return new ArrayList<>(0);
     }
 
     public Format getFormat() {

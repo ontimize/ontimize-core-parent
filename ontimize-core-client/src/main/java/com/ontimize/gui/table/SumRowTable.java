@@ -6,7 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.io.Serializable;
-import java.util.Vector;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -147,15 +147,15 @@ public class SumRowTable extends JTable {
     }
 
     @Override
-    public void tableChanged(TableModelEvent e) {
-        if (e!=null && (e.getType() == TableModelEvent.INSERT || e.getType() == TableModelEvent.DELETE)){
+    public void tableChanged(TableModelEvent event) {
+        if (event!=null && (event.getType() == TableModelEvent.INSERT || event.getType() == TableModelEvent.DELETE)){
             resizeAndRepaint();
             return;
         }
-        super.tableChanged(e);
+        super.tableChanged(event);
         if (this.dataTable != null && this.getTable() != null) {
-            if ((e == null) || (e.getFirstRow() == TableModelEvent.HEADER_ROW)) {
-                Vector visibleColumns = getTable().getVisibleColumns();
+            if ((event == null) || (event.getFirstRow() == TableModelEvent.HEADER_ROW)) {
+                List<String> visibleColumns = getTable().getVisibleColumns();
                 if ((visibleColumns != null) && !visibleColumns.isEmpty()) {
                     for (int i = 1; i < this.getColumnCount(); i++) {
                         TableColumn tC = this.getColumnModel().getColumn(i);

@@ -2,7 +2,7 @@ package com.ontimize.gui.login;
 
 import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.border.EmptyBorder;
 
@@ -10,8 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.Application;
-import com.ontimize.gui.login.ChangePasswordDialog;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.util.AWTUtilities;
 
 public class ShapeChangePasswordDialog extends ChangePasswordDialog {
@@ -22,7 +21,7 @@ public class ShapeChangePasswordDialog extends ChangePasswordDialog {
 
     public static boolean shape = true;
 
-    public ShapeChangePasswordDialog(Application mainApplication, Hashtable parameters, EntityReferenceLocator locator,
+    public ShapeChangePasswordDialog(Application mainApplication, Map<Object, Object> parameters, EntityReferenceLocator locator,
             String user, String password) {
         super(mainApplication, parameters, locator, user, password);
         try {

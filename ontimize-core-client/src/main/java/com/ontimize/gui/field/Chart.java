@@ -9,10 +9,11 @@ import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.lang.reflect.Constructor;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -123,12 +124,12 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     /**
      * A reference to a y Axis name. By default, null.
      */
-    protected Vector yAxesName = null;
+    protected List<Object> yAxesName = null;
 
     /**
      * A reference to a visible series. By default, null.
      */
-    protected Vector visibleSeries = null;
+    protected List<Object> visibleSeries = null;
 
     /**
      * The reference to type. By default, LYNE type.
@@ -138,7 +139,7 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     /**
      * A reference to value. By default, null.
      */
-    protected Hashtable value = null;
+    protected Map<Object, Object> value = null;
 
     /**
      * A reference to X label. By default, "".
@@ -178,10 +179,10 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     /**
      * Inits parameters and {@link #setLayout(LayoutManager)}.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      */
 
-    public Chart(Hashtable parameters) {
+    public Chart(Map<Object, Object> parameters) {
         this.init(parameters);
         this.setLayout(new BorderLayout());
         this.setBorder(null);
@@ -190,20 +191,20 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
 
     /**
      * This method create the component detecting version of JfreeChart library in classpath.
-     * @param parameters <code>Hashtable</code> with parameters
+     * @param parameters <code>Map</code> with parameters
      */
-    public void createChartComponent(Hashtable parameters) {
+    public void createChartComponent(Map<Object, Object> parameters) {
         if (ChartVersionControl.isVersion_1_0()) {
             this.chartImpl = new Chart_1_0(parameters);
         } else {
             try {
-                Class rootClass = Class.forName("com.ontimize.gui.field.Chart_0_9");
-                Class[] p = { Hashtable.class };
-                Constructor constructorChart = rootClass.getConstructor(p);
+                Class<?> rootClass = Class.forName("com.ontimize.gui.field.Chart_0_9");
+                Class<?>[] p = { HashMap.class };
+                Constructor<?> constructorChart = rootClass.getConstructor(p);
                 Object[] params = { p };
                 this.chartImpl = (IChartComponent) constructorChart.newInstance(params);
-            } catch (Exception e) {
-                Chart.logger.error(null, e);
+            } catch (Exception exc) {
+                Chart.logger.error(null, exc);
             }
         }
     }
@@ -211,7 +212,7 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     /**
      * Sets the name or names in Y axis and updates the chart.
      * <p>
-     * @param yAxis the String Vector with names
+     * @param yAxis the String List with names
      */
     @Override
     public void setYAxis(String[] yAxis) {
@@ -251,10 +252,10 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     }
 
     /**
-     * This method gets the <code>Hashtable</code>, processes one by one its parameters and creates the
+     * This method gets the <code>Map</code>, processes one by one its parameters and creates the
      * chart.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS * FRAME=BOX>
      *        <tr>
@@ -359,7 +360,7 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
      */
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         // Object entity = parameters.get("entity");
         // if (entity != null) {
         // this.entityName = entity.toString();
@@ -500,7 +501,7 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     /**
      * Gets the parameter value.
      * <p>
-     * @return the value the Hashtable with vector for Xaxis and other for each Yaxis serie
+     * @return the value the Map with List for Xaxis and other for each Yaxis serie
      */
     @Override
     public Object getValue() {
@@ -599,7 +600,7 @@ public class Chart extends JPanel implements DataComponent, IChartComponent, ITe
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         return this.chartImpl.getTextsToTranslate();
     }
 

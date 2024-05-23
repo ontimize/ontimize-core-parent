@@ -18,10 +18,11 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.rmi.Naming;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -48,13 +49,13 @@ import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.ols.RemoteLControlAdministration;
+import com.ontimize.jee.common.security.GeneralSecurityException;
+import com.ontimize.jee.common.security.License;
+import com.ontimize.jee.common.security.ModeErrorSecurityException;
 import com.ontimize.ols.LControl;
-import com.ontimize.ols.RemoteLControlAdministration;
 import com.ontimize.ols.SerialNumber;
 import com.ontimize.ols.WindowLError;
-import com.ontimize.security.GeneralSecurityException;
-import com.ontimize.security.License;
-import com.ontimize.security.ModeErrorSecurityException;
 
 public class LCMC extends JPanel implements ActionListener {
 
@@ -192,7 +193,7 @@ public class LCMC extends JPanel implements ActionListener {
         }
     }
 
-    private Hashtable getParametersInterface() throws Exception {
+    private Map<Object, Object> getParametersInterface() throws Exception {
         if (LCMC.lc != null) {
             return LCMC.lc.getParameters();
         }
@@ -202,7 +203,7 @@ public class LCMC extends JPanel implements ActionListener {
         return null;
     }
 
-    private Hashtable updateInterface(Hashtable h) throws Exception {
+    private Map<Object, Object> updateInterface(Map<Object, Object> h) throws Exception {
         if (LCMC.lc != null) {
             return LCMC.lc.updateL(h);
         }
@@ -252,7 +253,7 @@ public class LCMC extends JPanel implements ActionListener {
             return;
         }
 
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         String responsable = JOptionPane.showInputDialog(SwingUtilities.getWindowAncestor(this),
                 ApplicationManager.getTranslation("LCMC.RESPONSABLE", this.bundle),
                 ApplicationManager.getTranslation("LCMC.QUESTION", this.bundle), JOptionPane.QUESTION_MESSAGE);
@@ -320,17 +321,17 @@ public class LCMC extends JPanel implements ActionListener {
             h.put("License", lic);
         }
 
-        Hashtable hr = null;
+        Map<Object, Object> hr = null;
         try {
             hr = this.updateInterface(h);
-        } catch (GeneralSecurityException e) {
-            LCMC.logger.trace(null, e);
+        } catch (GeneralSecurityException exc) {
+            LCMC.logger.trace(null, exc);
             JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
                     ApplicationManager.getTranslation("LCMC.NO_PERMISSION", this.bundle),
                     ApplicationManager.getTranslation("LCMC.ERROR", this.bundle), JOptionPane.ERROR_MESSAGE);
             return;
-        } catch (Exception e) {
-            LCMC.logger.error(null, e);
+        } catch (Exception exc) {
+            LCMC.logger.error(null, exc);
             this.connected = false;
             this.activateButtons();
             JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
@@ -481,7 +482,7 @@ public class LCMC extends JPanel implements ActionListener {
         this.activateButtons();
     }
 
-    private void setValues(Hashtable h) {
+    private void setValues(Map<Object, Object> h) {
 
         if (LCMC.DEBUG) {
             LCMC.logger.debug(h.toString());
@@ -547,11 +548,11 @@ public class LCMC extends JPanel implements ActionListener {
 
             if (h.get("ListValidLicenseCodes") != null) {
                 this.tbCodes.setValue(null);
-                Hashtable hcode = new Hashtable();
+                Map<Object, Object> hcode = new HashMap<>();
                 hcode.put("Enabled", new Boolean(true));
-                Vector v = (Vector) h.get("ListValidLicenseCodes");
+                List<?> v = (List<?>) h.get("ListValidLicenseCodes");
                 for (int i = 0, a = v.size(); i < a; i++) {
-                    hcode.put("Functionality", v.elementAt(i));
+                    hcode.put("Functionality", v.get(i));
                     this.tbCodes.addRow(hcode);
                 }
             }
@@ -578,7 +579,7 @@ public class LCMC extends JPanel implements ActionListener {
             this.lchmText = ApplicationManager.getTranslation("LCMC.HELP_NOT_CONNECTED", this.bundle);
         } else {
             try {
-                Hashtable h = this.getParametersInterface();
+            	Map<Object, Object> h = this.getParametersInterface();
                 this.setValues(h);
 
             } catch (ModeErrorSecurityException ex) {
@@ -633,7 +634,7 @@ public class LCMC extends JPanel implements ActionListener {
         this.licenseFileAsString.setLineWrap(true);
         this.licenseFileAsString.setWrapStyleWord(true);
 
-        Hashtable ht = new Hashtable();
+        Map<Object, Object> ht = new HashMap<>();
         ht.put("cols", "Functionality;Enabled");
         ht.put("visiblecols", "Functionality;Enabled");
         ht.put("buttons", "no");
@@ -810,7 +811,7 @@ public class LCMC extends JPanel implements ActionListener {
         LCMC.showLCMC(f, b, null);
     }
 
-    public static void showLCMC(Frame f, ResourceBundle b, Hashtable h) {
+    public static void showLCMC(Frame f, ResourceBundle b, Map<Object, Object> h) {
         if (LCMC.jd == null) {
             LCMC.jd = new EJDialog(f, ApplicationManager.getTranslation("LCMC.LICENSE_CONTROLLER_MANAGER_CLIENT", b));
             LCMC.lcmc = new LCMC(b, h != null);
