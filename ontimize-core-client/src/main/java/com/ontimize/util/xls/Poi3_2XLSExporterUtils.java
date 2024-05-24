@@ -27,8 +27,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.windows.office.WindowsUtils;
 
 /**

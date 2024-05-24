@@ -1,9 +1,9 @@
 package com.ontimize.util.rule;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.ontimize.xml.XMLUtil;
+import com.ontimize.jee.common.xml.XMLUtil;
 
 public class RuleParser {
 
@@ -20,7 +20,7 @@ public class RuleParser {
     public static IRules parseRules(String rules) {
         try {
 
-            Document doc = com.ontimize.xml.XMLUtil.getDOMDocument(rules);
+            Document doc = XMLUtil.getDOMDocument(rules);
 
             NodeList elementsByTagName = doc.getElementsByTagName(Attributes.RULES);
             if ((elementsByTagName != null) && (elementsByTagName.getLength() == 1)) {
@@ -28,15 +28,15 @@ public class RuleParser {
                 return RuleParser.parseRulesXMLNode(currentXMLNode);
             }
 
-        } catch (Exception e) {
-            RuleParser.logger.error(null, e);
+        } catch (Exception exc) {
+            RuleParser.logger.error(null, exc);
         }
         return null;
     }
 
     protected static IRules parseRulesXMLNode(Node rulesNode) {
         IRules rules = new Rules();
-        Vector events = new Vector();
+        List<Object> events = new ArrayList<>();
         NodeList rulesChildNodes = rulesNode.getChildNodes();
         // Children should be a list of:
         // <event>
@@ -55,7 +55,7 @@ public class RuleParser {
 
     protected static IEvent parseEventXMLNode(Node eventNode) {
         IEvent event = new Event();
-        Hashtable eventAttributes = XMLUtil.parseAttributes(eventNode.getAttributes());
+        Map<Object, Object> eventAttributes = XMLUtil.parseAttributes(eventNode.getAttributes());
         event.setAttributes(eventAttributes);
         event.setType(eventAttributes.get(Attributes.TYPE).toString());
         NodeList eventChildNodes = eventNode.getChildNodes();
@@ -109,7 +109,7 @@ public class RuleParser {
 
     protected static IAction parseRuleActionXMLNode(Node ruleActionNode) {
         IAction action = new Action();
-        Hashtable eventAttributes = XMLUtil.parseAttributes(ruleActionNode.getAttributes());
+        Map<?, ?> eventAttributes = XMLUtil.parseAttributes(ruleActionNode.getAttributes());
         Object id = eventAttributes.get(Attributes.ID);
         if (id != null) {
             action.setId(id.toString());
@@ -127,15 +127,15 @@ public class RuleParser {
             String nodeName = currentChildNode.getNodeName();
             if (Attributes.PARAMS.equalsIgnoreCase(nodeName)) {
                 // create hashtable with parameters
-                List params = RuleParser.parseRuleActionParameters(currentChildNode);
+                List<Object> params = RuleParser.parseRuleActionParameters(currentChildNode);
                 action.setParams(params);
             }
         }
         return action;
     }
 
-    protected static List parseRuleActionParameters(Node ruleActionParamNode) {
-        List params = new Vector();
+    protected static List<Object> parseRuleActionParameters(Node ruleActionParamNode) {
+        List<Object> params = new ArrayList<>();
         NodeList eventChildNodes = ruleActionParamNode.getChildNodes();
         // action parameters are a list of:
         // <param-name>
@@ -185,11 +185,11 @@ public class RuleParser {
         return sb.toString();
     }
 
-    public static String generateXMLAttributes(Hashtable values) {
+    public static String generateXMLAttributes(Map<?,?> values) {
         StringBuilder sb = new StringBuilder();
-        Enumeration enumKeys = values.keys();
-        while (enumKeys.hasMoreElements()) {
-            Object key = enumKeys.nextElement();
+        Iterator<?> enumKeys = values.keySet().iterator();
+        while (enumKeys.hasNext()) {
+            Object key = enumKeys.next();
             Object value = values.get(key);
             sb.append(Attributes.SPACE);
             sb.append(key.toString());
@@ -209,7 +209,7 @@ public class RuleParser {
         return sb.toString();
     }
 
-    public static String openTagWithAttributes(String tag, Hashtable attributes) {
+    public static String openTagWithAttributes(String tag, Map<?,?> attributes) {
         StringBuilder sb = new StringBuilder();
         sb.append(Attributes.LT);
         sb.append(tag);

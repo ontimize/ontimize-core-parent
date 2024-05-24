@@ -3,8 +3,8 @@ package com.ontimize.util;
 import com.ontimize.gui.Application;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.preferences.ApplicationPreferences;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 public class PreferenceUtils {
 

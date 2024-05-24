@@ -6,8 +6,9 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.slf4j.Logger;
@@ -19,10 +20,10 @@ import com.ontimize.gui.InteractionManager;
 import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.IdentifiedElement;
 import com.ontimize.gui.field.ImageDataField;
-import com.ontimize.gui.field.MultipleReferenceDataFieldAttribute;
-import com.ontimize.gui.field.ReferenceFieldAttribute;
 import com.ontimize.gui.table.Table;
-import com.ontimize.gui.table.TableAttribute;
+import com.ontimize.jee.common.gui.field.MultipleReferenceDataFieldAttribute;
+import com.ontimize.jee.common.gui.field.ReferenceFieldAttribute;
+import com.ontimize.jee.common.gui.table.TableAttribute;
 
 public class TemplateUtils {
 
@@ -153,15 +154,15 @@ public class TemplateUtils {
     }
 
     /**
-     * Get a Hashtable with the names of form's fields and their translations <br>
+     * Get a Map with the names of form's fields and their translations <br>
      * key - Field name <br>
      * value - key translation
      * @param form
      * @return
      */
-    public static Hashtable getTemplateFields(Form form) {
-        List fields = form.getDataComponents();
-        List attrs = new ArrayList();
+    public static Map<Object, Object> getTemplateFields(Form form) {
+        List<Object> fields = form.getDataComponents();
+        List<Object> attrs = new ArrayList<>();
         for (int i = 0; i < fields.size(); i++) {
             if ((fields.get(i) instanceof DataField) && !(fields.get(i) instanceof ImageDataField)
                     && ((DataField) fields.get(i)).isVisible()) {
@@ -181,19 +182,19 @@ public class TemplateUtils {
                 }
             }
         }
-        return TemplateUtils.getTemplateHashtableTranslation(attrs, form.getResourceBundle());
+        return TemplateUtils.getTemplateMapTranslation(attrs, form.getResourceBundle());
     }
 
     /**
      * Get the list of tables to insert in the template <br>
      * key - Table entity <br>
-     * value - Hashtable with the names of the visible cols and their translations<br>
+     * value - Map with the names of the visible cols and their translations<br>
      * @param form
      * @return
      */
-    public static Hashtable getTemplateTables(Form form) {
-        Hashtable result = new Hashtable();
-        List fields = form.getComponentList();
+    public static Map<Object, Object> getTemplateTables(Form form) {
+    	Map<Object, Object> result = new HashMap<>();
+        List<Object> fields = form.getComponentList();
         for (int i = 0; i < fields.size(); i++) {
             if ((fields.get(i) instanceof Table) && ((Table) fields.get(i)).isVisible()) {
                 String entityName = ((Table) fields.get(i)).getEntityName();
@@ -204,7 +205,7 @@ public class TemplateUtils {
                 if (entityName.indexOf(".") > 0) {
                     entityName = entityName.substring(entityName.lastIndexOf(".") + 1);
                 }
-                result.put(entityName, TemplateUtils.getTemplateHashtableTranslation(
+                result.put(entityName, TemplateUtils.getTemplateMapTranslation(
                         ((Table) fields.get(i)).getVisibleColumns(), form.getResourceBundle()));
             } else if ((fields.get(i) instanceof ITemplateField)
                     && (((ITemplateField) fields.get(i)).getTemplateDataType() == ITemplateField.DATA_TYPE_TABLE)) {
@@ -219,15 +220,15 @@ public class TemplateUtils {
     }
 
     /**
-     * Get a Hashtable with all attributes of ImageField in the form and their translations
+     * Get a Map with all attributes of ImageField in the form and their translations
      * @param form
      * @return
      */
-    public static Hashtable getTemplateImages(Form form) {
-        Hashtable result = new Hashtable();
+    public static Map<Object, Object> getTemplateImages(Form form) {
+    	Map<Object, Object> result = new HashMap<>();
         // Changed in 5.2060EN-0.6 to get all component list in form (instead of
         // data components only)
-        List fields = form.getComponentList();
+        List<Object> fields = form.getComponentList();
         for (int i = 0; i < fields.size(); i++) {
             if ((fields.get(i) instanceof ImageDataField) && ((DataField) fields.get(i)).isVisible()) {
                 Object attribute = ((ImageDataField) fields.get(i)).getAttribute();
@@ -253,9 +254,9 @@ public class TemplateUtils {
         return result;
     }
 
-    protected static Hashtable getTemplateHashtableTranslation(List attrs, ResourceBundle bundle) {
+    protected static Map<Object, Object> getTemplateMapTranslation(List<?> attrs, ResourceBundle bundle) {
         if (attrs != null) {
-            Hashtable translation = new Hashtable();
+        	Map<Object, Object> translation = new HashMap<>();
             for (int i = 0; i < attrs.size(); i++) {
                 String trans = ApplicationManager.getTranslation((String) attrs.get(i), bundle);
                 translation.put(attrs.get(i), trans);
@@ -302,13 +303,13 @@ public class TemplateUtils {
     }
 
     /**
-     * Get a Hashtable with the values of all fields in the form
+     * Get a Map with the values of all fields in the form
      * @param form
      * @return
      */
-    public static Hashtable getFieldsValues(Form form) {
-        List components = form.getComponentList();
-        Hashtable result = new Hashtable();
+    public static Map<Object, Object> getFieldsValues(Form form) {
+        List<Object> components = form.getComponentList();
+        Map<Object, Object> result = new HashMap<>();
         for (int i = 0; i < components.size(); i++) {
 
             if ((components.get(i) instanceof ITemplateField)
@@ -364,15 +365,15 @@ public class TemplateUtils {
     }
 
     /**
-     * Get a Hashtable with the values of all tables in the form <br>
+     * Get a Map with the values of all tables in the form <br>
      * key - table entity name <br>
      * value - EntityResult with the table value
      * @param form
      * @return
      */
-    public static Hashtable getTablesValues(Form form) {
-        List components = form.getComponentList();
-        Hashtable tables = new Hashtable();
+    public static Map<Object, Object> getTablesValues(Form form) {
+        List<Object> components = form.getComponentList();
+        Map<Object, Object> tables = new HashMap<>();
         for (int i = 0; i < components.size(); i++) {
             if ((components.get(i) instanceof ITemplateField)
                     && (((ITemplateField) components.get(i)).getTemplateDataType() == ITemplateField.DATA_TYPE_TABLE)) {
@@ -418,14 +419,14 @@ public class TemplateUtils {
     }
 
     /**
-     * Get a Hashtable with the values of all Image fields in the form
+     * Get a Map with the values of all Image fields in the form
      * @param form
      * @param insertEmptyImages
      * @return
      */
-    public static Hashtable getImagesValues(Form form, boolean insertEmptyImages) {
-        List components = form.getComponentList();
-        Hashtable result = new Hashtable();
+    public static Map<Object, Object> getImagesValues(Form form, boolean insertEmptyImages) {
+        List<Object> components = form.getComponentList();
+        Map<Object, Object> result = new HashMap<>();
         for (int i = 0; i < components.size(); i++) {
             if ((components.get(i) instanceof ITemplateField)
                     && (((ITemplateField) components.get(i)).getTemplateDataType() == ITemplateField.DATA_TYPE_IMAGE)) {

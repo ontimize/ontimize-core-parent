@@ -2,11 +2,13 @@ package com.ontimize.windows.office;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,17 +27,17 @@ public class MSAccessRG implements ReportGenerator {
 
     private static String description = "Microsoft Access 2000 Report Generator";
 
-    private final Hashtable fileReportDB = new Hashtable();
+    private final Map<Object,Object> fileReportDB = new HashMap<>();
 
     private final ScriptUtilities su = new ScriptUtilities();
 
-    private final Vector reportList = new Vector();
+    private final List<Object> reportList = new ArrayList<>();
 
     private String basePath = null;
 
-    private final Vector synchronizedReport = new Vector();
+    private final List<Object> synchronizedReport = new ArrayList<>();
 
-    private final Vector synchronizedReportsUse = new Vector();
+    private final List<Object> synchronizedReportsUse = new ArrayList<>();
 
     public MSAccessRG(String propertiesFile) throws Exception {
         URL uRLProp = this.getClass().getClassLoader().getResource(propertiesFile);
@@ -60,14 +62,14 @@ public class MSAccessRG implements ReportGenerator {
             }
         }
         // Creates the list with the databases and their reports
-        Enumeration e = prop.propertyNames();
+        Enumeration<?> e = prop.propertyNames();
         while (e.hasMoreElements()) {
             String sDB = e.nextElement().toString();
             if (sDB.indexOf("BD") >= 0) {
                 // Gets the database file
                 String sFile = prop.getProperty(sDB);
                 // Asks for the report list
-                Vector vReportList = this.getReportList(sFile);
+                List<Object> vReportList = this.getReportList(sFile);
                 if (vReportList == null) {
                     MSAccessRG.logger.debug("Report list has not been created for: " + sFile);
                 } else {
@@ -88,23 +90,23 @@ public class MSAccessRG implements ReportGenerator {
         }
     }
 
-    public Vector getReportList(String databse) {
+    public List<Object> getReportList(String databse) {
         try {
             return this.su.listAccessDBReports(databse);
-        } catch (Exception e) {
-            MSAccessRG.logger.error(null, e);
+        } catch (Exception exc) {
+            MSAccessRG.logger.error(null, exc);
             return null;
         }
     }
 
     @Override
-    public Vector getReportList() {
+    public List<Object> getReportList() {
         return this.reportList;
     }
 
     @Override
-    public Vector getReportDescription() {
-        Vector vList = new Vector();
+    public List<Object> getReportDescription() {
+        List<Object> vList = new ArrayList<>();
         return vList;
     }
 
@@ -175,7 +177,7 @@ public class MSAccessRG implements ReportGenerator {
                     MSAccessRG.logger.debug("Error generating report: " + name);
                     return ReportGenerator.ERROR;
                 }
-            } else if (params instanceof Hashtable) {
+            } else if (params instanceof Map) {
                 // Search the report properties. It must be in the same
                 // directory
                 // that the general properties file
@@ -197,19 +199,19 @@ public class MSAccessRG implements ReportGenerator {
                     MSAccessRG.logger.debug("Parameter 'parameters' not found in the report properties file: " + path);
                     return ReportGenerator.ERROR;
                 }
-                Vector vParameterNames = new Vector();
+                List<Object> vParameterNames = new ArrayList<>();
                 StringTokenizer st = new StringTokenizer(parameters.toString(), ";");
                 while (st.hasMoreTokens()) {
                     vParameterNames.add(vParameterNames.size(), st.nextElement());
                 }
                 // Execute the script
-                Vector vParameters = new Vector();
+                List<Object> vParameters = new ArrayList<>();
                 vParameters.add(0, sDBFile);
                 vParameters.add(1, name);
                 vParameters.add(2, f);
                 for (int i = 0; i < vParameterNames.size(); i++) {
                     Object oName = vParameterNames.get(i);
-                    Object oValue = ((Hashtable) params).get(oName);
+                    Object oValue = ((Map<?,?>) params).get(oName);
                     vParameters.add(vParameters.size(), oValue);
                 }
                 URL url = this.getClass().getResource("scripts/" + script + ".vbs");

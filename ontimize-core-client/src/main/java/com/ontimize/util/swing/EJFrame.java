@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.MessageDialog;
 import com.ontimize.gui.preferences.ApplicationPreferences;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 import com.ontimize.util.incidences.FormCreateIncidences;
 
 public class EJFrame extends JFrame {

@@ -18,9 +18,9 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
@@ -28,18 +28,19 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.FileManagementEntity;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.ExtendedOperationThread;
 import com.ontimize.gui.Form;
 import com.ontimize.gui.MainApplication;
 import com.ontimize.gui.MessageDialog;
 import com.ontimize.gui.actions.AbstractButtonAction;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.FileManagementEntity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.util.FileUtils;
-import com.ontimize.util.remote.BytesBlock;
 
 import eu.gnome.morena.Device;
 import eu.gnome.morena.Scanner;
@@ -156,7 +157,7 @@ public class AttachmentScanWIAFileAction extends AbstractButtonAction {
                 }
 
                 entF = (FileManagementEntity) ent;
-                final Hashtable kv = AttachmentScanWIAFileAction.this.getAttachmentValuesKeys(this.currentForm);
+                final Map<Object, Object> kv = AttachmentScanWIAFileAction.this.getAttachmentValuesKeys(this.currentForm);
                 this.status = ApplicationManager.getTranslation("attachment.initiating_transfer");
                 for (File selectedFile : this.multiFile) {
                     long totalSize = selectedFile.length();
@@ -229,7 +230,7 @@ public class AttachmentScanWIAFileAction extends AbstractButtonAction {
 
             } catch (Exception e) {
                 AttachmentScanWIAFileAction.logger.error(null, e);
-                this.res = new EntityResult();
+                this.res = new EntityResultMapImpl();
                 ((EntityResult) this.res).setCode(EntityResult.OPERATION_WRONG);
                 ((EntityResult) this.res).setMessage(e.getMessage());
                 this.status = ApplicationManager.getTranslation("error_scanning_image");
@@ -284,14 +285,14 @@ public class AttachmentScanWIAFileAction extends AbstractButtonAction {
         this.uriSound = uriSound;
     }
 
-    protected Hashtable getAttachmentValuesKeys(Form f) throws Exception {
+    protected Map<Object, Object> getAttachmentValuesKeys(Form f) throws Exception {
 
         if (f == null) {
             throw new Exception("parent form is null");
         }
 
-        final Hashtable kv = new Hashtable();
-        Vector vKeys = f.getKeys();
+        final Map<Object, Object> kv = new HashMap<>();
+        List<String> vKeys = f.getKeys();
         if (vKeys.isEmpty()) {
             throw new Exception("'keys' parameter ir required in the parent form");
         }
@@ -305,7 +306,7 @@ public class AttachmentScanWIAFileAction extends AbstractButtonAction {
         return kv;
     }
 
-    protected ExtendedOperationThread createSendThread(final Form f, final List listOfFiles, final String description,
+    protected ExtendedOperationThread createSendThread(final Form f, final List<File> listOfFiles, final String description,
             final String uriSound) {
         return new WIASendThread(f, listOfFiles, description, uriSound);
     }
@@ -378,7 +379,7 @@ public class AttachmentScanWIAFileAction extends AbstractButtonAction {
                                     if (!session.isFeederUsed()) {
                                         ((Scanner) wManager.selectedDevice).setFunctionalUnit(0);
                                         java.awt.Image im = wManager.acquire(w);
-                                        List flatbedFile = new ArrayList<File>();
+                                        List<File> flatbedFile = new ArrayList<File>();
                                         File f = new File(System.getProperty("java.io.tmpdir"), "scntemp.jpg");
                                         f.deleteOnExit();
                                         ImageIO.write((RenderedImage) im, "jpg", f);

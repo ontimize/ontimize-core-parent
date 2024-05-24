@@ -1,12 +1,14 @@
 package com.ontimize.util.rule;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
+import java.util.Map.Entry;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.util.rule.RuleParser.Attributes;
 
 public class RuleUtils {
@@ -15,12 +17,12 @@ public class RuleUtils {
      * List of events matching <code>type</code>. If type is "" or null returns all events for these
      * rules.
      */
-    public static List findEventsByType(IRules rules, String type) {
-        List lMatchEvents = new Vector();
+    public static List<Object> findEventsByType(IRules rules, String type) {
+    	List<Object> lMatchEvents = new ArrayList<>();
         if ((rules == null) || (rules.getEvents().size() == 0)) {
             return lMatchEvents;
         }
-        List lAllEvents = rules.getEvents();
+        List<Object> lAllEvents = rules.getEvents();
         if ((type == null) || (type.length() == 0)) {
             return lAllEvents;
         }
@@ -37,12 +39,12 @@ public class RuleUtils {
      * List of events matching <code>type</code> and <code>field</code>. If type is "" or null returns
      * all events for these rules.
      */
-    public static List findEventsByField(IRules rules, String field) {
-        List lMatchEvents = new Vector();
+    public static List<Object> findEventsByField(IRules rules, String field) {
+    	List<Object> lMatchEvents = new ArrayList<>();
         if ((rules == null) || (rules.getEvents().size() == 0)) {
             return lMatchEvents;
         }
-        List lAllEvents = rules.getEvents();
+        List<Object> lAllEvents = rules.getEvents();
         if ((field == null) || (field.length() == 0)) {
             return lAllEvents;
         }
@@ -60,12 +62,12 @@ public class RuleUtils {
      * List of events matching <code>type</code> and <code>field</code>. If type is "" or null returns
      * all events for these rules.
      */
-    public static List findEventsByFieldAndType(IRules rules, String field, String type) {
-        List lMatchEvents = new Vector();
+    public static List<Object> findEventsByFieldAndType(IRules rules, String field, String type) {
+    	List<Object> lMatchEvents = new ArrayList<>();
         if ((rules == null) || (rules.getEvents().size() == 0)) {
             return lMatchEvents;
         }
-        List lAllEvents = rules.getEvents();
+        List<Object> lAllEvents = rules.getEvents();
         if ((type == null) || (type.length() == 0)) {
             return lAllEvents;
         }
@@ -84,15 +86,15 @@ public class RuleUtils {
      * List of actions matching <code>actionType</code> in Event. If actionType is "" or null returns
      * all actions for this event. This method does not take account conditions.
      */
-    public static List findActionsByEvent(IEvent event, String actionId) {
-        List lMatchActions = new Vector();
+    public static List<Object> findActionsByEvent(IEvent event, String actionId) {
+    	List<Object> lMatchActions = new ArrayList<>();
         if ((event == null) || (event.getRules().size() == 0)) {
             return lMatchActions;
         }
-        List lEventRules = event.getRules();
+        List<Object> lEventRules = event.getRules();
         for (int i = 0; i < lEventRules.size(); i++) {
             IRule currentRule = (IRule) lEventRules.get(i);
-            List lActions = currentRule.getActions();
+            List<?> lActions = currentRule.getActions();
             if ((actionId == null) || (actionId.length() == 0)) {
                 lMatchActions.addAll(lActions);
             } else {
@@ -112,10 +114,10 @@ public class RuleUtils {
      * actioType is "" or null returns all actions matching this eventType and eventField. This method
      * does not take account conditions.
      */
-    public static List findActionsByTypeAndField(IRules rules, String eventType, Hashtable filterEvents,
+    public static List<Object> findActionsByTypeAndField(IRules rules, String eventType, Map<?,?> filterEvents,
             String eventField, String actionType) {
-        List lMatchActions = new Vector();
-        List lEvents = rules.getEvents();
+    	List<Object> lMatchActions = new ArrayList<>();
+    	List<?> lEvents = rules.getEvents();
         if ((lEvents == null) || (lEvents.size() == 0)) {
             return lMatchActions;
         }
@@ -125,10 +127,10 @@ public class RuleUtils {
                 Object currentEventField = event.getAttributes().get(Attributes.FIELD);
                 if (eventType.equalsIgnoreCase(event.getType()) && (eventField != null)
                         && eventField.equalsIgnoreCase(currentEventField.toString())) {
-                    List lEventRules = event.getRules();
+                    List<Object> lEventRules = event.getRules();
                     for (int j = 0; j < lEventRules.size(); j++) {
                         IRule rule = (IRule) lEventRules.get(j);
-                        List lActions = rule.getActions();
+                        List<Object> lActions = rule.getActions();
                         if ((actionType == null) || (actionType.length() == 0)) {
                             lMatchActions.addAll(lActions);
                         } else {
@@ -147,11 +149,11 @@ public class RuleUtils {
     }
 
     public static EntityResult paramActionsToEntityResult(List paramActions) {
-        EntityResult res = new EntityResult(
+        EntityResult res = new EntityResultMapImpl(
                 Arrays.asList(new String[] { Attributes.PARAM_NAME, Attributes.PARAM_VALUE }));
         for (int i = 0; i < paramActions.size(); i++) {
             IActionParam param = (IActionParam) paramActions.get(i);
-            Hashtable hParam = new Hashtable();
+            Map<Object, Object> hParam = new HashMap<>();
             hParam.put(Attributes.PARAM_VALUE, param.getParamValue());
             hParam.put(Attributes.PARAM_NAME, param.getParamName());
             res.addRecord(hParam);
@@ -159,10 +161,10 @@ public class RuleUtils {
         return res;
     }
 
-    public static List entityResultToParamActions(EntityResult erActions) {
-        List paramActions = new Vector();
+    public static List<Object> entityResultToParamActions(EntityResult erActions) {
+    	List<Object> paramActions = new ArrayList<>();
         for (int i = 0; i < erActions.calculateRecordNumber(); i++) {
-            Hashtable hParam = erActions.getRecordValues(i);
+            Map<?,?> hParam = erActions.getRecordValues(i);
             IActionParam param = new ActionParam();
             Object paramName = hParam.get(Attributes.PARAM_NAME);
             if (paramName != null) {
@@ -177,24 +179,22 @@ public class RuleUtils {
         return paramActions;
     }
 
-    public static boolean matchAttributes(Hashtable attributeList, Hashtable attrsToMatch) {
+    public static boolean matchAttributes(Map<?,?> attributeList, Map<?,?> attrsToMatch) {
         if ((attrsToMatch == null) || attrsToMatch.isEmpty()) {
             return true;
         }
         if (attrsToMatch != null) {
-            Enumeration enumKeys = attrsToMatch.keys();
-            while (enumKeys.hasMoreElements()) {
-                Object key = enumKeys.nextElement();
-                if (attributeList.containsKey(key)) {
-                    Object oColumn = attrsToMatch.get(key);
-                    if (!oColumn.equals(attributeList.get(key))) {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-
-            }
+        	for(Entry<?, ?> entry:attrsToMatch.entrySet()) {
+        		 Object key = entry.getKey();
+                 if (attributeList.containsKey(key)) {
+                     Object oColumn = entry.getValue();
+                     if (!oColumn.equals(attributeList.get(key))) {
+                         return false;
+                     }
+                 } else {
+                     return false;
+                 }
+        	}
         }
         return true;
     }

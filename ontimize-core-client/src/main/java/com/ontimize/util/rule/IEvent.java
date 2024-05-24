@@ -2,6 +2,7 @@ package com.ontimize.util.rule;
 
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 public interface IEvent {
 
@@ -9,11 +10,11 @@ public interface IEvent {
 
     public void setType(String type);
 
-    public List getRules();
+    public List<Object> getRules();
 
-    public Hashtable getAttributes();
+    public Map<Object,Object> getAttributes();
 
-    public void setAttributes(Hashtable attributes);
+    public void setAttributes(Map<Object,Object> attributes);
 
     public void addRule(IRule rule);
 

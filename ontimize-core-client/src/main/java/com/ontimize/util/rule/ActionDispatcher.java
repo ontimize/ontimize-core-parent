@@ -1,7 +1,7 @@
 package com.ontimize.util.rule;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.jexl2.Expression;
 import org.apache.commons.jexl2.JexlContext;
@@ -10,11 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.Form;
-import com.ontimize.gui.SearchValue;
 import com.ontimize.gui.field.DataComponent;
 import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.FormComponent;
 import com.ontimize.gui.manager.IFormManager;
+import com.ontimize.jee.common.gui.SearchValue;
 import com.ontimize.util.ParseUtils;
 import com.ontimize.util.math.JexlExpressionParser;
 
@@ -25,8 +25,8 @@ public class ActionDispatcher {
     public ActionDispatcher(Form form, IFormManager formManager) {
     }
 
-    public static Object execute(List lActions, Form form) {
-        List lResult = new Vector();
+    public static Object execute(List<?> lActions, Form form) {
+        List<Object> lResult = new ArrayList<>();
         for (int i = 0; i < lActions.size(); i++) {
             IAction action = (Action) lActions.get(i);
             lResult.add(ActionDispatcher.executeAction(action, form));
@@ -39,7 +39,7 @@ public class ActionDispatcher {
         boolean conditionOK = ActionDispatcher.evaluateCondition(condition, form);
         if (conditionOK) {
             String id = action.getId();
-            List parameters = action.getParams();
+            List<?> parameters = action.getParams();
             if (RuleParser.Attributes.SHOW_MESSAGE_ACTION.equalsIgnoreCase(id)) {
                 if (parameters.size() != 1) {
                     ActionDispatcher.logger.debug("Incorrect number of parameters for action: " + id);

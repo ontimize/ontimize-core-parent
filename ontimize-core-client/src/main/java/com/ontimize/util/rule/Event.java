@@ -1,8 +1,9 @@
 package com.ontimize.util.rule;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import com.ontimize.util.rule.RuleParser.Attributes;
 
@@ -10,16 +11,16 @@ public class Event implements IEvent {
 
     protected String type;
 
-    protected Hashtable attributes;
+    protected Map<Object, Object> attributes;
 
-    protected List rules;
+    protected List<Object> rules;
 
     public Event() {
-        this.attributes = new Hashtable();
-        this.rules = new Vector();
+        this.attributes = new HashMap<>();
+        this.rules = new ArrayList<>();
     }
 
-    public Event(Hashtable attributes, List rules) {
+    public Event(Map<Object, Object> attributes, List<Object> rules) {
         this.setAttributes(attributes);
         this.setRules(rules);
     }
@@ -27,7 +28,7 @@ public class Event implements IEvent {
     /**
      * @param rules the rules to set
      */
-    public void setRules(List rules) {
+    public void setRules(List<Object> rules) {
         this.rules = rules;
     }
 
@@ -40,7 +41,7 @@ public class Event implements IEvent {
      * @return the rules
      */
     @Override
-    public List getRules() {
+    public List<Object> getRules() {
         return this.rules;
     }
 
@@ -48,7 +49,7 @@ public class Event implements IEvent {
      * @param attributes the attributes to set
      */
     @Override
-    public void setAttributes(Hashtable attributes) {
+    public void setAttributes(Map<Object, Object> attributes) {
         this.attributes = attributes;
     }
 
@@ -56,7 +57,7 @@ public class Event implements IEvent {
      * @return the attributes
      */
     @Override
-    public Hashtable getAttributes() {
+    public Map<Object, Object> getAttributes() {
         return this.attributes;
     }
 

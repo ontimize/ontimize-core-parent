@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 public interface TemplateGenerator {
 
@@ -19,11 +19,11 @@ public interface TemplateGenerator {
      * @throws Exception
      */
 
-    public File fillDocument(String resource, Hashtable valuesDescriptions, Hashtable valuesTable,
-            Hashtable valuesImages) throws Exception;
+    public File fillDocument(String resource, Map<Object, Object> valuesDescriptions, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages) throws Exception;
 
-    public File fillDocument(String resource, Hashtable valuesDescriptions, Hashtable valuesTable,
-            Hashtable valuesImages, Hashtable valuesPivotTable) throws Exception;
+    public File fillDocument(String resource, Map<Object, Object> valuesDescriptions, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages, Map<Object, Object> valuesPivotTable) throws Exception;
 
     /**
      * Fills the template
@@ -39,11 +39,11 @@ public interface TemplateGenerator {
      * @return
      * @throws Exception
      */
-    public File fillDocument(InputStream input, String nameFile, Hashtable fieldValues, Hashtable valuesTable,
-            Hashtable valuesImages) throws Exception;
+    public File fillDocument(InputStream input, String nameFile, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages) throws Exception;
 
-    public File fillDocument(InputStream input, String nameFile, Hashtable fieldValues, Hashtable valuesTable,
-            Hashtable valuesImages, Hashtable valuesPivotTable) throws Exception;
+    public File fillDocument(InputStream input, String nameFile, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages, Map<Object, Object> valuesPivotTable) throws Exception;
 
     // public void fillDocument(String archive, Form form, Vector field, Vector
     // table,Vector images);
@@ -80,7 +80,7 @@ public interface TemplateGenerator {
      *        This map contains the name of the image field (value) and its attribute (key)
      * @throws Exception
      */
-    public File createTemplate(Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages) throws Exception;
+    public File createTemplate(Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages) throws Exception;
 
     /**
      * Creates a list with all data fields included in the template
@@ -88,7 +88,7 @@ public interface TemplateGenerator {
      * @return List with all data fields included in the template
      * @throws Exception
      */
-    public List queryTemplateFields(String template) throws Exception;
+    public List<Object> queryTemplateFields(String template) throws Exception;
 
     /**
      * Creates a list with all data fields included in the template
@@ -96,6 +96,6 @@ public interface TemplateGenerator {
      * @return List with all data fields included in the template
      * @throws Exception
      */
-    public List queryTemplateFields(File template) throws Exception;
+    public List<Object> queryTemplateFields(File template) throws Exception;
 
 }

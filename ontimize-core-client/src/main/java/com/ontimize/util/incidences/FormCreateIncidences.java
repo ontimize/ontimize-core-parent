@@ -12,10 +12,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -40,8 +41,9 @@ import com.ontimize.gui.field.DataField;
 import com.ontimize.gui.field.MemoDataField;
 import com.ontimize.gui.field.TextDataField;
 import com.ontimize.gui.i18n.Internationalization;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.util.incidences.IIncidenceService;
 
 public class FormCreateIncidences extends EJDialog implements Internationalization {
 
@@ -155,7 +157,7 @@ public class FormCreateIncidences extends EJDialog implements Internationalizati
     }
 
     private TextDataField createAndConfigureSubjectDataField() {
-        Hashtable h = new Hashtable();
+        Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, IIncidenceService.INCIDENCES_SUBJECT);
         h.put(DataField.REQUIRED, "yes");
         h.put(DataField.DIM, "text");
@@ -167,7 +169,7 @@ public class FormCreateIncidences extends EJDialog implements Internationalizati
     }
 
     protected MemoDataField createAndConfigureMemoDataField() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(DataField.ATTR, IIncidenceService.INCIDENCES_DESCRIPTION);
         h.put(DataField.REQUIRED, "no");
         h.put(DataField.EXPAND, "yes");
@@ -181,7 +183,7 @@ public class FormCreateIncidences extends EJDialog implements Internationalizati
     }
 
     protected Button createAndConfigureButtonCancel() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "cancelButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.cancel"));
         Button cancelButton = new Button(h);
@@ -198,7 +200,7 @@ public class FormCreateIncidences extends EJDialog implements Internationalizati
     }
 
     protected Button createAndConfigureButtonAccept() {
-        Hashtable h = new Hashtable();
+    	Map<Object, Object> h = new HashMap<>();
         h.put(Button.KEY, "acceptButton");
         h.put(Button.TEXT, ApplicationManager.getTranslation("application.accept"));
         Button acceptButton = new Button(h);
@@ -265,7 +267,7 @@ public class FormCreateIncidences extends EJDialog implements Internationalizati
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public List<String> getTextsToTranslate() {
         // TODO Auto-generated method stub
         return null;
     }

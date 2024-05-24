@@ -3,7 +3,6 @@ package com.ontimize.util.swing.list;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListDataEvent;
@@ -12,7 +11,7 @@ import javax.swing.event.ListDataListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.NullValue;
+import com.ontimize.jee.common.db.NullValue;
 
 public class SortedListModel extends DefaultListModel implements ListDataListener {
 

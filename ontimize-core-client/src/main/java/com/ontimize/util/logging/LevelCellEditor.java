@@ -10,6 +10,10 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTable;
 
+import com.ontimize.jee.common.util.logging.ILogManager;
+import com.ontimize.jee.common.util.logging.Level;
+import com.ontimize.jee.common.util.logging.LogManagerFactory;
+
 public class LevelCellEditor extends DefaultCellEditor {
 
     protected static ILogManager manager = LogManagerFactory.getLogManager();

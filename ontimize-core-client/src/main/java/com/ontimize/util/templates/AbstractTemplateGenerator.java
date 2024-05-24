@@ -19,16 +19,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
-import com.ontimize.db.EntityResult;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.util.FileUtils;
-import com.ontimize.util.remote.BytesBlock;
 
 public abstract class AbstractTemplateGenerator implements TemplateGenerator {
 
@@ -45,20 +45,20 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
     protected NumberFormat numberFormat = new DecimalFormat();
 
     @Override
-    public File fillDocument(String resource, Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages)
+    public File fillDocument(String resource, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages)
             throws Exception {
         return this.fillDocument(resource, fieldValues, valuesTable, valuesImages, null);
     }
 
     @Override
-    public File fillDocument(InputStream input, String nameFile, Hashtable fieldValues, Hashtable valuesTable,
-            Hashtable valuesImages) throws Exception {
+    public File fillDocument(InputStream input, String nameFile, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages) throws Exception {
         return this.fillDocument(input, nameFile, fieldValues, valuesTable, valuesImages, null);
     }
 
     @Override
-    public File fillDocument(String resource, Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages,
-            Hashtable valuesPivotTable) throws Exception {
+    public File fillDocument(String resource, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages,
+    		Map<Object, Object> valuesPivotTable) throws Exception {
         URL url = this.getClass().getClassLoader().getResource(resource);
         InputStream input = url.openStream();
         return this.fillDocument(input, FileUtils.getFileName(resource), fieldValues, valuesTable, valuesImages,
@@ -79,7 +79,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return
      * @see #exportFieldData(Hashtable, String, DateFormat)
      */
-    public static String transformFieldData(Hashtable dataField, DateFormat df) {
+    public static String transformFieldData(Map<Object, Object> dataField, DateFormat df) {
         return AbstractTemplateGenerator.transformFieldData(dataField, df, null);
     }
 
@@ -93,7 +93,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return
      * @see #exportFieldData(Hashtable, String, DateFormat,NumberFormat)
      */
-    public static String transformFieldData(Hashtable dataField, DateFormat df, NumberFormat numberFormat) {
+    public static String transformFieldData(Map<Object, Object> dataField, DateFormat df, NumberFormat numberFormat) {
         String stringResult = AbstractTemplateGenerator.exportFieldData(dataField, "$#", df, numberFormat);
         stringResult = stringResult.replace('\n', '\r');
         return stringResult;
@@ -121,7 +121,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return The index file with name tableIndex.txt
      * @throws Exception
      */
-    public static File createTableDataFile(File directory, Hashtable valuesTable) throws Exception {
+    public static File createTableDataFile(File directory, Map<Object, Object> valuesTable) throws Exception {
         return AbstractTemplateGenerator.createTableDataFile(directory, valuesTable, "tableIndex.txt");
     }
 
@@ -133,17 +133,17 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return
      * @throws Exception
      */
-    public static File createTableDataFile(File directory, Hashtable valuesTable, String indexFileName)
+    public static File createTableDataFile(File directory, EntityResult valuesTable, String indexFileName)
             throws Exception {
         StringBuilder info = new StringBuilder();
         if (valuesTable != null) {
-            Enumeration enu = valuesTable.keys();
+            Enumeration<?> enu = valuesTable.keys();
             while (enu.hasMoreElements()) {
                 Object entityKey = enu.nextElement();
                 Object entityValue = valuesTable.get(entityKey);
                 if ((entityKey instanceof String) && (((String) entityKey).length() > 0)
-                        && (entityValue instanceof Hashtable)) {
-                    String dataTable = AbstractTemplateGenerator.exportTableData((Hashtable) entityValue);
+                        && (entityValue instanceof Map)) {
+                    String dataTable = AbstractTemplateGenerator.exportTableData((Map<?,?>) entityValue);
                     File actual = new File(directory.getPath(), (String) entityKey);
                     FileUtils.saveFile(actual, dataTable);
                     info.append(actual.getPath()).append("$");
@@ -175,21 +175,21 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return The table index File
      * @throws Exception
      */
-    public static File createTableDataDefinition(File directory, Hashtable valuesTable, DateFormat df)
+    public static File createTableDataDefinition(File directory, Map<Object, Object> valuesTable, DateFormat df)
             throws Exception {
         return AbstractTemplateGenerator.createTableDataDefinition(directory, valuesTable, df, null);
     }
 
-    public static File createTableDataDefinition(File directory, Hashtable valuesTable, DateFormat df,
+    public static File createTableDataDefinition(File directory, Map<Object, Object> valuesTable, DateFormat df,
             NumberFormat numberFormat) throws Exception {
         StringBuilder info = new StringBuilder();
         if (valuesTable != null) {
-            Enumeration enu = valuesTable.keys();
-            while (enu.hasMoreElements()) {
-                Object entityKey = enu.nextElement();
+            Iterator<?> it = valuesTable.keySet().iterator();
+            while (it.hasNext()) {
+                Object entityKey = it.next();
                 Object entityValue = valuesTable.get(entityKey);
-                if ((entityKey instanceof String) && (entityValue instanceof Hashtable)) {
-                    String tableColumns = AbstractTemplateGenerator.exportFieldData((Hashtable) entityValue, "$#", df,
+                if ((entityKey instanceof String) && (entityValue instanceof Map)) {
+                    String tableColumns = AbstractTemplateGenerator.exportFieldData((Map<?,?>) entityValue, "$#", df,
                             numberFormat);
                     info.append(entityKey).append("$#");
                     info.append(tableColumns).append("$#").append("\n");
@@ -216,12 +216,12 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return
      * @throws Exception
      */
-    public static File createImageDataFile(File directory, Hashtable valuesImages) throws Exception {
+    public static File createImageDataFile(File directory, Map<Object, Object> valuesImages) throws Exception {
         StringBuilder info = new StringBuilder();
         if (valuesImages != null) {
-            Enumeration enu = valuesImages.keys();
-            while (enu.hasMoreElements()) {
-                Object entityKey = enu.nextElement();
+            Iterator<?> enu = valuesImages.keySet().iterator();
+            while (enu.hasNext()) {
+                Object entityKey = enu.next();
                 Object entityValue = valuesImages.get(entityKey);
                 if (entityKey instanceof String) {
                     int width = 0;
@@ -303,7 +303,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @param df Format to use in date data fields
      * @return
      */
-    public static String exportFieldData(Hashtable data, String delimiter, DateFormat df) {
+    public static String exportFieldData(Map<Object, Object> data, String delimiter, DateFormat df) {
         return AbstractTemplateGenerator.exportFieldData(data, delimiter, df, null);
     }
 
@@ -316,7 +316,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @param numberFormat Format to use in the numeric fields
      * @return
      */
-    public static String exportFieldData(Hashtable data, String delimiter, DateFormat df, NumberFormat numberFormat) {
+    public static String exportFieldData(Map<?,?> data, String delimiter, DateFormat df, NumberFormat numberFormat) {
 
         // format : key1 + delimiter + value1 + delimiter + key2 + delimiter +
         // value2 + delimiter + ... + keyN + delimiter + valueN
@@ -331,9 +331,9 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
             Object key = keys[i];
             res.append(key);
             res.append(delimiter);
-            if (data.get(key) instanceof Vector) {
-                if (((Vector) data.get(key)).get(0) != null) {
-                    Object currentData = ((Vector) data.get(key)).get(0);
+            if (data.get(key) instanceof List) {
+                if (((List<?>) data.get(key)).get(0) != null) {
+                    Object currentData = ((List<?>) data.get(key)).get(0);
                     if ((df != null) && (currentData instanceof Date)) {
                         res.append(df.format(currentData));
                     } else {
@@ -375,7 +375,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @param data Table data
      * @return
      */
-    public static String exportTableData(Hashtable data) {
+    public static String exportTableData(Map<Object, Object> data) {
         // format :
         // colName1 $ colData1.1 # colData1.2 # ...# colData1.N $
         // colName2 $ colData2.1 # colData2.2 # ...# colData2.N $
@@ -391,7 +391,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
                 Object key = keys[i];
                 res.append(key);
                 res.append("$");
-                Vector vData = (Vector) data.get(key);
+                List<?> vData = (List<?>) data.get(key);
                 for (int j = 0; j < (vData.size() - 1); j++) {
                     if (vData.get(j) != null) {
                         res.append(vData.get(j).toString());
@@ -415,16 +415,16 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
     /**
      * Calculates the number of data rows.
      * @param data
-     * @return The size of the first Vector found in the Hashtable
+     * @return The size of the first Vector found in the Map
      */
-    public static int calculateRecordCount(Hashtable data) {
+    public static int calculateRecordCount(EntityResult data) {
         int r = 0;
-        Enumeration keys = data.keys();
+        Enumeration<?> keys = data.keys();
         while (keys.hasMoreElements()) {
             Object oKey = keys.nextElement();
             Object v = data.get(oKey);
-            if ((v != null) && (v instanceof Vector)) {
-                r = ((Vector) v).size();
+            if ((v != null) && (v instanceof List)) {
+                r = ((List<?>) v).size();
                 break;
             }
         }
@@ -464,26 +464,19 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @param data
      * @return
      */
-    public static boolean containsHashtableValue(Hashtable data) {
+    public static boolean containsHashtableValue(Map<?,?> data) {
         Object[] array = data.keySet().toArray();
         for (int i = 0; i < array.length; i++) {
-            if (data.get(array[i]) instanceof Hashtable) {
+            if (data.get(array[i]) instanceof Map<?,?>) {
                 return true;
             }
         }
         return false;
     }
 
-    public static Object[] getKeysOrder(Hashtable data) {
-        List keysOrder = new ArrayList();
+    public static Object[] getKeysOrder(Map<?,?> data) {
+        List<Object> keysOrder = new ArrayList<>();
 
-        if (data instanceof EntityResult) {
-            // Get the order of the field in the data to generate the template
-            List orderColumns = ((EntityResult) data).getOrderColumns();
-            if (orderColumns != null) {
-                keysOrder.addAll(orderColumns);
-            }
-        }
         // Put the elements not added yet in any order
         Object[] dataKeys = data.keySet().toArray();
         for (int i = 0; i < dataKeys.length; i++) {
@@ -491,6 +484,18 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
                 keysOrder.add(dataKeys[i]);
             }
         }
+        return keysOrder.toArray();
+    }
+    
+    public static Object[] getKeysOrder(EntityResult data) {
+        List<Object> keysOrder = new ArrayList<>();
+
+        // Get the order of the field in the data to generate the template
+        List<?> orderColumns = data.getOrderColumns();
+        if (orderColumns != null) {
+            keysOrder.addAll(orderColumns);
+        }
+        
         return keysOrder.toArray();
     }
 

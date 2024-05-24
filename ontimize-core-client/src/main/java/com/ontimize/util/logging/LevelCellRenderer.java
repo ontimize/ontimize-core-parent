@@ -7,6 +7,8 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import com.ontimize.jee.common.util.logging.Level;
+
 public class LevelCellRenderer extends JLabel implements TableCellRenderer {
 
     public LevelCellRenderer() {

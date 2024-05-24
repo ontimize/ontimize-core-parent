@@ -15,8 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
@@ -24,18 +25,19 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.FileManagementEntity;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.ExtendedOperationThread;
 import com.ontimize.gui.Form;
 import com.ontimize.gui.MainApplication;
 import com.ontimize.gui.MessageDialog;
 import com.ontimize.gui.actions.AbstractButtonAction;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.FileManagementEntity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.util.FileUtils;
-import com.ontimize.util.remote.BytesBlock;
 
 public class AttachmentScanTwainFileAction extends AbstractButtonAction {
 
@@ -102,7 +104,7 @@ public class AttachmentScanTwainFileAction extends AbstractButtonAction {
                     return;
                 }
                 entF = (FileManagementEntity) ent;
-                final Hashtable kv = AttachmentScanTwainFileAction.this.getAttachmentValuesKeys(this.currentForm);
+                final Map<Object, Object> kv = AttachmentScanTwainFileAction.this.getAttachmentValuesKeys(this.currentForm);
                 this.status = ApplicationManager.getTranslation("attachment.initiating_transfer",
                         this.currentForm.getResourceBundle());
 
@@ -178,7 +180,7 @@ public class AttachmentScanTwainFileAction extends AbstractButtonAction {
                 }
             } catch (Exception e) {
                 AttachmentScanTwainFileAction.logger.error(null, e);
-                this.res = new EntityResult();
+                this.res = new EntityResultMapImpl();
                 ((EntityResult) this.res).setCode(EntityResult.OPERATION_WRONG);
                 ((EntityResult) this.res).setMessage(e.getMessage());
                 this.status = ApplicationManager.getTranslation("error", this.currentForm.getResourceBundle()) + " : "
@@ -234,14 +236,14 @@ public class AttachmentScanTwainFileAction extends AbstractButtonAction {
         this.uriSound = uriSound;
     }
 
-    protected Hashtable getAttachmentValuesKeys(Form f) throws Exception {
+    protected Map<Object, Object> getAttachmentValuesKeys(Form f) throws Exception {
 
         if (f == null) {
             throw new Exception("parent form is null");
         }
 
-        final Hashtable kv = new Hashtable();
-        Vector vKeys = f.getKeys();
+        final Map<Object, Object> kv = new HashMap<>();
+        List<String> vKeys = f.getKeys();
         if (vKeys.isEmpty()) {
             throw new Exception("'keys' parameter ir required in the parent form");
         }

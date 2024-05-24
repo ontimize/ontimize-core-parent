@@ -8579,8 +8579,8 @@ public class Form extends JPanel
 	 *
 	 * @return a <code>List</code> with the component references from the form.
 	 */
-	public java.util.List getComponentList() {
-		ArrayList list = new ArrayList();
+	public List<Object> getComponentList() {
+		List<Object> list = new ArrayList<>();
 		for (int i = 0; i < this.componentList.size(); i++) {
 			list.add(i, this.componentList.get(i));
 		}

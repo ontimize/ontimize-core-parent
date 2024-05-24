@@ -13,13 +13,14 @@ import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -40,10 +41,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.field.document.CurrencyDocument;
 import com.ontimize.gui.table.CellRenderer;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.windows.office.WindowsUtils;
 
 /**
@@ -170,7 +171,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      *
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean xlsx, boolean openFile)
             throws Exception {
         OutputStream os = new FileOutputStream(output);
@@ -200,8 +201,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param xlsx {@link Boolean} Boolean indicating whether the extension *.xlsx or not.
      * @throws IOException
      */
-    public void createXLS(List entityResultsList, OutputStream os, List sheetNames, Hashtable hColumnRenderers,
-            List columnSort, boolean writeHeader, boolean xlsx)
+    public void createXLS(List<?> entityResultsList, OutputStream os, List<?> sheetNames, Map<?,?> hColumnRenderers,
+            List<?> columnSort, boolean writeHeader, boolean xlsx)
             throws IOException {
         Workbook wb = null;
         if (xlsx && XLSExporterFactory.isAvailableXLSX()) {
@@ -224,9 +225,9 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @since 5.3.8
      *
      */
-    protected float calculateRowHeight(Hashtable<Object, Object> sqlColumnTypes) {
+    protected float calculateRowHeight(Map<?, ?> sqlColumnTypes) {
         if ((sqlColumnTypes != null) && !sqlColumnTypes.isEmpty()) {
-            Collection<Object> collectionTypes = sqlColumnTypes.values();
+            Collection<?> collectionTypes = sqlColumnTypes.values();
             for (Object data : collectionTypes) {
                 if (Types.BINARY == ((Integer) data).intValue()) {
                     return 50;
@@ -247,8 +248,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param writeHeader {@link Boolean} Indicates whether the column header is written or not.
      * @throws IOException
      */
-    public void createXLS(List entityResultsList, OutputStream os, List sheetNames, Hashtable hColumnRenderers,
-            List columnSort, boolean writeHeader) throws IOException {
+    public void createXLS(List<?> entityResultsList, OutputStream os, List<?> sheetNames, Map<?,?> hColumnRenderers,
+            List<?> columnSort, boolean writeHeader) throws IOException {
         org.apache.poi.hssf.usermodel.HSSFWorkbook wb = new org.apache.poi.hssf.usermodel.HSSFWorkbook();
         sheetNames = this.checkSheetNames(entityResultsList.size(), sheetNames);
         for (int i = 0; i < entityResultsList.size(); i++) {
@@ -278,8 +279,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      *      {@link #writeSheet(Workbook, EntityResult, List, String, Hashtable, boolean) this other
      *      method} for *.xls
      */
-    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Hashtable hColumnRenderers,
-            List columnSort, boolean writeHeader, boolean xlsx) throws IOException {
+    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Map<?,?> hColumnRenderers,
+            List<?> columnSort, boolean writeHeader, boolean xlsx) throws IOException {
         Workbook wb = null;
         if (xlsx && XLSExporterFactory.isAvailableXLSX()) {
             wb = new org.apache.poi.xssf.streaming.SXSSFWorkbook();
@@ -303,11 +304,11 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheetNames {@link List} List of {@link String} with the names of the sheets
      * @return A {@link List} with the names of the sheet
      */
-    protected List checkSheetNames(int size, List sheetNames) {
+    protected List<Object> checkSheetNames(int size, List<?> sheetNames) {
         if ((sheetNames != null) && (sheetNames.size() == size)) {
-            return sheetNames;
+            return new ArrayList<>(sheetNames);
         }
-        List res = new Vector(size);
+        List<Object> res = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             res.add("Sheet" + i);
         }
@@ -324,7 +325,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param hColumnRenderers {@link Hashtable} Hashtable with the column renderers.
      * @param writeHeader {@link Boolean} Boolean to indicate if the column headers are written.
      */
-    protected void writeSheet(Workbook wb, EntityResult rs, List order, String sheetName, Hashtable hColumnRenderers,
+    protected void writeSheet(Workbook wb, EntityResult rs, List<?> order, String sheetName, Map<?,?> hColumnRenderers,
             boolean writeHeader) {
 
         int count = 0;
@@ -339,7 +340,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             order = rs.getOrderColumns();
         }
         if (order == null) {
-            order = new Vector(rs.keySet());
+            order = new ArrayList<>(rs.keySet());
         }
 
         this.helper = wb.getCreationHelper();
@@ -379,8 +380,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             }
 
             for (int j = 0; j < count; j++) {
-                Hashtable h = rs.getRecordValues(j);
-                Vector values = new Vector(order.size());
+                Map<?,?> h = rs.getRecordValues(j);
+                List<Object> values = new ArrayList<>(order.size());
                 for (Iterator it = order.iterator(); it.hasNext();) {
                     Object key = it.next();
                     values.add(h.get(key));
@@ -392,10 +393,10 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
                 sheet.autoSizeColumn(k);
             }
 
-            Enumeration enu = rs.keys();
+            Enumeration<?> enu = rs.keys();
             while (enu.hasMoreElements()) {
                 Object key = enu.nextElement();
-                Vector values = (Vector) rs.get(key);
+                List<?> values = (List<?>) rs.get(key);
                 try {
                     values.subList(0, this.MAX_ROWS_XLS).clear();
                     rs.put(key, values);
@@ -413,11 +414,11 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheet {@link Sheet} Sheet to which the styles will be applied.
      * @param orderColumns {@link List} List of ordered columns.
      * @param columnStyles {@link List} List of columns styles.
-     * @param hColumnRenderers {@link Hashtable} Hashtable with columns renderers.
-     * @param hColumnTypes {@link Hashtable} Hashtable with the list of column types.
+     * @param hColumnRenderers {@link Map} Map with columns renderers.
+     * @param hColumnTypes {@link Map} Map with the list of column types.
      */
-    protected void setColumnStyle(Workbook wb, Sheet sheet, List orderColumns, List columnStyles,
-            Hashtable hColumnRenderers, Hashtable hColumnTypes) {
+    protected void setColumnStyle(Workbook wb, Sheet sheet, List<?> orderColumns, List<?> columnStyles,
+            Map<?,?> hColumnRenderers, Map<?,?> hColumnTypes) {
         Row row = sheet.createRow(sheet.getLastRowNum());
         int column = 0;
 
@@ -497,8 +498,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param hColumnRenderers {@link Hashtable} Hashtable with the renderers to apply in the columns.
      * @param writeHeader {@link Boolean} Boolean to indicate whether the column headers are written.
      */
-    protected void writeSheet(Workbook wb, EntityResult rs, List order, List columnStyles, List columnHeaderStyles,
-            String sheetName, Hashtable hColumnRenderers,
+    protected void writeSheet(Workbook wb, EntityResult rs, List<?> order, List<?> columnStyles, List<?> columnHeaderStyles,
+            String sheetName, Map<?,?> hColumnRenderers,
             boolean writeHeader) {
 
         int count = 0;
@@ -513,7 +514,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             order = rs.getOrderColumns();
         }
         if (order == null) {
-            order = new Vector(rs.keySet());
+            order = new ArrayList<>(rs.keySet());
         }
 
         int rowNumbers = rs.calculateRecordNumber();
@@ -555,8 +556,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             }
 
             for (int j = 0; j < count; j++) {
-                Hashtable h = rs.getRecordValues(j);
-                Vector values = new Vector(order.size());
+                Map<?,?> h = rs.getRecordValues(j);
+                List<Object> values = new ArrayList<>(order.size());
                 for (Iterator it = order.iterator(); it.hasNext();) {
                     Object key = it.next();
                     values.add(h.get(key));
@@ -569,10 +570,10 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
                 sheet.autoSizeColumn(k);
             }
 
-            Enumeration enu = rs.keys();
+            Enumeration<?> enu = rs.keys();
             while (enu.hasMoreElements()) {
                 Object key = enu.nextElement();
-                Vector values = (Vector) rs.get(key);
+                List<?> values = (List<?>) rs.get(key);
                 try {
                     values.subList(0, this.MAX_ROWS_XLSX).clear();
                     rs.put(key, values);
@@ -591,12 +592,12 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheet {@link Sheet} Sheet to which the new line will be added.
      * @param values {@link List} List of values to be added to the new line
      * @param orderColumns {@link List} List of column order
-     * @param hColumnRenderers {@link Hashtable} Hashtable with the renderers of the columns
+     * @param hColumnRenderers {@link Map} Map with the renderers of the columns
      * @param columnStyles {@link List} List of column styles (not used in this method)
-     * @param hColumnTypes {@link Hashtable} Hashtable containing the column data type.
+     * @param hColumnTypes {@link Map} Map containing the column data type.
      */
-    protected void writeLineWithoutStyle(Workbook wb, Sheet sheet, List values, List orderColumns,
-            Hashtable hColumnRenderers, List columnStyles, Hashtable hColumnTypes) {
+    protected void writeLineWithoutStyle(Workbook wb, Sheet sheet, List<?> values, List<?> orderColumns,
+            Map<?,?> hColumnRenderers, List<?> columnStyles, Map<?,?> hColumnTypes) {
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
         int column = 0;
         for (int i = 0; i < values.size(); i++) {
@@ -853,13 +854,13 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param columnStyles {@link List} List of column styles.
      * @param columnHeaderStyles {@link List} List of column header styles.
      * @param sheetName {@link String} Name of spreadsheet
-     * @param hColumnRenderers {@link Hashtable} Hashtable with the renderers to apply in the columns.
+     * @param hColumnRenderers {@link Map} Map with the renderers to apply in the columns.
      * @param writeHeader {@link Boolean} Boolean to indicate whether the column headers are written.
      *
      */
     @Deprecated
-    protected void writeSheet_(Workbook wb, EntityResult rs, List order, List columnStyles, List columnHeaderStyles,
-            String sheetName, Hashtable hColumnRenderers,
+    protected void writeSheet_(Workbook wb, EntityResult rs, List<?> order, List<?> columnStyles, List<?> columnHeaderStyles,
+            String sheetName, Map<?,?> hColumnRenderers,
             boolean writeHeader) {
         this.dfs = new DecimalFormatSymbols(ApplicationManager.getLocale());
         this.decimalFormat.setDecimalFormatSymbols(this.dfs);
@@ -870,7 +871,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             order = rs.getOrderColumns();
         }
         if (order == null) {
-            order = new Vector(rs.keySet());
+            order = new ArrayList<>(rs.keySet());
         }
 
         Sheet sheet = wb.createSheet(sheetName);
@@ -879,8 +880,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             this.writeLine(wb, sheet, order, order, hColumnRenderers, columnHeaderStyles, rs.getColumnSQLTypes());
         }
         for (int count = rs.calculateRecordNumber(), i = 0; i < count; i++) {
-            Hashtable h = rs.getRecordValues(i);
-            Vector values = new Vector(order.size());
+            Map<?,?> h = rs.getRecordValues(i);
+            List<Object> values = new ArrayList<>(order.size());
             for (Iterator it = order.iterator(); it.hasNext();) {
                 Object key = it.next();
                 values.add(h.get(key));
@@ -899,12 +900,12 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheet {@link Sheet} Sheet selected
      * @param values {@link List} List of values to write in the sheet row
      * @param orderColumns {@link List} List of ordered columns
-     * @param hColumnRenderers {@link Hashtable} Hashtable with column renderers
+     * @param hColumnRenderers {@link Map} Map with column renderers
      * @param columnStyles {@link List} List of column styles
-     * @param hColumnTypes {@link Hashtable} Hashtable of column types to export
+     * @param hColumnTypes {@link Map} Map of column types to export
      */
-    protected void writeLine(Workbook wb, Sheet sheet, List values, List orderColumns, Hashtable hColumnRenderers,
-            List columnStyles, Hashtable hColumnTypes) {
+    protected void writeLine(Workbook wb, Sheet sheet, List<?> values, List<?> orderColumns, Map<?, ?> hColumnRenderers,
+            List<?> columnStyles, Map<?, ?> hColumnTypes) {
         Row row = sheet.createRow(sheet.getLastRowNum());
         int column = 0;
         for (int i = 0; i < values.size(); i++) {
@@ -1057,14 +1058,14 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheet {@link XSSFSheet} Hoja a la que se añadirá la línea.
      * @param values {@link List} List of values to be added to the line.
      * @param orderColumns {@link List} List of column order.
-     * @param hColumnRenderers {@link Hashtable} Hashtable containing the renderers of the columns.
+     * @param hColumnRenderers {@link Map} Map containing the renderers of the columns.
      * @param columnStyles {@link List} List of column styles
-     * @param hColumnTypes {@link Hashtable} Hashtable containing the data type of the columns to be
+     * @param hColumnTypes {@link Map} Map containing the data type of the columns to be
      *        exported.
      */
-    protected void writeLine(Object wb, org.apache.poi.xssf.usermodel.XSSFSheet sheet, List values, List orderColumns,
-            Hashtable hColumnRenderers, List columnStyles,
-            Hashtable hColumnTypes) {
+    protected void writeLine(Object wb, org.apache.poi.xssf.usermodel.XSSFSheet sheet, List<?> values, List<?> orderColumns,
+    		Map<?, ?> hColumnRenderers, List<?> columnStyles,
+    		Map<?, ?> hColumnTypes) {
         Row row = sheet.createRow(sheet.getLastRowNum() + 1);
         int column = 0;
         for (int i = 0; i < values.size(); i++) {
@@ -1142,13 +1143,13 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param sheet {@link Sheet} Sheet selected
      * @param values {@link List} List of values to write in the sheet row
      * @param order {@link List} List of ordered columns
-     * @param hColumnRenderers {@link Hashtable} Hashtable with column renderers
-     * @param hColumnTypes {@link Hashtable} Hashtable of column types to export
+     * @param hColumnRenderers {@link Map} Map with column renderers
+     * @param hColumnTypes {@link Map} Map of column types to export
      *
      * @see #writeLine(Workbook, Sheet, List, List, Hashtable, List, Hashtable)
      */
-    protected void writeLine(Workbook wb, Sheet sheet, List values, List order, Hashtable hColumnRenderers,
-            Hashtable hColumnTypes) {
+    protected void writeLine(Workbook wb, Sheet sheet, List<?> values, List<?> order, Map<?,?> hColumnRenderers,
+            Map<?,?> hColumnTypes) {
         this.writeLine(wb, sheet, values, order, hColumnRenderers, null, hColumnTypes);
     }
 
@@ -1158,7 +1159,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @param rs {@link EntityResult} EntityResult with the data to export
      * @param os {@link OutputStream} The output stream to save the document
      * @param sheetName {@link String} The name of the sheet
-     * @param hColumnRenderers {@link Hashtable} Hashtable with the column renderers
+     * @param hColumnRenderers {@link Map} Map with the column renderers
      * @param columnSort {@link List} List with the ordered columns
      * @param columnStyles {@link List} List with the styles of the column
      * @param columnHeaderStyles {@link List} List with the styles of the column headers
@@ -1168,8 +1169,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @throws Exception
      *
      */
-    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Hashtable hColumnRenderers,
-            List columnSort, List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Map<?,?> hColumnRenderers,
+            List<?> columnSort, List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean xlsx, boolean writeHeader) throws Exception {
         if (wb == null) {
             if (xlsx) {
@@ -1185,8 +1186,8 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+            List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean xlsx, boolean openFile) throws Exception {
         OutputStream os = new FileOutputStream(output);
         try {
@@ -1207,7 +1208,7 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @return An {@link XSSFWorkbook} class or null if not exists.
      */
     public static Object createXSSFWorkbook() {
-        Class classObject = null;
+        Class<?> classObject = null;
         try {
             classObject = Poi3_5XLSExporterUtils.class.getClassLoader()
                 .loadClass("org.apache.poi.xssf.usermodel.XSSFWorkbook");
@@ -1218,21 +1219,21 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     }
 
     /**
-     * @see #createXLS(EntityResult, File, String, Hashtable, List, boolean, boolean, boolean)
+     * @see #createXLS(EntityResult, File, String, Map, List, boolean, boolean, boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean openFile) throws Exception {
         this.createXLS(rs, output, sheetName, hColumnRenderers, columnSort, writeHeader, false, openFile);
     }
 
     /**
-     * @see #createXLS(EntityResult, File, String, Hashtable, List, List, List, Workbook, boolean,
+     * @see #createXLS(EntityResult, File, String, Map, List, List, List, Workbook, boolean,
      *      boolean, boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+            List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean openFile) throws Exception {
         this.createXLS(rs, output, sheetName, hColumnRenderers, columnSort, columnStyles, columnHeaderStyles, wb, false,
                 writeHeader, openFile);
@@ -1242,18 +1243,18 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      * @see #createXLS(EntityResult, File, String, Hashtable, List, boolean, boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, boolean writeHeader,
             boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, writeHeader, openFile);
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, writeHeader, openFile);
     }
 
     /**
      * @see #createXLS(EntityResult, File, String, Hashtable, List, boolean, boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, writeHeader, openFile);
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, writeHeader, openFile);
     }
 
     /**
@@ -1261,10 +1262,10 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      *      boolean, boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
-            List columnHeaderStyles, Workbook wb, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, List<?> columnStyles,
+            List<?> columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, columnStyles, columnHeaderStyles, wb, xlsx,
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, columnStyles, columnHeaderStyles, wb, xlsx,
                 writeHeader, openFile);
     }
 
@@ -1273,10 +1274,10 @@ public class Poi3_5XLSExporterUtils extends AbstractXLSExporter implements XLSEx
      *      boolean)
      */
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
-            List columnHeaderStyles, Workbook wb, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, List<?> columnStyles,
+            List<?> columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, columnStyles, columnHeaderStyles, wb,
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, columnStyles, columnHeaderStyles, wb,
                 writeHeader, openFile);
     }
 

@@ -100,10 +100,10 @@ public interface XLSExporter {
      *        export or not.
      * @throws Exception
      */
-    public void createXLS(EntityResult rs, File output, String sheetName, Map<?, ?> hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?, ?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean openFile) throws Exception;
 
-    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean xlsx, boolean openFile)
             throws Exception;
 
