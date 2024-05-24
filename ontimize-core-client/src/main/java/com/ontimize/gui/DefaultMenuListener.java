@@ -3,8 +3,9 @@ package com.ontimize.gui;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
-import java.util.Vector;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -19,7 +20,7 @@ import com.ontimize.gui.i18n.LocaleEvent;
 import com.ontimize.gui.i18n.LocaleListener;
 import com.ontimize.gui.i18n.LocaleMenuItem;
 import com.ontimize.gui.i18n.MenuLocale;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
 
 /**
  * This class implements the default menu listener for processing events, overrides
@@ -46,7 +47,7 @@ public abstract class DefaultMenuListener implements MenuListener, ActionListene
 
     private static boolean checkSupportedLocales = false;
 
-    private static Vector supportedLocales = new Vector();
+    private static List<Object> supportedLocales = new ArrayList<>();
 
     private static boolean queryLocales = false;
 
@@ -79,7 +80,7 @@ public abstract class DefaultMenuListener implements MenuListener, ActionListene
         if (this.application != null) {
             Locale l = this.application.getLocale();
             ApplicationMenuBar m = this.menu;
-            Vector items = m.getAllItems();
+            List<Object> items = m.getAllItems();
             for (int i = 0; i < items.size(); i++) {
                 Object item = items.get(i);
                 if (item instanceof LocaleMenuItem) {
@@ -101,7 +102,7 @@ public abstract class DefaultMenuListener implements MenuListener, ActionListene
         if (menuBar instanceof ApplicationMenuBar) {
             this.menu = (ApplicationMenuBar) menuBar;
             ApplicationMenuBar applicationMenuBar = (ApplicationMenuBar) menuBar;
-            Vector items = applicationMenuBar.getAllItems();
+            List<Object> items = applicationMenuBar.getAllItems();
             for (int i = 0; i < items.size(); i++) {
                 Object item = items.get(i);
                 if ((item instanceof JMenuItem) && !(item instanceof MenuLocale)) {
@@ -157,7 +158,7 @@ public abstract class DefaultMenuListener implements MenuListener, ActionListene
             }
             if (!DefaultMenuListener.checkSupportedLocales) {
                 // Checks the available locales
-                Vector notSupportedLocales = new Vector();
+                List<Object> notSupportedLocales = new ArrayList<>();
                 for (int i = 0; i < ((MenuLocale) e.getSource()).getMenuComponentCount(); i++) {
                     Component c = ((MenuLocale) e.getSource()).getMenuComponent(i);
                     if (c instanceof LocaleMenuItem) {

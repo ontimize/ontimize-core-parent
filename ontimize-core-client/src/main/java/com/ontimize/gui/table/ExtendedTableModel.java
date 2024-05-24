@@ -3,6 +3,7 @@ package com.ontimize.gui.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.i18n.Internationalization;
 import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.util.JEPUtils;
 import com.ontimize.util.math.MathExpressionParser;
 import com.ontimize.util.math.MathExpressionParserFactory;
@@ -125,7 +127,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 	 * @deprecated
 	 */
 	@Deprecated
-	public ExtendedTableModel(Map<Object, Object> tableData, List<Object> columnNames, List<Object> columnTexts,
+	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, List<Object> columnTexts,
 			Map<Object, Object> calculatedColumns) {
 		this(tableData, columnNames, columnTexts, calculatedColumns, false, null);
 	}
@@ -134,16 +136,16 @@ public class ExtendedTableModel extends AbstractTableModel {
 	 * @deprecated
 	 */
 	@Deprecated
-	public ExtendedTableModel(Map<Object, Object> tableData, List<Object> columNames, List<Object> columnTexts, Map<Object, Object> calculatedColumns,
+	public ExtendedTableModel(EntityResult tableData, List<Object> columNames, List<Object> columnTexts, Map<Object, Object> calculatedColumns,
 			boolean editable) {
 		this(tableData, columNames, columnTexts, calculatedColumns, editable, null);
 	}
 
-	public ExtendedTableModel(Map<Object, Object> tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable) {
+	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable) {
 		this(tableData, columnNames, new ArrayList<>(columnNames), calculatedColumns, editable);
 	}
 
-	public ExtendedTableModel(Map<Object, Object> tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable,
+	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable,
 			List<Object> colsReqCalc) {
 		this(tableData, columnNames, new ArrayList<>(columnNames), calculatedColumns, editable, colsReqCalc);
 	}
@@ -155,7 +157,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 	 *
 	 * @deprecated
 	 */
-	public ExtendedTableModel(Map<Object, Object> tableData, List<Object> columnNames, List<Object> columnTexts,
+	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, List<Object> columnTexts,
 			Map<Object, Object> calculatedColumns,
 			boolean editable, List<Object> colsReqCalc) {
 		this.colsReqCalc = colsReqCalc;
@@ -195,9 +197,9 @@ public class ExtendedTableModel extends AbstractTableModel {
 		}
 
 		this.columnsNumber = this.columnNames.size() + this.calculatedColumnsNames.size();
-		Iterator<?> enumKeys = tableData.keySet().iterator();
-		while (enumKeys.hasNext()) {
-			Object oKey = enumKeys.next();
+		Enumeration<?> enumKeys = tableData.keys();
+		while (enumKeys.hasMoreElements()) {
+			Object oKey = enumKeys.nextElement();
 			// Value must be a list
 			Object oValue = tableData.get(oKey);
 			if (oValue instanceof List) {

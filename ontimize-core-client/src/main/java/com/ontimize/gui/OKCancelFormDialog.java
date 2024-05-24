@@ -5,11 +5,12 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -105,16 +106,16 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
         this.init(formManager, title, formName, returnValues, emptyMessage);
     }
 
-    protected void setFixedValues(Hashtable fixedValues, String[] fixedValuesModifiables) {
+    protected void setFixedValues(Map<?,?> fixedValues, String[] fixedValuesModifiables) {
         this.form.enableDataFields(true);
-        Vector vAttributes = this.form.getDataFieldAttributeList();
+        List<?> vAttributes = this.form.getDataFieldAttributeList();
         for (int i = 0; i < vAttributes.size(); i++) {
             this.form.setModifiable(vAttributes.get(i).toString(), true);
         }
         if (fixedValues != null) {
-            Enumeration enumKeys = fixedValues.keys();
-            while (enumKeys.hasMoreElements()) {
-                Object oKey = enumKeys.nextElement();
+            Iterator<?> enumKeys = fixedValues.keySet().iterator();
+            while (enumKeys.hasNext()) {
+                Object oKey = enumKeys.next();
                 OKCancelFormDialog.v.form.setDataFieldValue(oKey, fixedValues.get(oKey));
                 OKCancelFormDialog.v.form.setModifiable(oKey.toString(), false);
                 boolean isModifiable = false;
@@ -322,20 +323,20 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
     }
 
     public static int showDialog(Frame frame, IFormManager formManager, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues) {
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues) {
         return OKCancelFormDialog.showDialog(frame, formManager, title, formName, returnValues, emptyMessage,
                 fixedValues, null);
     }
 
     public static int showDialog(Frame frame, IFormManager formManger, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues,
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues,
             OKActionValidator val) {
         return OKCancelFormDialog.showDialog(frame, formManger, title, formName, returnValues, emptyMessage,
                 fixedValues, null, null);
     }
 
     public static int showDialog(Frame frame, IFormManager formManager, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues,
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues,
             OKActionValidator val, String[] fixedValuesModifiables) {
         if (OKCancelFormDialog.v == null) {
             OKCancelFormDialog.v = new OKCancelFormDialog(frame, formManager, title, formName, returnValues,
@@ -409,20 +410,20 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
     }
 
     public static int showDialog(Dialog dialog, IFormManager formManager, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues) {
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues) {
         return OKCancelFormDialog.showDialog(dialog, formManager, title, formName, returnValues, emptyMessage,
                 fixedValues, null);
     }
 
     public static int showDialog(Dialog dialog, IFormManager formManager, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues,
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues,
             OKActionValidator val) {
         return OKCancelFormDialog.showDialog(dialog, formManager, title, formName, returnValues, emptyMessage,
                 fixedValues, null, null);
     }
 
     public static int showDialog(Dialog dialog, IFormManager formManager, String title, String formName,
-            String[] returnValues, String emptyMessage, Hashtable fixedValues,
+            String[] returnValues, String emptyMessage, Map<Object, Object> fixedValues,
             OKActionValidator val, String[] fixedValuesModifiables) {
         if (OKCancelFormDialog.v == null) {
             OKCancelFormDialog.v = new OKCancelFormDialog(dialog, formManager, title, formName, returnValues,
@@ -435,10 +436,10 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
                 || (val != OKCancelFormDialog.v.validator)) {
             try {
                 OKCancelFormDialog.v.form.free();
-            } catch (Exception e) {
-                OKCancelFormDialog.logger.error(e.getMessage(), e);
+            } catch (Exception exc) {
+                OKCancelFormDialog.logger.error(exc.getMessage(), exc);
                 if (ApplicationManager.DEBUG) {
-                    OKCancelFormDialog.logger.error(null, e);
+                    OKCancelFormDialog.logger.error(null, exc);
                 }
             }
             OKCancelFormDialog.v.dispose();
@@ -550,8 +551,8 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        return new Vector();
+    public List<String> getTextsToTranslate() {
+        return new ArrayList<>();
     }
 
     @Override
@@ -563,8 +564,8 @@ public class OKCancelFormDialog extends EJDialog implements Internationalization
             if (res != null) {
                 this.setTitle(res.getString(this.titleKey));
             }
-        } catch (Exception e) {
-            OKCancelFormDialog.logger.error(e.getMessage(), e);
+        } catch (Exception exc) {
+            OKCancelFormDialog.logger.error(exc.getMessage(), exc);
         }
     }
 

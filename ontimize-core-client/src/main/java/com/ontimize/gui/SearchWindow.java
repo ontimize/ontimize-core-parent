@@ -21,11 +21,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
@@ -50,15 +51,15 @@ import javax.swing.border.MatteBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
-import com.ontimize.db.FileManagementEntity;
 import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.i18n.Internationalization;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.db.FileManagementEntity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
 import com.ontimize.util.gd.GDUtilities;
 
 public class SearchWindow extends EJDialog implements Internationalization {
@@ -190,8 +191,8 @@ public class SearchWindow extends EJDialog implements Internationalization {
                 SearchWindow.this.wResult.setVisible(false);
             }
             String sText = SearchWindow.this.containText.getText();
-            Hashtable kv = new Hashtable();
-            Vector av = new Vector();
+            Map<Object, Object> kv = new HashMap<>();
+            java.util.List<Object> av = new ArrayList<>();
             av.add(Form.ORIGINAL_FILE_NAME);
             av.add(Form.ATTACHMENT_ID);
             av.add(Form.USER);
@@ -271,7 +272,7 @@ public class SearchWindow extends EJDialog implements Internationalization {
     }
 
     @Override
-    public Vector getTextsToTranslate() {
+    public java.util.List<String> getTextsToTranslate() {
         return null;
     }
 
@@ -332,7 +333,7 @@ public class SearchWindow extends EJDialog implements Internationalization {
                                     return;
                                 }
                             }
-                            Hashtable kv = new Hashtable();
+                            Map<Object, Object> kv = new HashMap<>();
                             kv.put(Form.ATTACHMENT_ID, result.getId());
 
                             com.ontimize.gui.actions.DownloadThread eop = new com.ontimize.gui.actions.DownloadThread(
@@ -403,7 +404,7 @@ public class SearchWindow extends EJDialog implements Internationalization {
             }
 
             public void setListData(EntityResult res) {
-                Vector v = new Vector();
+                java.util.List<ResultSearch> v = new  ArrayList<>();
                 for (int i = 0; i < res.calculateRecordNumber(); i++) {
                     Integer id = null;
                     String name = null;
@@ -411,7 +412,7 @@ public class SearchWindow extends EJDialog implements Internationalization {
                     Date date = null;
                     int privateA = 0;
                     String user = null;
-                    Hashtable h = res.getRecordValues(i);
+                    Map<?,?> h = res.getRecordValues(i);
 
                     if (h.containsKey(Form.ATTACHMENT_ID)) {
                         id = (Integer) h.get(Form.ATTACHMENT_ID);
@@ -440,7 +441,7 @@ public class SearchWindow extends EJDialog implements Internationalization {
                     }
                     v.add(new ResultSearch(id, name, description, date, privateA, user));
                 }
-                this.setListData(v);
+                this.setListData(v.toArray());
             }
 
             @Override

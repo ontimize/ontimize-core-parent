@@ -16,8 +16,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -57,6 +60,7 @@ import com.ontimize.gui.table.Table;
 import com.ontimize.gui.table.TableButton;
 import com.ontimize.gui.table.TableSorter;
 import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.security.FormPermission;
 import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.report.ReportUtils;
@@ -492,9 +496,9 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 	 * @return the table model
 	 */
 	protected TableModel getTableModel(EntityResult res) {
-		Vector vColumns = new Vector();
+		List<Object> vColumns = new ArrayList<>();
 
-		Enumeration enumKeys = res.keys();
+		Enumeration<?> enumKeys = res.keys();
 		while (enumKeys.hasMoreElements()) {
 			Object oKey = enumKeys.nextElement();
 			vColumns.add(oKey);
@@ -503,7 +507,7 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 			vColumns.add("No data");
 		}
 		TableSorter sorter = new TableSorter(
-				new ExtendedTableModel(res, vColumns, vColumns, new Hashtable(), false, new Vector()));
+				new ExtendedTableModel(res, vColumns, vColumns, new HashMap<>(), false, new ArrayList<>()));
 		sorter.enableSort(true);
 		sorter.enableFiltering(true);
 		this.addTableHeaderMouseListener(this.table);
@@ -645,7 +649,7 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 
 	@Override
 	public void deleteData() {
-		this.table.setModel(this.getTableModel(new EntityResult()));
+		this.table.setModel(this.getTableModel(new EntityResultMapImpl()));
 		if (this.table.getRowHeight() > 20) {
 			this.table.setRowHeight(20);
 		}
@@ -725,10 +729,10 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 		if (this.isEmpty()) {
 			return;
 		}
-		Vector v = null;
-		Hashtable hData = (Hashtable) this.getValue();
+		List<Object> v = null;
+		Map<?, ?> hData = (Map<?,?>) this.getValue();
 
-		Vector visibles = new Vector();
+		List<Object> visibles = new ArrayList<>();
 		Enumeration enumKeys = hData.keys();
 		while (enumKeys.hasMoreElements()) {
 			visibles.add(enumKeys.nextElement());

@@ -11,10 +11,10 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -45,8 +45,9 @@ import com.ontimize.gui.manager.ITreeFormManager;
 import com.ontimize.gui.table.Table;
 import com.ontimize.gui.tree.OTreeNode;
 import com.ontimize.gui.tree.Tree;
+import com.ontimize.jee.common.gui.SearchValue;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.printing.HTMLProcessor;
-import com.ontimize.util.remote.BytesBlock;
 import com.ontimize.util.templates.TemplateUtils;
 
 /**
@@ -170,7 +171,7 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
 
     }
 
-    protected Vector valueChangedListenerAttributes = null;
+    protected List<Object> valueChangedListenerAttributes = null;
 
     protected boolean valueChangeListenerEnabled = true;
 
@@ -178,7 +179,7 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
 
     public static final int UPDATE_CHANGED = 1;
 
-    protected Vector modifiedFieldAttributes = new Vector(3);
+    protected List<Object> modifiedFieldAttributes = new ArrayList<>(3);
 
     protected int updateMethod = InteractionManager.UPDATE_CHANGED;
 
@@ -338,12 +339,12 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
 
         this.registerFormKeyBindings();
 
-        this.valueChangedListenerAttributes = (Vector) this.managedForm.getDataFieldAttributeList().clone();
+        this.valueChangedListenerAttributes = new ArrayList<>(this.managedForm.getDataFieldAttributeList());
         this.managedForm.clearDataFieldButton.addActionListener(this.deleteFieldsListener);
         // Registers navigation listeners
         this.managedForm.addDataNavigationListener(this);
         // Registers change listeners
-        Vector vComponents = this.managedForm.componentList;
+        List<?> vComponents = this.managedForm.componentList;
         for (int i = 0; i < vComponents.size(); i++) {
             Object c = vComponents.get(i);
             if ((c != null) && (c instanceof ValueChangeDataComponent)) {
@@ -410,7 +411,7 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
      */
     public void setQueryInsertMode() {
         this.currentMode = InteractionManager.QUERYINSERT;
-        this.managedForm.updateDataFieldsEDTh(new Hashtable());
+        this.managedForm.updateDataFieldsEDTh(new HashMap<>());
 
         // Disable fields
         this.managedForm.clearDataFieldButton.setEnabled(true);
@@ -645,10 +646,10 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
                     final HTMLProcessor processor = new HTMLProcessor(templateURL);
 
                     // For each data component, we replace it
-                    Enumeration enumKeys = this.managedForm.dataComponentList.keys();
-                    while (enumKeys.hasMoreElements()) {
-                        Object oKey = enumKeys.nextElement();
-                        if (!(oKey instanceof Hashtable)) {
+                    Iterator<?> enumKeys = this.managedForm.dataComponentList.keySet().iterator();
+                    while (enumKeys.hasNext()) {
+                        Object oKey = enumKeys.next();
+                        if (!(oKey instanceof Map)) {
                             // If key is a hashtable then it is a table and the
                             // tables have a button to print the data
                             Object oValue = this.managedForm.getDataFieldValue(oKey.toString());
@@ -756,7 +757,7 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
      * Returns a Vector with the atributes of the fields that have been modified.
      * @return - the vector with the modified field attributes.
      */
-    public Vector getModifiedFieldAttributes() {
+    public List<Object> getModifiedFieldAttributes() {
         return this.modifiedFieldAttributes;
     }
 
@@ -877,8 +878,8 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
                         oNode = (OTreeNode) associatedNode.getParent();
                         path = associatedPath.getParentPath();
                     }
-                    Vector vKeys = oNode.getKeys();
-                    Hashtable hFormData = e.getData();
+                    List<?> vKeys = oNode.getKeys();
+                    Map<?,?> hFormData = e.getData();
 
                     // Now, node is associated organizational node to the form.
                     // It
@@ -886,7 +887,7 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
                     for (int i = 0; i < oNode.getChildCount(); i++) {
                         boolean bKeysMatch = true;
                         OTreeNode n = (OTreeNode) oNode.getChildAt(i);
-                        Hashtable hNodeData = n.getKeysValues();
+                        Map<?,?> hNodeData = n.getKeysValues();
                         for (int j = 0; j < vKeys.size(); j++) {
                             Object oFieldValue = hFormData.get(vKeys.get(j));
                             if (oFieldValue != null) {
@@ -1112,54 +1113,54 @@ public class InteractionManager implements Freeable, ValueChangeListener, DataNa
     /**
      * Gets tables included in form that are inserted when template is created.
      * @param form Form that is source to create template
-     * @return <code>Hashtable</code> with tables included in template
+     * @return <code>Map</code> with tables included in template
      */
-    public Hashtable getTemplateTables(Form form) {
+    public Map<Object, Object> getTemplateTables(Form form) {
         return TemplateUtils.getTemplateTables(form);
     }
 
     /**
      * Gets fields included in form that are inserted when template is created.
      * @param form Form that is source to create template
-     * @return <code>Hashtable</code> with fields included in template
+     * @return <code>Map</code> with fields included in template
      */
-    public Hashtable getTemplateFields(Form form) {
+    public Map<Object, Object> getTemplateFields(Form form) {
         return TemplateUtils.getTemplateFields(form);
     }
 
     /**
      * Gets images included in form that are inserted when template is created.
      * @param form Form that is source to create template
-     * @return <code>Hashtable</code> with tables included in template
+     * @return <code>Map</code> with tables included in template
      */
-    public Hashtable getTemplateImages(Form form) {
+    public Map<Object, Object> getTemplateImages(Form form) {
         return TemplateUtils.getTemplateImages(form);
     }
 
     /**
      * Gets field values included in form that are inserted when template is filled.
      * @param form Form that is source to fill template
-     * @return <code>Hashtable</code> with field values included in template
+     * @return <code>Map</code> with field values included in template
      */
-    public Hashtable getFieldValues(Form form) {
+    public Map<Object, Object> getFieldValues(Form form) {
         return TemplateUtils.getFieldsValues(form);
     }
 
     /**
      * Gets table values included in form that are inserted when template is filled.
      * @param form Form that is source to fill template
-     * @return <code>Hashtable</code> with table values included in template
+     * @return <code>Map</code> with table values included in template
      */
-    public Hashtable getTableValues(Form form) {
+    public Map<Object, Object> getTableValues(Form form) {
         return TemplateUtils.getTablesValues(form);
     }
 
     /**
      * Gets image values included in form that are inserted when template is filled.
      * @param form Form that is source to fill template
-     * @return <code>Hashtable</code> with image values included in template
+     * @return <code>Map</code> with image values included in template
      */
-    public Hashtable getImageValues(Form form, boolean insertEmptyImages) {
+    public Map<Object, Object> getImageValues(Form form, boolean insertEmptyImages) {
         return TemplateUtils.getImagesValues(form, insertEmptyImages);
     }
 

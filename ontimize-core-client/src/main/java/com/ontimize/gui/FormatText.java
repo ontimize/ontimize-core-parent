@@ -1,6 +1,7 @@
 package com.ontimize.gui;
 
-import com.ontimize.db.NullValue;
+import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.gui.MultipleValue;
 
 public class FormatText extends MultipleValue {
 

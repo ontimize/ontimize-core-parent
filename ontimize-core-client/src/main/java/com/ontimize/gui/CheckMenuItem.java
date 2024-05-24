@@ -3,11 +3,12 @@ package com.ontimize.gui;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.EventListener;
-import java.util.Hashtable;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -24,9 +25,9 @@ import com.ontimize.gui.field.IdentifiedElement;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.gui.preferences.ApplicationPreferences;
 import com.ontimize.gui.preferences.HasPreferenceComponent;
-import com.ontimize.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.security.MenuPermission;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.MenuPermission;
 import com.ontimize.util.ParseUtils;
 
 /**
@@ -65,10 +66,10 @@ public class CheckMenuItem extends JCheckBoxMenuItem implements FormComponent, I
     /**
      * The class constructor. Inits parameters, permissions and registers status component.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters.
+     * @param parameters the <code>Map</code> with parameters.
      */
 
-    public CheckMenuItem(Hashtable parameters) {
+    public CheckMenuItem(Map<Object, Object> parameters) {
         this.init(parameters);
 
         // Icon parameter
@@ -100,7 +101,7 @@ public class CheckMenuItem extends JCheckBoxMenuItem implements FormComponent, I
     /**
      * Initializes parameters.
      * <p>
-     * @param parameters the hashtable with parameters
+     * @param parameters the map with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
      *        <tr>
@@ -148,7 +149,7 @@ public class CheckMenuItem extends JCheckBoxMenuItem implements FormComponent, I
      *        </TABLE>
      */
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         // Attribute
         Object attr = parameters.get("attr");
         if (attr != null) {
@@ -192,8 +193,8 @@ public class CheckMenuItem extends JCheckBoxMenuItem implements FormComponent, I
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         v.add(this.attribute);
         return v;
     }

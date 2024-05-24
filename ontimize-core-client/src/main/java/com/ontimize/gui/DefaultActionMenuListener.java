@@ -8,8 +8,9 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractButton;
@@ -27,14 +28,14 @@ import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.preferences.ApplicationPreferences;
 import com.ontimize.gui.preferences.BasicApplicationPreferences;
 import com.ontimize.help.HelpUtilities;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.report.RemoteReportReferencer;
+import com.ontimize.jee.common.report.store.ReportStore;
 import com.ontimize.module.IModuleActionMenuListener;
 import com.ontimize.ols.control.LCMC;
 import com.ontimize.report.BaseEntityReportDesigner;
-import com.ontimize.report.RemoteReportReferencer;
 import com.ontimize.report.ReportConfig;
-import com.ontimize.report.store.ReportStore;
 
 public class DefaultActionMenuListener extends DefaultMenuListener {
 
@@ -98,7 +99,7 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
 
     protected BaseEntityReportDesigner entityReportDesigner = null;
 
-    protected Hashtable createdForms = new Hashtable();
+    protected Map<Object, Object> createdForms = new HashMap<>();
 
     /** The listener list. */
     protected List<IModuleActionMenuListener> moduleListenerList;
@@ -577,10 +578,10 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
             if (this.dReportSelection == null) {
 
                 try {
-                    Class rootClass = Class.forName("com.ontimize.report.ReportSelection");
-                    Class[] p = { Frame.class, EntityReferenceLocator.class, ReportStore[].class,
+                    Class<?> rootClass = Class.forName("com.ontimize.report.ReportSelection");
+                    Class<?>[] p = { Frame.class, EntityReferenceLocator.class, ReportStore[].class,
                             ResourceBundle.class };
-                    Constructor constructorReportSelection = rootClass.getConstructor(p);
+                    Constructor<?> constructorReportSelection = rootClass.getConstructor(p);
                     Object[] parameters = { this.application.getFrame(), referenceLocator, null,
                             ApplicationManager.getApplication().getResourceBundle() };
                     this.dReportSelection = (ReportConfig) constructorReportSelection.newInstance(parameters);
@@ -602,8 +603,8 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
                 }
 
                 if (this.rs == null) {
-                    if (referenceLocator instanceof com.ontimize.report.RemoteReportReferencer) {
-                        List list = ((RemoteReportReferencer) referenceLocator)
+                    if (referenceLocator instanceof RemoteReportReferencer) {
+                        List<?> list = ((RemoteReportReferencer) referenceLocator)
                             .getRemoteReportStore(referenceLocator.getSessionId());
                         if (list != null) {
                             this.rs = (ReportStore[]) list.toArray(new ReportStore[list.size()]);
@@ -626,13 +627,13 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
     protected void actionReportDesignerCommand() {
         try {
             EntityReferenceLocator locator = this.application.getReferenceLocator();
-            java.util.List l = this.getEntitiesListForReportDesigner();
+            List<?> l = this.getEntitiesListForReportDesigner();
             EntityReferenceLocator referenceLocator = ApplicationManager.getApplication().getReferenceLocator();
 
             if (this.entityReportDesigner == null) {
                 if (this.rs == null) {
-                    if (locator instanceof com.ontimize.report.RemoteReportReferencer) {
-                        List list = ((RemoteReportReferencer) locator).getRemoteReportStore(locator.getSessionId());
+                    if (locator instanceof RemoteReportReferencer) {
+                        List<?> list = ((RemoteReportReferencer) locator).getRemoteReportStore(locator.getSessionId());
                         if (list != null) {
                             this.rs = (ReportStore[]) list.toArray(new ReportStore[list.size()]);
                         }
@@ -640,10 +641,10 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
                 }
 
                 try {
-                    Class rootClass = Class.forName("com.ontimize.report.EntityReportDesigner");
-                    Class[] p = { Frame.class, EntityReferenceLocator.class, String.class, java.util.List.class,
+                    Class<?> rootClass = Class.forName("com.ontimize.report.EntityReportDesigner");
+                    Class<?>[] p = { Frame.class, EntityReferenceLocator.class, String.class, java.util.List.class,
                             ResourceBundle.class, ReportStore[].class };
-                    Constructor constructorEntityReportDesigner = rootClass.getConstructor(p);
+                    Constructor<?> constructorEntityReportDesigner = rootClass.getConstructor(p);
                     Object[] parameters = { null, referenceLocator, "ReportDesigner", l,
                             this.application.getResourceBundle(), this.rs };
                     this.entityReportDesigner = (BaseEntityReportDesigner) constructorEntityReportDesigner
@@ -679,8 +680,8 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
             EntityReferenceLocator locator = this.application.getReferenceLocator();
 
             if (this.rs == null) {
-                if (locator instanceof com.ontimize.report.RemoteReportReferencer) {
-                    List list = ((RemoteReportReferencer) locator).getRemoteReportStore(locator.getSessionId());
+                if (locator instanceof RemoteReportReferencer) {
+                    List<?> list = ((RemoteReportReferencer) locator).getRemoteReportStore(locator.getSessionId());
                     if (list != null) {
                         this.rs = (ReportStore[]) list.toArray(new ReportStore[list.size()]);
                     }
@@ -722,19 +723,19 @@ public class DefaultActionMenuListener extends DefaultMenuListener {
         }
     }
 
-    protected java.util.List getEntitiesListForReportDesigner() {
-        if (this.application.getReferenceLocator() instanceof com.ontimize.report.RemoteReportReferencer) {
+    protected List<Object> getEntitiesListForReportDesigner() {
+        if (this.application.getReferenceLocator() instanceof RemoteReportReferencer) {
             try {
-                return ((com.ontimize.report.RemoteReportReferencer) this.application.getReferenceLocator())
+                return ((RemoteReportReferencer) this.application.getReferenceLocator())
                     .getReportEntityNames(this.application.getReferenceLocator().getSessionId());
             } catch (Exception ex) {
                 DefaultActionMenuListener.logger.error(null, ex);
             }
         }
-        return new ArrayList();
+        return new ArrayList<>();
     }
 
-    protected com.ontimize.report.store.ReportStore[] rs = null;
+    protected ReportStore[] rs = null;
 
     public com.ontimize.report.BaseEntityReportDesigner getEntityReportDesigner() {
         return this.entityReportDesigner;

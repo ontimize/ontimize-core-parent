@@ -13,13 +13,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -101,10 +99,10 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 
 	protected List<Object>		internationalizationComponents				= new ArrayList<>();
 
-	protected Vector textsToTranslate = new Vector(Arrays.asList(
-			new String[] { ConfigureFormBundleDialog.MESSAGE_BUNDLE_ALL_TRANSLATIONS_REQUIRED,
+	protected List<String> textsToTranslate = Arrays.asList(
+			ConfigureFormBundleDialog.MESSAGE_BUNDLE_ALL_TRANSLATIONS_REQUIRED,
 					ConfigureFormBundleDialog.MESSAGE_BUNDLE_BUNDLE_CLASS_REQUIRED,
-					ConfigureFormBundleDialog.MESSAGE_BUNDLE_SAVE_CHANGES }));
+					ConfigureFormBundleDialog.MESSAGE_BUNDLE_SAVE_CHANGES );
 
 	protected String originalTitle;
 
@@ -377,9 +375,9 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 
 			@Override
 			public void editingStopped(TableEditionEvent e) {
-				Hashtable rowValues = ConfigureFormBundleDialog.this.confTable.getRowData(e.getRow());
+				Map<?,?> rowValues = ConfigureFormBundleDialog.this.confTable.getRowData(e.getRow());
 				if (rowValues != null) {
-					Hashtable keys = new Hashtable();
+					Map<Object, Object> keys = new HashMap<>();
 					keys.put(ConfigureFormBundleDialog.textKeyColumn,
 							rowValues.get(ConfigureFormBundleDialog.textKeyColumn));
 					keys.put(ConfigureFormBundleDialog.bundleClassColumn,
@@ -405,7 +403,7 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		});
 
 		this.confTable.addInsertTableInsertRowListener(e -> {
-			Hashtable rowData = e.getRowData();
+			Map<?,?> rowData = e.getRowData();
 			if (rowData != null) {
 				ConfigureFormBundleDialog.this.tableChanges.addRecord(rowData);
 				if (ConfigureFormBundleDialog.this.acceptButton != null) {
@@ -478,10 +476,10 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 
 	protected void clearChanges() {
 		// The entity result with the changes needs always the column names.
-		Vector columns = this.confTable.getAttributeList();
+		List<Object> columns = this.confTable.getAttributeList();
 		this.tableChanges.clear();
 		for (Object column : columns) {
-			this.tableChanges.put(column, new Vector());
+			this.tableChanges.put(column, new ArrayList<>());
 		}
 	}
 
@@ -531,7 +529,7 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		if ((remoteReference != null) && (remoteReference instanceof IDatabaseBundleManager)) {
 			DatabaseBundleValues dbbv = new DatabaseBundleValues(this.availableLocales);
 
-			dbbv.addBundleValue(key, bundleClassColumn, new Hashtable<String, Object>());
+			dbbv.addBundleValue(key, bundleClassColumn, new HashMap<String, Object>());
 
 			((IDatabaseBundleManager) remoteReference).deleteBundleValues(dbbv,
 					this.form.getFormManager().getReferenceLocator().getSessionId());
@@ -551,7 +549,7 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 	}
 
 	protected boolean saveChanges() throws Exception {
-		if (this.tableChanges.size() > 0) {
+		if (this.tableChanges.calculateRecordNumber() > 0) {
 			Object remoteReference = ((UtilReferenceLocator) this.form.getFormManager().getReferenceLocator())
 					.getRemoteReference(this.remoteObjectName,
 							this.form.getFormManager().getReferenceLocator().getSessionId());
@@ -559,8 +557,8 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 				DatabaseBundleValues dbbv = new DatabaseBundleValues(this.availableLocales);
 
 				for (int i = 0; i < this.tableChanges.calculateRecordNumber(); i++) {
-					Hashtable h = this.tableChanges.getRecordValues(i);
-					Hashtable trans = new Hashtable();
+					Map<?,?> h = this.tableChanges.getRecordValues(i);
+					Map<Object, Object> trans = new HashMap<>();
 					for (String availableLocale : this.availableLocales) {
 						if (h.get(availableLocale) != null) {
 							trans.put(availableLocale, h.get(availableLocale));
@@ -627,13 +625,13 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		String applicationResourceFileName = ((MainApplication) this.form.getFormManager().getApplication())
 				.getResourcesFileName();
 
-		List textsToTranslate = this.form.getTextsToTranslate();
+		List<String> textsToTranslate = this.form.getTextsToTranslate();
 		String[] locales = this.getAvailableLocales();
 
-		Vector columns = this.confTable.getAttributeList();
-		this.originalValues = new EntityResult();
+		List<Object> columns = this.confTable.getAttributeList();
+		this.originalValues = new EntityResultMapImpl();
 		for (Object column : columns) {
-			this.originalValues.put(column, new Vector());
+			this.originalValues.put(column, new ArrayList<>());
 		}
 
 		LanguageResourcesManager lrm = new LanguageResourcesManager(locales, formResourceFileName,
@@ -641,14 +639,14 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		Collections.sort(textsToTranslate);
 		// For each text key we must know the resources where it appears and the
 		// translations in each available language
-		Hashtable lastRecord = null;
+		Map<String, String> lastRecord = null;
 		for (int i = 0; i < textsToTranslate.size(); i++) {
 			if (textsToTranslate.get(i) instanceof String) {
 				String str = (String) textsToTranslate.get(i);
 				if ((str != null) && (str.toString().trim().length() > 0)) {
-					Hashtable record = lrm.getValuesForKey(str.toString());
+					Map<String, String> record = lrm.getValuesForKey(str.toString());
 					if (record == null) {
-						record = new Hashtable();
+						record = new HashMap<>();
 						record.put(ConfigureFormBundleDialog.textKeyColumn, str);
 						if (formResourceFileName != null) {
 							record.put(ConfigureFormBundleDialog.bundleClassColumn, formResourceFileName);
@@ -661,7 +659,7 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 					// confTable.addRow(record);
 
 					if (!this.compareRecordBundleKeys(lastRecord, record)) {
-						this.originalValues.addRecord((Hashtable) record.clone(), i);
+						this.originalValues.addRecord(new HashMap<>(record), i);
 						lastRecord = record;
 					}
 				}
@@ -674,7 +672,7 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		this.confTable.setValue(this.originalValues);
 	}
 
-	protected boolean compareRecordBundleKeys(Hashtable record1, Hashtable record2) {
+	protected boolean compareRecordBundleKeys(Map<?,?> record1, Map<?,?> record2) {
 		if ((record1 != null) && (record2 != null)) {
 			Object textKey1 = record1.get(ConfigureFormBundleDialog.textKeyColumn);
 			Object textKey2 = record2.get(ConfigureFormBundleDialog.textKeyColumn);
@@ -691,11 +689,11 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 	}
 
 	@Override
-	public Vector getTextsToTranslate() {
+	public List<String> getTextsToTranslate() {
 		if (this.internationalizationComponents != null) {
-			Vector v = new Vector();
+			List<String> v = new ArrayList<>();
 			for (Object element : this.internationalizationComponents) {
-				Vector textsToTranslate = ((Internationalization) element)
+				List<String> textsToTranslate = ((Internationalization) element)
 						.getTextsToTranslate();
 				if (textsToTranslate != null) {
 					v.addAll(textsToTranslate);
@@ -764,8 +762,8 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 			}
 		}
 
-		public Hashtable getValuesForKey(String textKey) {
-			Hashtable result = null;
+		public Map<String, String> getValuesForKey(String textKey) {
+			Map<String, String> result = null;
 			if (this.formResources != null) {
 				result = this.formResources.getTranslationForKey(textKey);
 			}
@@ -824,8 +822,8 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 			return null;
 		}
 
-		public Hashtable getTranslationForKey(String textKey) {
-			Hashtable h = new Hashtable();
+		public Map<String, String> getTranslationForKey(String textKey) {
+			Map<String, String> h = new HashMap<>();
 			for (int i = 0; i < this.bundles.length; i++) {
 				if (ConfigureFormBundleDialog.bundleContainsKey(this.bundles[i], textKey)) {
 					h.put(this.locales[i], this.bundles[i].getString(textKey));

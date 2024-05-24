@@ -5581,8 +5581,8 @@ public class Table extends JRootPane
      * @return all text keys the table stores
      */
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         for (Object element : this.attributes) {
             v.add(element.toString());
         }

@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -316,7 +314,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	/**
 	 * The vector with attributes to update when data field value changed. By default, null.
 	 */
-	protected Vector					onsetvaluesetAttributes					= null;
+	protected List<Object>					onsetvaluesetAttributes					= null;
 
 	/**
 	 * Indicates if fields contained into 'onsetvalueset' have to be deleted on null value of the field.
@@ -448,7 +446,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	/**
 	 * The others parent keys in a 1x3 Vector.
 	 */
-	protected List<Object>				othersParentKey							= new Vector(1, 3);
+	protected List<Object>				othersParentKey							= new ArrayList(1);
 
 	/**
 	 * The parent keys vector.
@@ -784,7 +782,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 			}
 			Object oValue = referenceDataField.getValue();
 			if (oValue != null) {
-				Hashtable hKeysValues = new Hashtable();
+				Map<Object, Object> hKeysValues = new HashMap<>();
 				hKeysValues.put(referenceDataField.getCodeFieldName(), oValue);
 				int row = this.multipleResultTable.getRowForKeys(hKeysValues);
 				if (row >= 0) {
@@ -951,7 +949,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 					ReferenceExtDataField.this.t.setValue(ReferenceExtDataField.this.dataCache);
 					Object oValue = ReferenceExtDataField.this.getValue();
 					if (oValue != null) {
-						Hashtable hKeysValues = new Hashtable();
+						Map<Object, Object> hKeysValues = new HashMap<>();
 						hKeysValues.put(ReferenceExtDataField.this.code, oValue);
 						int row = ReferenceExtDataField.this.t.getRowForKeys(hKeysValues);
 						if (row >= 0) {
@@ -964,28 +962,28 @@ public class ReferenceExtDataField extends TextFieldDataField
 			ReferenceExtDataField.this.okButton.addActionListener(e -> {
 				if (ReferenceExtDataField.this.t.getSelectedRow() >= 0) {
 					if (ReferenceExtDataField.this.cacheTime > 0) {
-						Hashtable hFieldValue1 = ReferenceExtDataField.this.t.getRowData(ReferenceExtDataField.this.t.getSelectedRow());
+						Map<Object, Object> hFieldValue1 = ReferenceExtDataField.this.t.getRowData(ReferenceExtDataField.this.t.getSelectedRow());
 						Object cod = hFieldValue1.get(ReferenceExtDataField.this.code);
 						ReferenceExtDataField.this.setCode(cod, ValueEvent.USER_CHANGE);
 						ReferenceExtDataField.this.tableWindow.setVisible(false);
 					} else {// There is not cache
-						Hashtable hFieldValue2 = ReferenceExtDataField.this.t.getRowData(ReferenceExtDataField.this.t.getSelectedRow());
+						Map<Object, Object> hFieldValue2 = ReferenceExtDataField.this.t.getRowData(ReferenceExtDataField.this.t.getSelectedRow());
 						// Data format must be an EntityResult
 						ReferenceExtDataField.this.disabledValueEvents = true;
 						Object oPreviusSavedValue = ReferenceExtDataField.this.getValue();
 						try {
-							Hashtable hValuesVector = new Hashtable();
-							Enumeration enumKeys = hFieldValue2.keys();
-							while (enumKeys.hasMoreElements()) {
-								Object oKey = enumKeys.nextElement();
-								Vector v1 = new Vector();
+							Map<Object, Object> hValuesVector = new HashMap<>();
+							Iterator<?> enumKeys = hFieldValue2.keySet().iterator();
+							while (enumKeys.hasNext()) {
+								Object oKey = enumKeys.next();
+								List<Object> v1 = new ArrayList<>();
 								v1.add(hFieldValue2.get(oKey));
 								hValuesVector.put(oKey, v1);
 							}
-							Vector vAttributes = ReferenceExtDataField.this.getAttributes();
+							List<?> vAttributes = ReferenceExtDataField.this.getAttributes();
 							for (int i = 0; i < vAttributes.size(); i++) {
 								if (!hValuesVector.containsKey(vAttributes.get(i))) {
-									Vector v2 = new Vector();
+									List<Object> v2 = new ArrayList<>();
 									v2.add(null);
 									hValuesVector.put(vAttributes.get(i), v2);
 								}
@@ -1012,7 +1010,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				this.setSize(Toolkit.getDefaultToolkit().getScreenSize().width - 40, this.getHeight());
 			}
 			if (oValue != null) {
-				Hashtable kv = new Hashtable();
+				Map<Object, Object> kv = new HashMap<>();
 				kv.put(ReferenceExtDataField.this.code, oValue);
 				int row = ReferenceExtDataField.this.t.getRowForKeys(kv);
 				if (row >= 0) {
@@ -1092,7 +1090,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 																ReferenceExtDataField.this.t.setSelectedRow(-1);
 																Object oValue = ReferenceExtDataField.this.getValue();
 																if (oValue != null) {
-																	Hashtable hKeysValues = new Hashtable();
+																	Map<Object, Object> hKeysValues = new HashMap<>();
 																	hKeysValues.put(ReferenceExtDataField.this.code, oValue);
 																	int row = ReferenceExtDataField.this.t.getRowForKeys(hKeysValues);
 																	if (row >= 0) {
@@ -1149,7 +1147,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 								enabledFiltering = ReferenceExtDataField.this.t.isFilteringEnabled();
 								ReferenceExtDataField.this.populateTable();
 								ReferenceExtDataField.this.t.enableFiltering(false);
-								Hashtable hKeysValues = new Hashtable();
+								Map<Object, Object> hKeysValues = new HashMap<>();
 								hKeysValues.put(ReferenceExtDataField.this.code, ReferenceExtDataField.this.getValue());
 								int row = ReferenceExtDataField.this.t.getRowForKeys(hKeysValues);
 								if (row >= 0) {
@@ -1373,7 +1371,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		if (!this.dataRecordListenerReady) {
 			if (this.t.hasForm()) {
 				this.t.getDetailForm().getForm().addDataRecordListener(event -> {
-					if (e.getType() == DataRecordEvent.UPDATE) {
+					if (event.getType() == DataRecordEvent.UPDATE) {
 						// When the detail form values are updated then it
 						// is
 						// necessary update the cache too
@@ -1382,7 +1380,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 							Map<?, ?> updateKeys = event.getKeysValues();
 							ReferenceExtDataField.this.updateDataCache(updateAttributes, updateKeys);
 							if (ReferenceExtDataField.this.existFieldsToUpdate(updateAttributes, updateKeys)) {
-								Hashtable data = ReferenceExtDataField.this.getCodeValues(ReferenceExtDataField.this.getValue());
+								Map<Object, Object> data = ReferenceExtDataField.this.getCodeValues(ReferenceExtDataField.this.getValue());
 								ReferenceExtDataField.this.updateOnSetValueSetAttributes(data);
 							}
 						}
@@ -1393,7 +1391,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		}
 	}
 
-	protected boolean existFieldsToUpdate(Hashtable changes, Hashtable keys) {
+	protected boolean existFieldsToUpdate(Map<?,?> changes, Map<?,?> keys) {
 		// Field in 'onsetvalueset' attribute only must be updated if the update
 		// record is the selected one
 		// One of the modified fields must be one of the 'onsetvalueset' fields
@@ -1404,9 +1402,9 @@ public class ReferenceExtDataField extends TextFieldDataField
 		if (keys.containsKey(attr)) {
 			Object currentValue = this.getValue();
 			if (keys.get(attr).equals(currentValue)) {
-				Enumeration eKeys = changes.keys();
-				while (eKeys.hasMoreElements()) {
-					Object key = eKeys.nextElement();
+				Iterator<?> eKeys = changes.keySet().iterator();
+				while (eKeys.hasNext()) {
+					Object key = eKeys.next();
 					if (key instanceof ReferenceFieldAttribute) {
 						key = ((ReferenceFieldAttribute) key).getAttr();
 					}
@@ -1461,7 +1459,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * columns in text field. By default, it is the parameter value of visiblecols in table.</td> </tr> <tr> <td>querycols</td> <td><i>dcol1;dcol2;...;dcoln</td> <td>yes</td>
 	 * <td>no</td> <td>Columns that are added to description for query</td> </tr> <tr> <td>parentkeylistener</td> <td><i>yes/no</td> <td>no</td> <td>no</td> <td>Register a listener
 	 * for each parentkey field to delete data of this field when one of the parentkey values changes (when new value of the parentkey field is null, field value is not reset,
-	 * excepts if 'disableonparentkeynull' is true). If you use this parameter then you need to use the setvalueorder for the Form @see {@link Form#init(Hashtable)}</td> </tr> <tr>
+	 * excepts if 'disableonparentkeynull' is true). If you use this parameter then you need to use the setvalueorder for the Form @see {@link Form#init(Map)}</td> </tr> <tr>
 	 * <td>disableonparentkeynull</td> <td><i>yes/no</td> <td>no</td> <td>no</td> <td>Disable field when parentkey is null.</td> </tr> <tr> <td>noresultclearcode</td>
 	 * <td><i>yes/no</i> (since version 5.2068EN)</td> <td>yes</td> <td>no</td> <td>Indicates whether code field should be reset when query did not return any match for current
 	 * code value.</td> </tr> </Table> <p> Valid Table parameters: <p> <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS * FRAME=BOX> <tr> <td><b>attribute</td>
@@ -1591,7 +1589,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		super.setRequired(required);
 	}
 
-	protected void configureButtons(Hashtable parameters) {
+	protected void configureButtons(Map<Object, Object> parameters) {
 		// Code field and button for showing results are added.
 		super.panel.add(this.codeField, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 1, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(DataField.DEFAULT_TOP_MARGIN, DataField.DEFAULT_FIELD_LEFT_MARGIN, DataField.DEFAULT_BOTTOM_MARGIN, 0), 0, 0));
@@ -1658,7 +1656,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				this.clearDetailTableQuickFilterWhenShow);
 	}
 
-	protected void configureOpaque(Hashtable parameters) {
+	protected void configureOpaque(Map<Object, Object> parameters) {
 		if (parameters.containsKey("opaque") && !ApplicationManager.parseStringValue(parameters.get("opaque").toString())) {
 			if (this.codeField != null) {
 				this.codeField.setOpaque(false);
@@ -1666,7 +1664,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		}
 	}
 
-	protected void configureFormat(Hashtable parameters, boolean translation) {
+	protected void configureFormat(Map<Object, Object> parameters, boolean translation) {
 		Object oFormat = parameters.get(ReferenceExtDataField.FORMAT);
 		if ((oFormat != null) && (oFormat instanceof String)) {
 			this.formatPattern = new FormatPattern(oFormat.toString(), translation);
@@ -1679,14 +1677,14 @@ public class ReferenceExtDataField extends TextFieldDataField
 		}
 	}
 
-	protected void configureQueryCols(Hashtable parameters) {
+	protected void configureQueryCols(Map<Object, Object> parameters) {
 		Object querycols = parameters.get("querycols");
 		if (querycols != null) {
 			this.queryColumns = ApplicationManager.getTokensAt((String) querycols, ";");
 		}
 	}
 
-	protected void configureQueryField(Hashtable parameters) {
+	protected void configureQueryField(Map<Object, Object> parameters) {
 		if (this.codeQueryField != null) {
 			try {
 				if (parameters.containsKey("form")) {
@@ -1695,7 +1693,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				Object cols = parameters.get(Table.COLS);
 				if (cols != null) {
 					String sColumnNames = cols.toString();
-					Vector vCols = ApplicationManager.getTokensAt(sColumnNames, ";");
+					List<String> vCols = ApplicationManager.getTokensAt(sColumnNames, ";");
 					if (vCols.indexOf(this.codeQueryField) < 0) {
 						vCols.add(this.codeQueryField);
 					}
@@ -1728,7 +1726,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		Object onsetvalueset = parameters.get("onsetvalueset");
 		if (onsetvalueset != null) {
 			this.hOnSetValueSetEquivalences = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";", ":");
-			this.onsetvaluesetAttributes = new Vector();
+			this.onsetvaluesetAttributes = new ArrayList<>();
 
 			// We can't use the keys of the map to get the attribute
 			// names
@@ -2667,8 +2665,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 				return;
 			} else {
 				// Obtain the code
-				if (value instanceof Hashtable) {
-					this.setRecordValue(value, inner, oPreviousValue);
+				if (value instanceof EntityResult) {
+					this.setRecordValue((EntityResult) value, inner, oPreviousValue);
 				} else {
 					// When it is not a <code>Hashtable</code> is the code.
 					// Therefore, query is executed.
@@ -2678,7 +2676,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 						this.deleteUserData();
 						return;
 					}
-					Vector vCodes = (Vector) this.dataCache.get(this.code);
+					List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 					if (vCodes == null) {
 						ReferenceExtDataField.logger
 								.debug(this.getClass().toString() + " : " + this.getAttribute() + " Data for code " + this.code + " have not been encountered: " + this.dataCache);
@@ -2688,7 +2686,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 						this.codeField.setText(cod.toString());
 					} else {
 						this.codeValue = null;
-						Vector v = (Vector) this.dataCache.get(this.codeQueryField);
+						List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
 						this.codeValue = cod;
 						if (v != null) {
 							Object v2 = v.get(0);
@@ -2734,18 +2732,18 @@ public class ReferenceExtDataField extends TextFieldDataField
 		}
 	}
 
-	protected void setRecordValue(Object value, boolean inner, Object oPreviousValue) {
-		this.dataCache = (Hashtable) value;
-		Object cod = ((Hashtable) value).get(this.code);
+	protected void setRecordValue(EntityResult value, boolean inner, Object oPreviousValue) {
+		this.dataCache = value;
+		Object cod = value.get(this.code);
 		if (cod != null) {
-			if (cod instanceof Vector) {
-				cod = ((Vector) cod).get(0);
+			if (cod instanceof List) {
+				cod = ((List<?>) cod).get(0);
 				if ((this.codeQueryField == null) && (cod != null)) {
 					this.codeField.setText(cod.toString());
 				} else {
 					this.codeValue = null;
-					Vector v = (Vector) this.dataCache.get(this.codeQueryField);
-					int index = ((Vector) ((Hashtable) value).get(this.code)).indexOf(cod);
+					List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
+					int index = ((List<?>) ((Map<?,?>) value).get(this.code)).indexOf(cod);
 					if (index >= 0) {
 						this.codeValue = cod;
 						Object v2 = v.get(index);
@@ -2765,8 +2763,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 					this.codeField.setText(cod.toString());
 				} else {
 					this.codeValue = null;
-					Vector v = (Vector) this.dataCache.get(this.codeQueryField);
-					int index = ((Vector) ((Hashtable) value).get(this.code)).indexOf(cod);
+					List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
+					int index = ((List<?>) ((Map<?,?>) value).get(this.code)).indexOf(cod);
 					if (index >= 0) {
 						this.codeValue = cod;
 						Object v2 = v.get(index);
@@ -2778,7 +2776,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 					}
 				}
 			}
-			String sDescriptionString = this.getCodeDescription(cod, (Hashtable) value);
+			String sDescriptionString = this.getCodeDescription(cod, (EntityResult) value);
 			((JTextField) this.dataField).setText(sDescriptionString);
 
 			this.setInnerValue(this.getValue());
@@ -2831,7 +2829,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 			this.useCacheManager();
 		}
 		this.setInnerListenerEnabled(false);
-		Vector vCodes = (Vector) this.dataCache.get(this.code);
+		List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 
 		if ((vCodes == null) || vCodes.isEmpty() || !vCodes.contains(oValue)) {
 			this.setValueIfNotExistCacheData(inner, oPreviousValue, oValue);
@@ -2850,7 +2848,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * @param oValue
 	 */
 	protected void setValueIfNotExistCacheData(boolean inner, Object oPreviousValue, Object oValue) {
-		Vector vCodes;
+		List<?> vCodes;
 		if (ApplicationManager.DEBUG) {
 			ReferenceExtDataField.logger.debug(this.getClass().toString() + ": " + this.getAttribute() + ": setValue() : value: " + oValue + " : Code is not stored in cache ");
 		}
@@ -2872,7 +2870,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				this.dataCache = res;
 			}
 			// Put in the cache
-			vCodes = (Vector) this.dataCache.get(this.code);
+			vCodes = (List<?>) this.dataCache.get(this.code);
 			if (vCodes.contains(oValue)) {
 				if (ApplicationManager.DEBUG) {
 					ReferenceExtDataField.logger
@@ -2883,7 +2881,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 					this.codeField.setText(oValue.toString());
 				} else {
 					this.codeValue = null;
-					Vector v = (Vector) this.dataCache.get(this.codeQueryField);
+					List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
 					int index = vCodes.indexOf(oValue);
 					if (index >= 0) {
 						Object v2 = v.get(index);
@@ -2911,7 +2909,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 							.debug(this.getClass().toString() + ": " + this.getAttribute() + ": setValue() : value: " + oValue + " : Code is not stored in cache");
 				}
 
-				if (!((Vector) res.get(this.code)).contains(oValue)) {
+				if (!((List<?>) res.get(this.code)).contains(oValue)) {
 					if (ApplicationManager.DEBUG) {
 						ReferenceExtDataField.logger.debug(": " + this.getAttribute() + ": setValue() : value: " + oValue + " : In codes of query result is not stored the code ");
 					}
@@ -2923,8 +2921,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 				Enumeration enumCacheKeys = this.dataCache.keys();
 				while (enumCacheKeys.hasMoreElements()) {
 					Object oCacheKey = enumCacheKeys.nextElement();
-					Vector vCacheValues = (Vector) this.dataCache.get(oCacheKey);
-					Vector vResultValues = (Vector) res.get(oCacheKey);
+					List<Object> vCacheValues = (List<Object>) this.dataCache.get(oCacheKey);
+					List<?> vResultValues = (List<?>) res.get(oCacheKey);
 					if ((vResultValues != null) && !vResultValues.isEmpty()) {
 						vCacheValues.add(vCacheValues.size(), vResultValues.get(0));
 					} else {
@@ -2935,7 +2933,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 					this.codeField.setText(oValue.toString());
 				} else {
 					this.codeValue = null;
-					Vector v = (Vector) this.dataCache.get(this.codeQueryField);
+					List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
 					int index = vCodes.indexOf(oValue);
 					if (index >= 0) {
 						this.codeValue = oValue;
@@ -2969,7 +2967,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * @param oValue
 	 * @param vCodes
 	 */
-	protected void setValueIfExistCacheData(boolean inner, Object oPreviousValue, Object oValue, Vector vCodes) {
+	protected void setValueIfExistCacheData(boolean inner, Object oPreviousValue, Object oValue, List<?> vCodes) {
 		if (ApplicationManager.DEBUG) {
 			ReferenceExtDataField.logger.debug(": setValue() : value: " + oValue + " : In codes of query result is stored the code");
 		}
@@ -2977,7 +2975,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 			this.codeField.setText(oValue.toString());
 		} else {
 			this.codeValue = null;
-			Vector v = (Vector) this.dataCache.get(this.codeQueryField);
+			List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
 			int index = vCodes.indexOf(oValue);
 			if (index >= 0) {
 				this.codeValue = oValue;
@@ -3047,20 +3045,20 @@ public class ReferenceExtDataField extends TextFieldDataField
 		}
 	}
 
-	protected String getQueryDescription(Object code, Hashtable value, String description) {
+	protected String getQueryDescription(Object code, EntityResult value, String description) {
 		if (this.queryColumns == null) {
 			return description;
 		}
 
 		StringBuilder buffer = new StringBuilder(description);
-		Vector vCodes = (Vector) value.get(this.code);
+		List<?> vCodes = (List<?>) value.get(this.code);
 		int index = vCodes.indexOf(code);
 
 		for (String column : this.queryColumns) {
 			Object dataList = value.get(column);
-			if ((dataList instanceof Vector) && (((Vector) dataList).size() > index)) {
+			if ((dataList instanceof List) && (((List<?>) dataList).size() > index)) {
 				buffer.append(this.separator);
-				buffer.append(this.toString(((Vector) dataList).get(index)));
+				buffer.append(this.toString(((List<?>) dataList).get(index)));
 			}
 		}
 
@@ -3079,7 +3077,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	protected String getCodeDescription(Object code, EntityResult value) {
 		// For all columns, gets and shows the value
 		String description = new String();
-		Vector vCodes = (Vector) value.get(this.code);
+		List<?> vCodes = (List<?>) value.get(this.code);
 		int index = vCodes.indexOf(code);
 
 		if ((this.formatPattern != null) && !this.formatPattern.isEmpty()) {
@@ -3479,8 +3477,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * @return the vector with elements to translate
 	 */
 	@Override
-	public Vector getTextsToTranslate() {
-		Vector v = super.getTextsToTranslate();
+	public List<String> getTextsToTranslate() {
+		List<String> v = super.getTextsToTranslate();
 		if (this.attribute instanceof ReferenceFieldAttribute) {
 			v.add(((ReferenceFieldAttribute) this.attribute).getAttr());
 			v.add(((ReferenceFieldAttribute) this.attribute).getCod());
@@ -3498,15 +3496,15 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *            the object to find
 	 * @return the hashtable with key-values
 	 */
-	public Hashtable getCodeValues(Object code) {
-		Hashtable h = new Hashtable();
+	public Map<Object, Object> getCodeValues(Object code) {
+		Map<Object, Object> h = new HashMap<>();
 		if ((this.cacheTime > 0) && this.isDataCacheInitialized() && this.useCacheManager && (this.cacheManager != null) && (this.parentkeyCache || this.cacheManager
 				.existsCache(this.entityName, this.getAttributes(), this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences())))) {
 			this.dataCache = this.cacheManager.getDataCache(this.entityName, this.getAttributes(), this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences()));
 		}
 
 		if (this.dataCache != null) {
-			Vector vCodes = (Vector) this.dataCache.get(this.code);
+			List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 			if ((vCodes == null) || vCodes.isEmpty()) {
 				return h;
 			}
@@ -3514,10 +3512,10 @@ public class ReferenceExtDataField extends TextFieldDataField
 			if (index < 0) {
 				return h;
 			}
-			Enumeration enumKeys = this.dataCache.keys();
+			Enumeration<?> enumKeys = this.dataCache.keys();
 			while (enumKeys.hasMoreElements()) {
 				Object oKey = enumKeys.nextElement();
-				Vector vValues = (Vector) this.dataCache.get(oKey);
+				List<?> vValues = (List<?>) this.dataCache.get(oKey);
 				Object oValue = vValues.get(index);
 				if (oValue != null) {
 					h.put(oKey, oValue);
@@ -3532,7 +3530,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *
 	 * @return the data cache
 	 */
-	public Hashtable getDataCache() {
+	public EntityResult getDataCache() {
 		return this.dataCache;
 	}
 
@@ -3579,7 +3577,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		long t = System.currentTimeMillis();
 		try {
 			this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-			Hashtable hKeysValues = this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences());
+			Map<Object, Object> hKeysValues = this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences());
 			EntityResult result = this.locator.getEntityReference(this.entityName).query(hKeysValues, this.getAttributes(), this.locator.getSessionId());
 			if (ApplicationManager.DEBUG_TIMES) {
 				ReferenceExtDataField.logger.debug(this.getClass().getName() + ": init cache time: " + (this.lastCacheTime - t));
@@ -3658,7 +3656,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 			this.lastCacheTime = 0;
 			Object oValue = this.getValue();
 			this.dataCacheInitialized = false;
-			this.dataCache = new Hashtable();
+			this.dataCache = new EntityResultMapImpl();
 			if ((this.cacheManager != null) && this.useCacheManager) {
 				this.cacheManager.invalidateCache(this.entityName, this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences()));
 			}
@@ -3685,9 +3683,9 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *
 	 * @return the vector with parentkeys
 	 */
-	public Vector getParentKeys() {
+	public List<Object> getParentKeys() {
 		if (this.parentkeyList == null) {
-			this.parentkeyList = new Vector();
+			this.parentkeyList = new ArrayList<>();
 			if (this.parentKeys != null) {
 				this.parentkeyList.add(this.parentKeys);
 			}
@@ -3711,7 +3709,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *            the string with values
 	 * @return <code>Hashtable</code> with key-value
 	 */
-	public Hashtable getParentkeyEquivalences() {
+	public Map<Object, Object> getParentkeyEquivalences() {
 		return this.hParentkeyEquivalences;
 	}
 
@@ -3724,9 +3722,9 @@ public class ReferenceExtDataField extends TextFieldDataField
 	}
 
 	@Override
-	public Hashtable getParentKeyValues() {
+	public Map<Object, Object> getParentKeyValues() {
 		if ((this.getParentKeys() != null) && (this.getParentKeys().size() > 0)) {
-			Hashtable keysValues = new Hashtable();
+			Map<Object, Object> keysValues = new HashMap<>();
 			for (Object currentParentKey : this.getParentKeys()) {
 				Object currentParentKeyValue = this.parentForm.getDataFieldValue(currentParentKey.toString());
 				if (ApplicationManager.DEBUG) {
@@ -3755,7 +3753,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * @return the vector with attributes
 	 */
 	@Override
-	public Vector getAttributes() {
+	public List<Object> getAttributes() {
 		return this.t.getAttributeList();
 	}
 
@@ -3828,7 +3826,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 		if (this.clearDetailTableQuickFilterWhenShow) {
 			this.clearQuickFilter();
 		}
-		Hashtable hData = this.dataCache;
+		EntityResult hData = this.dataCache;
 		if (this.cacheTime != 0) {
 			long t = System.currentTimeMillis();
 			long timeSinceLastQuery = t - this.getLastCacheTime();
@@ -3852,7 +3850,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				}
 			}
 		} else {
-			Hashtable hKeysValues = this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences());
+			Map<?,?> hKeysValues = this.replaceParentkeyByEquivalence(this.getParentkeyEquivalences());
 			EntityResult result = this.locator.getEntityReference(this.entityName).query(hKeysValues, this.t.getAttributeList(), this.locator.getSessionId());
 			if (result.getCode() == EntityResult.OPERATION_WRONG) {
 				if (this.parentForm != null) {
@@ -4093,7 +4091,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	}
 
 	@Override
-	public Vector getParentKeyList() {
+	public List<Object> getParentKeyList() {
 		return this.getParentKeys();
 	}
 
@@ -4491,7 +4489,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 
 			@Override
 			public void run() {
-				Hashtable dataCache = null;
+				EntityResult dataCache = null;
 				if (this.dataField.cacheTime > 0) {
 					if (!this.dataField.isDataCacheInitialized()) {
 						this.dataField.initCache();
@@ -4537,7 +4535,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				});
 			}
 
-			protected List processFilter(String filter, Hashtable dataCache) {
+			protected List processFilter(String filter, EntityResult dataCache) {
 				List result = new ArrayList();
 				if ((dataCache == null) || dataCache.isEmpty()) {
 					return result;
@@ -4568,7 +4566,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				Pattern pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE);
 
 				String codeField = this.dataField.getCodeFieldName();
-				Vector codes = (Vector) dataCache.get(codeField);
+				List<?> codes = (List<?>) dataCache.get(codeField);
 
 				Iterator valueCodes = codes.iterator();
 				while (valueCodes.hasNext()) {
@@ -4594,7 +4592,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 
 		protected Object	code;
 
-		protected Hashtable	data;
+		protected Map<Object, Object>	data;
 
 		public ResultItem(String description, Object code) {
 			this.code = code;

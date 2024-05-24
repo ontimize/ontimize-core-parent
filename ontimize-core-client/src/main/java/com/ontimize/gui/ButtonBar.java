@@ -8,10 +8,12 @@ import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JToolBar;
@@ -53,7 +55,7 @@ public class ButtonBar extends JToolBar implements FormComponent, Freeable {
 
     private final EmptyBorder margin = new EmptyBorder(4, 5, 4, 5);
 
-    public ButtonBar(Hashtable parameters) {
+    public ButtonBar(Map<Object, Object> parameters) {
         super();
         this.init(parameters);
         this.setFloatable(false);
@@ -66,9 +68,9 @@ public class ButtonBar extends JToolBar implements FormComponent, Freeable {
         }
         this.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         if (this.alignment == GridBagConstraints.NORTHWEST) {
-            this.hideButton = new Button(new Hashtable());
+            this.hideButton = new Button(new HashMap<>());
         } else if (this.alignment == GridBagConstraints.NORTHEAST) {
-            this.hideButton = new Button(new Hashtable());
+            this.hideButton = new Button(new HashMap<>());
         }
         if (this.hideButton != null) {
             ImageIcon iconL = ImageManager.getIcon(ImageManager.LEFT_ARROW);
@@ -137,7 +139,7 @@ public class ButtonBar extends JToolBar implements FormComponent, Freeable {
     }
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         Object rollover = parameters.get("rollover");
         if (rollover == null) {
             this.rollover = true;
@@ -235,8 +237,8 @@ public class ButtonBar extends JToolBar implements FormComponent, Freeable {
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         return v;
     }
 

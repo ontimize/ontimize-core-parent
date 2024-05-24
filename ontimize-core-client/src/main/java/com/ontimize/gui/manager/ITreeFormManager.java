@@ -1,6 +1,6 @@
 package com.ontimize.gui.manager;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionListener;
@@ -36,14 +36,14 @@ public interface ITreeFormManager
      * @param keysValues
      * @param childSelect
      */
-    public void insertedNode(TreePath path, Hashtable keysValues, boolean childSelect);
+    public void insertedNode(TreePath path, Map<?,?> keysValues, boolean childSelect);
 
     /**
      * Inserts a new node into the <code>Tree</code> associated to this <code>FormManager</code>
      * @param path
      * @param keysValues
      */
-    public void insertedNode(TreePath path, Hashtable keysValues);
+    public void insertedNode(TreePath path, Map<?,?> keysValues);
 
     /**
      * This method does that the parent node of current selected node will be selected if the current
@@ -54,27 +54,27 @@ public interface ITreeFormManager
     /**
      * Updates the node of the <code>Tree</code> associate to this <code>FormManager</code>.
      * @param path <code>TreePath</code> to be updated.
-     * @param attributesValues <code>Hashtable</code> with the values to be updated.
-     * @param keysValues <code>Hashtable</code> with the keys of the record which will be updated.
+     * @param attributesValues <code>Map</code> with the values to be updated.
+     * @param keysValues <code>Map</code> with the keys of the record which will be updated.
      */
-    public void updatedNode(TreePath path, Hashtable attributesValues, Hashtable keysValues);
+    public void updatedNode(TreePath path, Map<?,?> attributesValues, Map<?,?> keysValues);
 
     /**
      * Updates the node of the <code>Tree</code> associate to this <code>FormManager</code>.
      * @param path <code>TreePath</code> to be updated.
-     * @param attributesValues <code>Hashtable</code> with the values to be updated.
-     * @param keysValues <code>Hashtable</code> with the keys of the record which will be updated.
+     * @param attributesValues <code>Map</code> with the values to be updated.
+     * @param keysValues <code>Map</code> with the keys of the record which will be updated.
      * @param select true if the updated node will be selected.
      */
-    public void updatedNode(TreePath path, Hashtable attributesValues, Hashtable keysValues, boolean select);
+    public void updatedNode(TreePath path, Map<?,?> attributesValues, Map<?,?> keysValues, boolean select);
 
     /**
      * This method calls the deletedNode method of the <code>Tree</code> associated to this
      * <code>FormManager</code>
      * @param path <code>TreePath</code> to be deleted.
-     * @param keysValues a <code>Hashtable</code> with the keys of the record to be deleted.
+     * @param keysValues a <code>Map</code> with the keys of the record to be deleted.
      * @param select true the next node will be selected
      */
-    public void deletedNode(TreePath path, Hashtable keysValues, boolean select);
+    public void deletedNode(TreePath path, Map<?,?> keysValues, boolean select);
 
 }

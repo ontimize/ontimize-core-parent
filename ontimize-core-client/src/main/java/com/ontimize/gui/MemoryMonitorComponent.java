@@ -17,10 +17,11 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -347,7 +348,7 @@ public class MemoryMonitorComponent extends JPanel implements FormComponent, Ide
 
     protected String attribute = null;
 
-    public MemoryMonitorComponent(Hashtable parameters) {
+    public MemoryMonitorComponent(Map<Object, Object> parameters) {
         this.monitor = new MemoryMonitor();
         this.setLayout(new BorderLayout());
         this.add(this.monitor);
@@ -355,7 +356,7 @@ public class MemoryMonitorComponent extends JPanel implements FormComponent, Ide
     }
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         Object attr = parameters.get("attr");
         if (attr != null) {
             this.attribute = attr.toString();
@@ -382,9 +383,8 @@ public class MemoryMonitorComponent extends JPanel implements FormComponent, Ide
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
-        return v;
+    public List<String> getTextsToTranslate() {
+        return new ArrayList<>();
     }
 
     public void setCanvasPreferredSize(int w, int h) {

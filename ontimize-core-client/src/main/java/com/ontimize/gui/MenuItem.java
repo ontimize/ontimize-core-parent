@@ -15,11 +15,13 @@ import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EventListener;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -36,9 +38,9 @@ import com.ontimize.gui.field.IdentifiedElement;
 import com.ontimize.gui.images.ImageManager;
 import com.ontimize.gui.preferences.ApplicationPreferences;
 import com.ontimize.gui.preferences.HasPreferenceComponent;
-import com.ontimize.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.security.MenuPermission;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.MenuPermission;
 import com.ontimize.util.ParseUtils;
 
 /**
@@ -123,9 +125,9 @@ public class MenuItem extends JMenuItem implements FormComponent, IdentifiedElem
     /**
      * The class constructor. It initializes parameters, sets margin and register status component.
      * <p>
-     * @param parameters The hashtable with parameters
+     * @param parameters The map with parameters
      */
-    public MenuItem(Hashtable parameters) {
+    public MenuItem(Map<Object, Object> parameters) {
         this.init(parameters);
         Insets iMargins = this.getMargin();
         int iLeftMargin = iMargins.left;
@@ -147,7 +149,7 @@ public class MenuItem extends JMenuItem implements FormComponent, IdentifiedElem
     /**
      * Initializes parameters.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
      *        <tr>
@@ -233,7 +235,7 @@ public class MenuItem extends JMenuItem implements FormComponent, IdentifiedElem
      *        </table>
      */
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         // Attribute
         Object attr = parameters.get("attr");
         if (attr != null) {
@@ -300,8 +302,8 @@ public class MenuItem extends JMenuItem implements FormComponent, IdentifiedElem
      * @return the vector with attribute parameter.
      */
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         v.add(this.attribute);
         if (this.text != null) {
             v.add(this.text);
@@ -594,7 +596,7 @@ public class MenuItem extends JMenuItem implements FormComponent, IdentifiedElem
 
     protected ApToolBarButton createAppToolBarButton() {
         if (appToolBarButtonInstance == null) {
-            Hashtable params = new Hashtable();
+            Map<Object, Object> params = new HashMap<>();
             params.put("attr", this.attribute);
             params.put("action", this.getActionCommand());
 

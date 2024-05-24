@@ -1,10 +1,11 @@
 package com.ontimize.gui;
 
 import java.awt.LayoutManager;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JSeparator;
@@ -15,8 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.field.FormComponent;
 import com.ontimize.gui.field.IdentifiedElement;
+import com.ontimize.jee.common.security.MenuPermission;
 import com.ontimize.security.ClientSecurityManager;
-import com.ontimize.security.MenuPermission;
 
 /**
  * This class implements a separator between menu elements.
@@ -42,7 +43,7 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
      * <p>
      * @param parameters
      */
-    public MenuSeparator(Hashtable parameters) {
+    public MenuSeparator(Map<Object, Object> parameters) {
         super();
         this.init(parameters);
         this.initPermissions();
@@ -56,7 +57,7 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
     /**
      * Inits parameters.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
      *        <tr>
@@ -77,7 +78,7 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
      */
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         this.attribute = parameters.get("attr");
     }
 
@@ -91,8 +92,8 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         return v;
     }
 
@@ -121,12 +122,12 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
             try {
                 manager.checkPermission(this.enabledPermission);
                 this.restricted = false;
-            } catch (Exception e) {
+            } catch (Exception exc) {
                 this.restricted = true;
                 super.setEnabled(false);
 
                 if (ApplicationManager.DEBUG_SECURITY) {
-                    MenuSeparator.logger.debug(null, e);
+                    MenuSeparator.logger.debug(null, exc);
                 }
             }
             if (this.visiblePermission == null) {
@@ -134,10 +135,10 @@ public class MenuSeparator extends JSeparator implements FormComponent, Freeable
             }
             try {
                 manager.checkPermission(this.visiblePermission);
-            } catch (Exception e) {
+            } catch (Exception exc) {
                 super.setVisible(false);
                 if (ApplicationManager.DEBUG_SECURITY) {
-                    MenuSeparator.logger.debug(null, e);
+                    MenuSeparator.logger.debug(null, exc);
                 }
             }
         }

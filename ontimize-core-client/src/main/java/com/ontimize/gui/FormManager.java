@@ -10,13 +10,15 @@ import java.awt.LayoutManager;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -36,8 +38,6 @@ import com.ontimize.builder.ApplicationBuilder;
 import com.ontimize.builder.FormBuilder;
 import com.ontimize.builder.TreeBuilder;
 import com.ontimize.builder.xml.XMLFormBuilder;
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.field.DataComponent;
 import com.ontimize.gui.manager.BaseFormManager;
 import com.ontimize.gui.manager.IFormManager;
@@ -45,8 +45,10 @@ import com.ontimize.gui.manager.ITreeFormManager;
 import com.ontimize.gui.tree.OTreeNode;
 import com.ontimize.gui.tree.PageFetchTreeNode;
 import com.ontimize.gui.tree.Tree;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 /**
  * The <code>FormManager</code> is used to create, register and manage a group of form.
@@ -138,7 +140,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
     protected JPanel cardPanel;
 
     /**
-     * Creates a FormManager instance with the parameters establishes in <code>Hastable</code>. This
+     * Creates a FormManager instance with the parameters establishes in <code>Map</code>. This
      * constructor is called from {@link ApplicationBuilder}
      * <p>
      * The parameters
@@ -260,12 +262,12 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
      * </tr>
      * </Table>
      */
-    public FormManager(Hashtable parameters) throws Exception {
+    public FormManager(Map<Object, Object> parameters) throws Exception {
         super(parameters);
     }
 
     @Override
-    public void init(Hashtable parameters) throws Exception {
+    public void init(Map<Object, Object> parameters) throws Exception {
         String useclasspath = (String) parameters.get(IFormManager.USE_CLASS_PATH);
         if ("yes".equalsIgnoreCase(useclasspath)) {
             this.useClasspath = true;
@@ -316,11 +318,11 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
         try {
             if (!this.isLoaded()) {
                 if (this.formInteractionManagerClassNameList != null) {
-                    Enumeration enumKeys = this.formInteractionManagerClassNameList.keys();
-                    while (enumKeys.hasMoreElements()) {
-                        String form = (String) enumKeys.nextElement();
-                        String imClassName = this.formInteractionManagerClassNameList.get(form);
-                        this.applyInteractionManager(imClassName, form);
+                    
+                    for(Entry<String, String> entry:formInteractionManagerClassNameList.entrySet()) {
+                    	String form = entry.getKey();
+                    	String imClassName = entry.getValue();
+                    	this.applyInteractionManager(imClassName, form);
                     }
                 }
                 if (this.setResourceBundleOnLoad) {
@@ -332,8 +334,8 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
 
                     if (this.treeFileName != null) {
                         try {
-                            Class currentTreeClass = Class.forName(this.treeClass);
-                            Constructor currentConstructor = currentTreeClass.getConstructor(
+                            Class<?> currentTreeClass = Class.forName(this.treeClass);
+                            Constructor<?> currentConstructor = currentTreeClass.getConstructor(
                                     new Class[] { String.class, TreeBuilder.class, EntityReferenceLocator.class });
                             this.managedTree = (Tree) currentConstructor
                                 .newInstance(new Object[] { this.treeFileName, this.treeBuilder, this.locator });
@@ -601,8 +603,8 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = super.getTextsToTranslate();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = super.getTextsToTranslate();
         // And for tree when exists
         if (this.managedTree != null) {
             v.addAll(this.managedTree.getTextsToTranslate());
@@ -676,13 +678,13 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
             fForm.deleteDataFields(true);
             // Moves until the root
             OTreeNode auxNode = node;
-            ArrayList settedList = new ArrayList();
+            List<Object> settedList = new ArrayList<>();
             while ((auxNode != null) && !auxNode.isRoot()) {
-                Hashtable hAssociatedFields = auxNode.getAssociatedDataField();
-                Enumeration enumKeys = hAssociatedFields.keys();
+                Map<Object, Object> hAssociatedFields = auxNode.getAssociatedDataField();
+                Iterator<?> enumKeys = hAssociatedFields.keySet().iterator();
                 OTreeNode oParentNode = (OTreeNode) auxNode.getParent();
-                while (enumKeys.hasMoreElements() /*  */) {
-                    Object oKey = enumKeys.nextElement();
+                while (enumKeys.hasNext() /*  */) {
+                    Object oKey = enumKeys.next();
                     Object pValue = oParentNode.getValueForAttribute(oKey);
                     Object oAssociatedField = hAssociatedFields.get(oKey);
                     if (!settedList.contains(oAssociatedField)) {
@@ -705,17 +707,17 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
         // Moreover, we delete form data
         fForm.deleteDataFields(true);
 
-        Vector vFixAttributes = this.setFormDataFieldData(oTreeNode, fForm);
+        List<String> vFixAttributes = this.setFormDataFieldData(oTreeNode, fForm);
 
-        Vector vNoModifiables = (Vector) vFixAttributes.clone();
+        List<Object> vNoModifiables = new ArrayList<>(vFixAttributes);
 
         // We have to show the parent associated value
 
         // Moving backward until the root node.
-        Vector vCustomerFields = new Vector();
+        List<Object> vCustomerFields = new ArrayList<>();
         while ((oTreeNode != null) && !oTreeNode.isRoot()) {
-            Hashtable hAssociatedFields = oTreeNode.getAssociatedDataField();
-            Vector vAssociatedOrderedFields = oTreeNode.getAssociatedOrderedDataField();
+            Map<Object, Object> hAssociatedFields = oTreeNode.getAssociatedDataField();
+            List<Object> vAssociatedOrderedFields = oTreeNode.getAssociatedOrderedDataField();
             OTreeNode oParentNode = (OTreeNode) oTreeNode.getParent();
             for (int i = 0; i < vAssociatedOrderedFields.size(); i++) {
                 Object oKey = vAssociatedOrderedFields.get(i);
@@ -753,9 +755,9 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
 
     protected void selectDataNode(OTreeNode oTreeNode, Form fForm, Cursor cursor, long initTime) {
 
-        Vector vFixAttributes = this.setFormDataFieldData(oTreeNode, fForm);
+        List<String> vFixAttributes = this.setFormDataFieldData(oTreeNode, fForm);
 
-        Vector vNoModifiables = (Vector) vFixAttributes.clone();
+        List<Object> vNoModifiables = new ArrayList<>(vFixAttributes);
 
         // When tree shows the form, it must look for if fields
         // whose
@@ -777,13 +779,13 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
             // When node is not organizational, we have to get
             // parent
             // of parent of this one.
-            Hashtable hSearchKeysValues = new Hashtable();
+        	Map<Object, Object> hSearchKeysValues = new HashMap<>();
             OTreeNode oParentNode;
             if (oTreeNode.isRoot()) {
                 // Moreover, we obtain current node keys and
                 // query and
                 // fill data in form.
-                Hashtable hKeysValues = oTreeNode.getKeysValues();
+                Map<Object, Object> hKeysValues = oTreeNode.getKeysValues();
                 try {
                     Entity entity = this.getReferenceLocator().getEntityReference(oTreeNode.getEntityName());
                     // When user does click in node, if node is
@@ -795,7 +797,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
                     // must be
                     // passed
                     // to entity.
-                    Vector vFieldsAttributes = this.getFormAttributes(fForm);
+                    List<Object> vFieldsAttributes = this.getFormAttributes(fForm);
 
                     long t4 = System.currentTimeMillis();
                     EntityResult results = entity.query(hKeysValues, vFieldsAttributes, this.locator.getSessionId());
@@ -844,29 +846,23 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
                 oParentNode = (OTreeNode) ((OTreeNode) oTreeNode.getParent()).getParent();
                 // Get the associated field from the keys and
                 // values
-                Hashtable AssociatedFields = oTreeNode.getAssociatedDataField();
-                Enumeration enumAssociatedFieldKeys = AssociatedFields.keys();
-                while (enumAssociatedFieldKeys.hasMoreElements()) {
-                    Object oParentField = enumAssociatedFieldKeys.nextElement();
-                    Object oChildField = AssociatedFields.get(oParentField);
+                Map<Object, Object> AssociatedFields = oTreeNode.getAssociatedDataField();
+                for(Entry<Object, Object> entry:AssociatedFields.entrySet()) {
+                	Object oParentField = entry.getKey();
+                    Object oChildField = entry.getValue();
                     hSearchKeysValues.put(oChildField, oParentNode.getValueForAttribute(oParentField));
                 }
             }
             // Gets the current key and does the query and fills
             // with
             // form data
-            Hashtable hKeysValues = oTreeNode.getKeysValues();
-            Enumeration enumNodeKeys = hKeysValues.keys();
-            while (enumNodeKeys.hasMoreElements()) {
-                Object oKey = enumNodeKeys.nextElement();
-                Object oKeyValue = hKeysValues.get(oKey);
-                hSearchKeysValues.put(oKey, oKeyValue);
-            }
+            Map<Object, Object> hKeysValues = oTreeNode.getKeysValues();
+            hSearchKeysValues.putAll(hKeysValues);
             try {
                 Entity entity = this.getReferenceLocator().getEntityReference(oTreeNode.getEntityName());
                 // Query is executed to the table
                 long t4 = System.currentTimeMillis();
-                Vector vFieldsAttributes = this.getFormAttributes(fForm);
+                List<Object> vFieldsAttributes = this.getFormAttributes(fForm);
 
                 EntityResult results = entity.query(hSearchKeysValues, vFieldsAttributes, this.locator.getSessionId());
                 long t5 = System.currentTimeMillis();
@@ -959,11 +955,11 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
 
     }
 
-    protected Vector setFormDataFieldData(OTreeNode oTreeNode, Form fForm) {
+    protected List<String> setFormDataFieldData(OTreeNode oTreeNode, Form fForm) {
         // For attributes fixed in tree structure, we establish
         // field
         // values indicated by node.
-        Vector vFixAttributes = oTreeNode.getFixAttributes();
+        List<String> vFixAttributes = oTreeNode.getFixAttributes();
         // These attributes are the necessary to find in parent
         // nodes
         // and fix their values in form.
@@ -977,16 +973,16 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
         return vFixAttributes;
     }
 
-    protected void setDataFromParent(OTreeNode oTreeNode, Form fForm, Vector vNoModifiables) {
+    protected void setDataFromParent(OTreeNode oTreeNode, Form fForm, List<Object> vNoModifiables) {
 
         OTreeNode parentNode = (OTreeNode) oTreeNode.getParent();
-        Set updatedDataField = new HashSet();
+        Set<Object> updatedDataField = new HashSet<>();
         while ((parentNode != null) && !parentNode.isRoot()) {
-            Hashtable hAssociatedFields = parentNode.getAssociatedDataField();
-            Enumeration enumKeys = hAssociatedFields.keys();
+            Map<Object, Object> hAssociatedFields = parentNode.getAssociatedDataField();
+            Iterator<?> enumKeys = hAssociatedFields.keySet().iterator();
             OTreeNode oParentNode = (OTreeNode) parentNode.getParent();
-            while (enumKeys.hasMoreElements() /*  */) {
-                Object oKey = enumKeys.nextElement();
+            while (enumKeys.hasNext() /*  */) {
+                Object oKey = enumKeys.next();
                 if (!updatedDataField.contains(oKey)) {
                     Object oValue = oParentNode.getValueForAttribute(oKey);
                     Object oAssociatedField = hAssociatedFields.get(oKey);
@@ -1004,7 +1000,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
         }
     }
 
-    protected Vector getFormAttributes(Form fForm) {
+    protected List<Object> getFormAttributes(Form fForm) {
         if (fForm instanceof FormExt) {
             return ((FormExt) fForm).getAttributesToQuery();
         } else {
@@ -1099,12 +1095,12 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
                     Form fForm = this.getFormReference(sFormShowName);
 
                     if (this.formModifiableFields.containsKey(fForm)) {
-                        Vector v = (Vector) this.formModifiableFields.get(fForm);
+                        List<?> v = (List<?>) this.formModifiableFields.get(fForm);
                         for (int i = 0; i < v.size(); i++) {
                             fForm.setModifiable((String) v.get(i), true);
                         }
                     }
-                    fForm.updateDataFields(new Hashtable());
+                    fForm.updateDataFields(new HashMap<>());
                     t2 = System.currentTimeMillis();
                     FormManager.logger
                         .trace("Tree node '" + node.toString() + "' Form fields clear time: " + (t2 - initTime));
@@ -1142,7 +1138,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
 
         if (((OTreeNode) oNode).isOrganizational()) {
             long t = System.currentTimeMillis();
-            Hashtable result = null;
+            Map<Object, Object> result = null;
             OTreeNode updateParentNode = null;
             if (oNode instanceof PageFetchTreeNode) {
                 updateParentNode = (OTreeNode) ((OTreeNode) oNode).getParent();
@@ -1320,7 +1316,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
      * @deprecated
      */
     @Deprecated
-    public void dataInserted(Hashtable keysValues) {
+    public void dataInserted(Map<?,?> keysValues) {
         try {
             this.checkModified = false;
             if (this.managedTree != null) {
@@ -1340,14 +1336,14 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
                         this.managedTree.setSelectionPath(path);
                         if (!keysValues.isEmpty()) {
                             try {
-                                Vector vChildren = ((OTreeNode) oNode).getChildren();
+                                List<Object> vChildren = ((OTreeNode) oNode).getChildren();
                                 for (int i = 0; i < vChildren.size(); i++) {
                                     boolean bValid = true;
-                                    Hashtable hKeysValues = ((OTreeNode) ((OTreeNode) oNode).getChildAt(i))
+                                    Map<Object, Object> hKeysValues = ((OTreeNode) ((OTreeNode) oNode).getChildAt(i))
                                         .getKeysValues();
-                                    Enumeration enumInsertKeys = keysValues.keys();
-                                    while (enumInsertKeys.hasMoreElements()) {
-                                        Object oKey = enumInsertKeys.nextElement();
+                                    Iterator<?> enumInsertKeys = keysValues.keySet().iterator();
+                                    while (enumInsertKeys.hasNext()) {
+                                        Object oKey = enumInsertKeys.next();
                                         if (!hKeysValues.containsKey(oKey)) {
                                             bValid = false;
                                             break;
@@ -1444,7 +1440,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
      */
 
     @Override
-    public void insertedNode(TreePath path, Hashtable keysValues) {
+    public void insertedNode(TreePath path, Map<?, ?> keysValues) {
         try {
             if (com.ontimize.gui.ApplicationManager.DEBUG) {
                 FormManager.logger
@@ -1470,14 +1466,14 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
     }
 
     /**
-     * This method call the {@link FormManager#insertedNode(TreePath, Hashtable)} and the new node will
+     * This method call the {@link FormManager#insertedNode(TreePath, Map)} and the new node will
      * be selected if the condition childSelect is true.
      * @param path
      * @param keysValues
      * @param childSelect
      */
     @Override
-    public void insertedNode(TreePath path, Hashtable keysValues, boolean childSelect) {
+    public void insertedNode(TreePath path, Map<?, ?> keysValues, boolean childSelect) {
         try {
             if (com.ontimize.gui.ApplicationManager.DEBUG) {
                 FormManager.logger
@@ -1506,11 +1502,11 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
      * This method calls the deletedNode method of the <code>Tree</code> associated to this
      * <code>FormManager</code>
      * @param path <code>TreePath</code> to be deleted.
-     * @param keysValues a <code>Hashtable</code> with the keys of the record to be deleted.
+     * @param keysValues a <code>Map</code> with the keys of the record to be deleted.
      * @param select true the next node will be selected
      */
     @Override
-    public void deletedNode(TreePath path, Hashtable keysValues, boolean select) {
+    public void deletedNode(TreePath path, Map<?,?> keysValues, boolean select) {
         if (this.managedTree != null) {
             this.checkModified = false;
             try {
@@ -1526,11 +1522,11 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
     /**
      * Updates the node of the <code>Tree</code> associate to this <code>FormManager</code>.
      * @param path <code>TreePath</code> to be updated.
-     * @param attributesValues <code>Hashtable</code> with the values to be updated.
-     * @param keysValues <code>Hashtable</code> with the keys of the record which will be updated.
+     * @param attributesValues <code>Map</code> with the values to be updated.
+     * @param keysValues <code>Map</code> with the keys of the record which will be updated.
      */
     @Override
-    public void updatedNode(TreePath path, Hashtable attributesValues, Hashtable keysValues) {
+    public void updatedNode(TreePath path, Map<?,?> attributesValues, Map<?,?> keysValues) {
         this.checkModified = false;
         if (this.managedTree != null) {
             this.processTreeSelectionEvent = false;
@@ -1547,13 +1543,13 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
     /**
      * Updates the node of the <code>Tree</code> associate to this <code>FormManager</code>.
      * @param path <code>TreePath</code> to be updated.
-     * @param attributesValues <code>Hashtable</code> with the values to be updated.
-     * @param keysValues <code>Hashtable</code> with the keys of the record which will be updated.
+     * @param attributesValues <code>Map</code> with the values to be updated.
+     * @param keysValues <code>Map</code> with the keys of the record which will be updated.
      * @param select true if the updated node will be selected.
      */
 
     @Override
-    public void updatedNode(TreePath path, Hashtable attributesValues, Hashtable keysValues, boolean select) {
+    public void updatedNode(TreePath path, Map<?,?> attributesValues, Map<?,?> keysValues, boolean select) {
         this.checkModified = false;
         if (this.managedTree != null) {
             // Selection events are processed. It can be necessary to update the
@@ -1718,9 +1714,9 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
                     // for
                     // fields that they are not
                     // included in data list.
-                    Hashtable hFieldsValues = f.getDataFieldValues(false);
+                    Map<?,?> hFieldsValues = f.getDataFieldValues(false);
                     fNewForm.setDataFieldValues(hFieldsValues);
-                    Vector v = f.getDataFieldAttributeList();
+                    List<?> v = f.getDataFieldAttributeList();
                     for (int i = 0; i < v.size(); i++) {
                         DataComponent c = f.getDataFieldReference(v.get(i).toString());
                         if (c != null) {
@@ -1877,7 +1873,7 @@ public class FormManager extends BaseFormManager implements ITreeFormManager {
 
     @Override
     public boolean showForm(final String formName) {
-        final Vector res = new Vector();
+        final List<Object> res = new ArrayList<>();
         if (SwingUtilities.isEventDispatchThread()) {
             return this.showFormInEDTh(formName);
         } else {

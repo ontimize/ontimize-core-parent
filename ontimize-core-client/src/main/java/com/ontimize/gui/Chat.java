@@ -26,12 +26,13 @@ import java.awt.event.WindowListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.EventObject;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -64,15 +65,15 @@ import javax.swing.text.StyledDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.Entity;
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.images.ImageManager;
-import com.ontimize.locator.ClientReferenceLocator;
-import com.ontimize.locator.EntityReferenceLocator;
-import com.ontimize.locator.BMessage;
-import com.ontimize.locator.SMessage;
-import com.ontimize.locator.UtilReferenceLocator;
-import com.ontimize.locator.UtilReferenceLocator.Message;
+import com.ontimize.jee.common.db.Entity;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.locator.BMessage;
+import com.ontimize.jee.common.locator.ClientReferenceLocator;
+import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.locator.SMessage;
+import com.ontimize.jee.common.locator.UtilReferenceLocator;
+import com.ontimize.jee.common.locator.UtilReferenceLocator.Message;
 
 public class Chat extends JPanel {
 
@@ -92,7 +93,7 @@ public class Chat extends JPanel {
 
     protected JOpenConnection connectionList = null;
 
-    protected Hashtable windowCache = new Hashtable();
+    protected Map<Long, UserChatWindow> windowCache = new HashMap<>();
 
     protected WindowHandler wHandler = new WindowHandler();
 
@@ -129,7 +130,7 @@ public class Chat extends JPanel {
 
     protected static class JUserList extends JList implements UserChangeListener {
 
-        public JUserList(Vector l) {
+        public JUserList(List<?> l) {
             super();
             DefaultListModel model = new DefaultListModel();
             for (int i = 0; i < l.size(); i++) {
@@ -174,7 +175,7 @@ public class Chat extends JPanel {
             Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if ((c instanceof JLabel) && Chat.this.windowCache.containsKey(value)) {
                 UserChatWindow user = (UserChatWindow) Chat.this.windowCache.get(value);
-                ArrayList alList = user.getUser();
+                List<?> alList = user.getUser();
                 ((JLabel) c).setText(alList.toString());
             }
             return c;
@@ -208,17 +209,17 @@ public class Chat extends JPanel {
 
     }
 
-    protected Vector getUserList() {
-        Vector list = new Vector();
+    protected List<Object> getUserList() {
+    	List<Object> list = new ArrayList<>();
         if (this.locator != null) {
             try {
                 Entity entity = this.locator.getEntityReference(
                         ((UtilReferenceLocator) this.locator).getLoginEntityName(this.locator.getSessionId()));
-                Vector av = new Vector();
+                List<Object> av = new ArrayList<>();
                 av.add(Chat.USER);
-                EntityResult res = entity.query(new Hashtable(), av, this.locator.getSessionId());
+                EntityResult res = entity.query(new HashMap<>(), av, this.locator.getSessionId());
                 if ((res.getCode() != EntityResult.OPERATION_WRONG) && res.containsKey(Chat.USER)) {
-                    Vector v = (Vector) res.get(Chat.USER);
+                    List<?> v = (List<?>) res.get(Chat.USER);
                     String s = ((ClientReferenceLocator) this.locator).getUser();
                     if (v.contains(s)) {
                         v.remove(s);
@@ -227,8 +228,8 @@ public class Chat extends JPanel {
                         list.add(new User(v.get(i).toString(), false));
                     }
                 }
-            } catch (Exception e) {
-                Chat.logger.error(null, e);
+            } catch (Exception exc) {
+                Chat.logger.error(null, exc);
             }
         }
         return list;
@@ -237,7 +238,7 @@ public class Chat extends JPanel {
     protected void updateConnectUser() {
         if (this.locator != null) {
             try {
-                List listConnect = ((UtilReferenceLocator) this.locator).getConnectedUsers(this.locator.getSessionId());
+                List<?> listConnect = ((UtilReferenceLocator) this.locator).getConnectedUsers(this.locator.getSessionId());
                 ListModel model = this.userList.getModel();
                 for (int i = 0; i < model.getSize(); i++) {
                     User user = (User) model.getElementAt(i);
@@ -247,8 +248,8 @@ public class Chat extends JPanel {
                         user.disconnect();
                     }
                 }
-            } catch (Exception e) {
-                Chat.logger.error(null, e);
+            } catch (Exception exc) {
+                Chat.logger.error(null, exc);
             }
         }
     }
@@ -281,9 +282,9 @@ public class Chat extends JPanel {
             if ((s != null) && (s instanceof UserChatWindow)) {
                 UserChatWindow w = (UserChatWindow) s;
                 if (Chat.this.windowCache.containsValue(w)) {
-                    Enumeration enu = Chat.this.windowCache.keys();
-                    while (enu.hasMoreElements()) {
-                        Object k = enu.nextElement();
+                    Iterator<?> enu = Chat.this.windowCache.keySet().iterator();
+                    while (enu.hasNext()) {
+                        Object k = enu.next();
                         UserChatWindow user = (UserChatWindow) Chat.this.windowCache.get(k);
                         if (w.equals(user)) {
                             Chat.this.windowCache.remove(k);
@@ -396,8 +397,8 @@ public class Chat extends JPanel {
 
         private class StoreUser extends ArrayList {
 
-            public List toStringArray() {
-                ArrayList list = new ArrayList();
+            public List<String> toStringArray() {
+            	List<String> list = new ArrayList<>();
                 for (int i = 0; i < this.size(); i++) {
                     list.add(this.get(i).toString());
                 }
@@ -425,7 +426,7 @@ public class Chat extends JPanel {
             return this.sessionCommunicationId;
         }
 
-        protected ArrayList getUser() {
+        protected List<Object> getUser() {
             return this.userList;
         }
 
@@ -440,7 +441,7 @@ public class Chat extends JPanel {
                     for (int i = 0; i < this.userList.size(); i++) {
                         try {
                             String currentUser = ((ClientReferenceLocator) Chat.this.locator).getUser();
-                            List list = this.userList.toStringArray();
+                            List<String> list = this.userList.toStringArray();
                             list.add(currentUser);
                             SMessage message = new SMessage(currentUser, SMessage.REMOVE_USER, user.toString(),
                                     this.sessionCommunicationId, list);
@@ -457,7 +458,7 @@ public class Chat extends JPanel {
         }
 
         protected void paintTitle() {
-            List l = this.userList.toStringArray();
+            List<String> l = this.userList.toStringArray();
             StringBuilder buffer = new StringBuilder();
             for (int i = 0; i < l.size(); i++) {
                 buffer.append(l.get(i));
@@ -466,7 +467,7 @@ public class Chat extends JPanel {
             this.setTitle(buffer.toString());
         }
 
-        protected void checkUser(List list) {
+        protected void checkUser(List<?> list) {
             if (list != null) {
                 for (int i = 0; i < this.userList.size(); i++) {
                     User currentUser = (User) this.userList.get(i);
@@ -573,7 +574,7 @@ public class Chat extends JPanel {
                     JOptionPane.showMessageDialog(UserChatWindow.this, sMessage);
                     Long l = new Long(smsg.getCommunicationId());
                     if (Chat.this.windowCache.containsKey(l)) {
-                        UserChatWindow actual = (UserChatWindow) Chat.this.windowCache.get(l);
+                        UserChatWindow actual = Chat.this.windowCache.get(l);
                         actual.removeUser(Chat.this.getUser(userFrom), false);
                         Chat.this.connectionList.repaint();
                     }
@@ -581,7 +582,7 @@ public class Chat extends JPanel {
             }
         }
 
-        protected Hashtable colorUser = new Hashtable();
+        protected Map<Object, Object> colorUser = new HashMap<>();
 
         protected Color getColorUser(String user) {
             if ((user == null) || (user.length() == 0)) {
@@ -615,7 +616,7 @@ public class Chat extends JPanel {
                 String currentUser = ((ClientReferenceLocator) Chat.this.locator).getUser();
                 for (int i = 0; i < this.userList.size(); i++) {
                     try {
-                        List list = this.userList.toStringArray();
+                        List<String> list = this.userList.toStringArray();
                         list.add(currentUser);
                         BMessage message = new BMessage(currentUser, textToSend, this.sessionCommunicationId, list);
                         ((UtilReferenceLocator) Chat.this.locator).sendMessage(message, this.userList.get(i).toString(),
@@ -698,8 +699,8 @@ public class Chat extends JPanel {
             bAdd.addActionListener(new ActionListener() {
 
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    List lAddList = UserSelectionList.showAddList((Component) e.getSource(), Chat.this.locator,
+                public void actionPerformed(ActionEvent event) {
+                    List<?> lAddList = UserSelectionList.showAddList((Component) event.getSource(), Chat.this.locator,
                             UserChatWindow.this.userList.toStringArray());
                     if (lAddList == null) {
                         return;
@@ -726,7 +727,7 @@ public class Chat extends JPanel {
                     } catch (Exception ex) {
                         Chat.logger.error(null, ex);
                     }
-                    List listDelete = UserSelectionList.showRemoveList((Component) e.getSource(), Chat.this.locator,
+                    List<?> listDelete = UserSelectionList.showRemoveList((Component) e.getSource(), Chat.this.locator,
                             UserChatWindow.this.userList);
                     if (listDelete == null) {
                         return;
@@ -765,14 +766,14 @@ public class Chat extends JPanel {
                     }
 
                     if (Chat.this.windowCache.containsValue(UserChatWindow.this)) {
-                        Enumeration enu = Chat.this.windowCache.keys();
-                        while (enu.hasMoreElements()) {
-                            Object k = enu.nextElement();
+                        Iterator<?> enu = Chat.this.windowCache.keySet().iterator();
+                        while (enu.hasNext()) {
+                            Object k = enu.next();
                             UserChatWindow actual = (UserChatWindow) Chat.this.windowCache.get(k);
                             if (UserChatWindow.this.equals(actual)) {
                                 Chat.this.windowCache.remove(k);
                                 Chat.this.connectionList.removeConnection(new Long(actual.getSessionCommunicationId()));
-                                ArrayList list = actual.getUser();
+                                List<Object> list = actual.getUser();
 
                                 for (int i = 0; i < list.size(); i++) {
                                     String destino = list.get(i).toString();
@@ -824,15 +825,15 @@ public class Chat extends JPanel {
 
         protected static JList userList = null;
 
-        protected static ArrayList returnList = null;
+        protected static List<Object> returnList = null;
 
-        public static List showAddList(Component comp, EntityReferenceLocator locator, List connect) {
+        public static List<Object> showAddList(Component comp, EntityReferenceLocator locator, List<?> connect) {
             UserSelectionList.returnList = null;
             if (UserSelectionList.dUserList == null) {
                 UserSelectionList.showUserList(comp);
             }
             try {
-                List list = ((UtilReferenceLocator) locator).getConnectedUsers(locator.getSessionId());
+                List<?> list = ((UtilReferenceLocator) locator).getConnectedUsers(locator.getSessionId());
                 // Have to remove the connected users, the application user and
                 // the repeat ones.
 
@@ -846,7 +847,7 @@ public class Chat extends JPanel {
                     list.remove(((ClientReferenceLocator) locator).getUser());
                 }
 
-                ArrayList finalList = new ArrayList();
+                List<Object> finalList = new ArrayList<>();
                 for (int i = 0; i < list.size(); i++) {
                     if (!finalList.contains(list.get(i))) {
                         finalList.add(list.get(i));
@@ -941,7 +942,7 @@ public class Chat extends JPanel {
 
         private boolean connect = false;
 
-        private final ArrayList changeListener = new ArrayList();
+        private final List<Object> changeListener = new ArrayList<>();
 
         protected User(String user) {
             this.user = user;
@@ -1043,7 +1044,7 @@ public class Chat extends JPanel {
                     if (index >= 0) {
                         Object o = Chat.this.connectionList.getModel().getElementAt(index);
                         if (Chat.this.windowCache.containsKey(o)) {
-                            UserChatWindow w = (UserChatWindow) Chat.this.windowCache.get(o);
+                            UserChatWindow w = Chat.this.windowCache.get(o);
                             w.setVisible(true);
                         }
                     }
@@ -1087,11 +1088,11 @@ public class Chat extends JPanel {
     }
 
     protected UserChatWindow openWindow(User user) {
-        Enumeration enu = this.windowCache.keys();
-        while (enu.hasMoreElements()) {
-            Long lSessionId = (Long) enu.nextElement();
+        Iterator<?> enu = this.windowCache.keySet().iterator();
+        while (enu.hasNext()) {
+            Long lSessionId = (Long) enu.next();
             UserChatWindow w = (UserChatWindow) this.windowCache.get(lSessionId);
-            ArrayList list = w.getUser();
+            List<?> list = w.getUser();
             if (list.size() > 1) {
                 continue;
             }
@@ -1111,7 +1112,7 @@ public class Chat extends JPanel {
         UserChatWindow w = this.getCacheWindow(d);
         if (w == null) {
             w = new UserChatWindow(id);
-            List users = message.getUsers();
+            List<?> users = message.getUsers();
             if (users != null) {
                 for (int i = 0; i < users.size(); i++) {
                     String user = (String) users.get(i);
@@ -1150,9 +1151,9 @@ public class Chat extends JPanel {
         if (this.isVisible()) {
             return true;
         }
-        Enumeration enu = this.windowCache.keys();
-        while (enu.hasMoreElements()) {
-            UserChatWindow w = (UserChatWindow) this.windowCache.get(enu.nextElement());
+        Iterator<?> enu = this.windowCache.keySet().iterator();
+        while (enu.hasNext()) {
+            UserChatWindow w = (UserChatWindow) this.windowCache.get(enu.next());
             if (w.isVisible()) {
                 return true;
             }
@@ -1161,11 +1162,9 @@ public class Chat extends JPanel {
     }
 
     public void setVisibleUserWindow() {
-        Enumeration enu = this.windowCache.keys();
-        while (enu.hasMoreElements()) {
-            UserChatWindow w = (UserChatWindow) this.windowCache.get(enu.nextElement());
-            w.setVisible(true);
-        }
+    	for(Entry<Long, UserChatWindow> entry:this.windowCache.entrySet()) {
+    		entry.getValue().setVisible(true);
+    	}
     }
 
     protected class ChatControlThread extends Thread {
@@ -1185,7 +1184,7 @@ public class Chat extends JPanel {
                         Thread.sleep(Chat.this.messagesCheckTime);
                     }
                     Chat.this.updateConnectUser();
-                    Vector v = ((UtilReferenceLocator) Chat.this.locator).getMessages(Chat.this.locator.getSessionId(),
+                    List<?> v = ((UtilReferenceLocator) Chat.this.locator).getMessages(Chat.this.locator.getSessionId(),
                             Chat.this.locator.getSessionId());
                     if (v != null) {
                         for (int i = 0; i < v.size(); i++) {
@@ -1204,8 +1203,8 @@ public class Chat extends JPanel {
                             }
                         }
                     }
-                } catch (Exception e) {
-                    Chat.logger.error(null, e);
+                } catch (Exception exc) {
+                    Chat.logger.error(null, exc);
                 }
             }
         }
@@ -1216,7 +1215,7 @@ public class Chat extends JPanel {
 
     private static Chat sChat = null;
 
-    public static void showChat(EntityReferenceLocator locator, Vector messages, int messagesCheckTime,
+    public static void showChat(EntityReferenceLocator locator, List<?> messages, int messagesCheckTime,
             int chatCheckTime) {
         try {
             if (Chat.fChat == null) {
