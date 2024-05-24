@@ -1,6 +1,6 @@
 package com.ontimize.util.templates;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import com.ontimize.gui.Form;
 import com.ontimize.gui.button.Button;
@@ -15,14 +15,14 @@ public class OpenTemplateButton extends Button {
 
     protected OpenTemplateAction action;
 
-    protected Hashtable parameters;
+    protected Map<Object, Object> parameters;
 
-    public OpenTemplateButton(Hashtable parameters) {
+    public OpenTemplateButton(Map<Object, Object> parameters) {
         super(parameters);
     }
 
     @Override
-    public void init(Hashtable parameters) {
+    public void init(Map<Object, Object> parameters) {
         super.init(parameters);
         this.parameters = parameters;
     }

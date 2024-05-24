@@ -9,11 +9,12 @@ import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -65,7 +66,7 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean openFile) throws Exception {
         OutputStream os = new FileOutputStream(output);
         try {
@@ -80,8 +81,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
         }
     }
 
-    public void createXLS(List entityResultsList, OutputStream os, List sheetNames, Hashtable hColumnRenderers,
-            List columnSort, boolean writeHeader) throws IOException {
+    public void createXLS(List<?> entityResultsList, OutputStream os, List<?> sheetNames, Map<?,?> hColumnRenderers,
+    		List<?> columnSort, boolean writeHeader) throws IOException {
         HSSFWorkbook wb = new HSSFWorkbook();
         sheetNames = this.checkSheetNames(entityResultsList.size(), sheetNames);
         for (int i = 0; i < entityResultsList.size(); i++) {
@@ -91,26 +92,26 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
         wb.write(os);
     }
 
-    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Hashtable hColumnRenderers,
-            List columnSort, boolean writeHeader) throws IOException {
+    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Map<?,?> hColumnRenderers,
+    		List<?> columnSort, boolean writeHeader) throws IOException {
         Poi3_2XLSExporterUtils.wb = new HSSFWorkbook();
         sheetName = sheetName == null ? "Sheet1" : sheetName;
         this.writeSheet(Poi3_2XLSExporterUtils.wb, rs, columnSort, sheetName, hColumnRenderers, writeHeader);
         Poi3_2XLSExporterUtils.wb.write(os);
     }
 
-    protected List checkSheetNames(int size, List sheetNames) {
+    protected List<?> checkSheetNames(int size, List<?> sheetNames) {
         if ((sheetNames != null) && (sheetNames.size() == size)) {
             return sheetNames;
         }
-        List res = new Vector(size);
+        List<Object> res = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             res.add("Sheet" + i);
         }
         return res;
     }
 
-    protected void writeSheet(Workbook wb, EntityResult rs, List order, String sheetName, Hashtable hColumnRenderers,
+    protected void writeSheet(Workbook wb, EntityResult rs, List<?> order, String sheetName, Map<?,?> hColumnRenderers,
             boolean writeHeader) {
         Poi3_2XLSExporterUtils.dfs = new DecimalFormatSymbols(ApplicationManager.getLocale());
         Poi3_2XLSExporterUtils.decimalFormat.setDecimalFormatSymbols(Poi3_2XLSExporterUtils.dfs);
@@ -121,7 +122,7 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             order = rs.getOrderColumns();
         }
         if (order == null) {
-            order = new Vector(rs.keySet());
+            order = new ArrayList<>(rs.keySet());
         }
 
         HSSFSheet sheet = ((HSSFWorkbook) wb).createSheet(sheetName);
@@ -129,8 +130,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             this.writeLine(sheet, rs.getOrderColumns(), order, hColumnRenderers, rs.getColumnSQLTypes());
         }
         for (int count = rs.calculateRecordNumber(), i = 0; i < count; i++) {
-            Hashtable h = rs.getRecordValues(i);
-            Vector values = new Vector(order.size());
+            Map<?,?> h = rs.getRecordValues(i);
+            List<Object> values = new ArrayList<>(order.size());
             for (Iterator it = rs.getOrderColumns().iterator(); it.hasNext();) {
                 Object key = it.next();
                 values.add(h.get(key));
@@ -139,8 +140,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
         }
     }
 
-    protected void writeSheet(Workbook wb, EntityResult rs, List order, List columnStyles, List columnHeaderStyles,
-            String sheetName, Hashtable hColumnRenderers,
+    protected void writeSheet(Workbook wb, EntityResult rs, List<?> order, List<?> columnStyles, List<?> columnHeaderStyles,
+            String sheetName, Map<?,?> hColumnRenderers,
             boolean writeHeader) {
         Poi3_2XLSExporterUtils.dfs = new DecimalFormatSymbols(ApplicationManager.getLocale());
         Poi3_2XLSExporterUtils.decimalFormat.setDecimalFormatSymbols(Poi3_2XLSExporterUtils.dfs);
@@ -151,7 +152,7 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             order = rs.getOrderColumns();
         }
         if (order == null) {
-            order = new Vector(rs.keySet());
+            order = new ArrayList<>(rs.keySet());
         }
 
         HSSFSheet sheet = ((HSSFWorkbook) wb).createSheet(sheetName);
@@ -159,8 +160,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
             this.writeLine(sheet, order, order, hColumnRenderers, columnHeaderStyles, rs.getColumnSQLTypes());
         }
         for (int count = rs.calculateRecordNumber(), i = 0; i < count; i++) {
-            Hashtable h = rs.getRecordValues(i);
-            Vector values = new Vector(order.size());
+            Map<?,?> h = rs.getRecordValues(i);
+            List<Object> values = new ArrayList<>(order.size());
             for (Iterator it = order.iterator(); it.hasNext();) {
                 Object key = it.next();
                 values.add(h.get(key));
@@ -169,8 +170,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
         }
     }
 
-    protected void writeLine(HSSFSheet sheet, List values, List orderColumns, Hashtable hColumnRenderers,
-            List columnStyles, Hashtable hColumnTypes) {
+    protected void writeLine(HSSFSheet sheet, List<?> values, List<?> orderColumns, Map<?,?> hColumnRenderers,
+    		List<?> columnStyles, Map<?,?> hColumnTypes) {
         HSSFRow row = sheet.createRow(sheet.getLastRowNum() + 1);
         int column = 0;
         for (int i = 0; i < values.size(); i++) {
@@ -330,13 +331,13 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
         }
     }
 
-    protected void writeLine(HSSFSheet sheet, List values, List order, Hashtable hColumnRenderers,
-            Hashtable hColumnTypes) {
+    protected void writeLine(HSSFSheet sheet, List<?> values, List<?> order, Map<?,?> hColumnRenderers,
+            Map<?,?> hColumnTypes) {
         this.writeLine(sheet, values, order, hColumnRenderers, null, hColumnTypes);
     }
 
-    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Hashtable hColumnRenderers,
-            List columnSort, List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, OutputStream os, String sheetName, Map<?,?> hColumnRenderers,
+    		List<?> columnSort, List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader) throws Exception {
         if (wb == null) {
             wb = new HSSFWorkbook();
@@ -347,8 +348,8 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+    		List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean openFile) throws Exception {
         OutputStream os = new FileOutputStream(output);
         try {
@@ -365,37 +366,37 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
             boolean writeHeader, boolean xlsx, boolean openFile)
             throws Exception {
         this.createXLS(rs, output, sheetName, hColumnRenderers, columnSort, writeHeader, openFile);
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, Hashtable hColumnRenderers, List columnSort,
-            List columnStyles, List columnHeaderStyles, Workbook wb,
+    public void createXLS(EntityResult rs, File output, String sheetName, Map<?,?> hColumnRenderers, List<?> columnSort,
+    		List<?> columnStyles, List<?> columnHeaderStyles, Workbook wb,
             boolean writeHeader, boolean xlsx, boolean openFile) throws Exception {
         this.createXLS(rs, output, sheetName, hColumnRenderers, columnSort, columnStyles, columnHeaderStyles, wb,
                 writeHeader, openFile);
     }
 
     @Override
-    public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
+    public void createXLS(EntityResult rs, File output, String sheetName, List<?> columnSort, boolean writeHeader,
             boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, writeHeader, openFile);
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, writeHeader, openFile);
     }
 
     @Override
     public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, writeHeader, openFile);
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, writeHeader, openFile);
     }
 
     @Override
     public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
             List columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean xlsx, boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, columnStyles, columnHeaderStyles, wb, xlsx,
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, columnStyles, columnHeaderStyles, wb, xlsx,
                 writeHeader, openFile);
     }
 
@@ -403,7 +404,7 @@ public class Poi3_2XLSExporterUtils extends AbstractXLSExporter implements XLSEx
     public void createXLS(EntityResult rs, File output, String sheetName, List columnSort, List columnStyles,
             List columnHeaderStyles, Workbook wb, boolean writeHeader,
             boolean openFile) throws Exception {
-        this.createXLS(rs, output, sheetName, new Hashtable(), columnSort, columnStyles, columnHeaderStyles, wb,
+        this.createXLS(rs, output, sheetName, new HashMap<>(), columnSort, columnStyles, columnHeaderStyles, wb,
                 writeHeader, openFile);
     }
 

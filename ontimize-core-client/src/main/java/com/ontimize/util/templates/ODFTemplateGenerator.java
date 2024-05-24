@@ -24,8 +24,8 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.util.FileUtils;
-import com.ontimize.util.remote.BytesBlock;
 import com.ontimize.windows.office.WindowsUtils;
 
 /**

@@ -12,11 +12,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -38,8 +37,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.images.ImageManager;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.util.FileUtils;
 
 /**
@@ -103,14 +102,14 @@ public class ODFParser {
      * @param values
      * @return
      */
-    public static Hashtable translateDotFields(Hashtable values) {
+    public static Map<Object, Object> translateDotFields(Map<Object,Object> values) {
 
         try {
-            Hashtable translations = new Hashtable();
+            Map<Object, Object> translations = new HashMap<>();
             if (values == null) {
                 return translations;
             }
-            Iterator valuesit = values.keySet().iterator();
+            Iterator<?> valuesit = values.keySet().iterator();
             while (valuesit.hasNext()) {
                 Object o = valuesit.next();
                 if ((o != null) && (o instanceof String)) {
@@ -121,7 +120,7 @@ public class ODFParser {
                     }
                 }
             }
-            Iterator transit = translations.keySet().iterator();
+            Iterator<?> transit = translations.keySet().iterator();
             while (transit.hasNext()) {
                 String val = transit.next().toString();
                 values.put(translations.get(val), values.remove(val));
@@ -130,7 +129,7 @@ public class ODFParser {
             // order columns should be the same as entity result because
             // are used in method getKeysOrder()
             if (values instanceof EntityResult) {
-                ((EntityResult) values).setColumnOrder(new Vector(translations.values()));
+                ((EntityResult) values).setColumnOrder(new ArrayList<>(translations.values()));
             }
         } catch (Exception e) {
             ODFParser.logger.error(null, e);
@@ -167,7 +166,7 @@ public class ODFParser {
         return this.temp;
     }
 
-    public File create(Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages, boolean createLabels)
+    public File create(Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages, boolean createLabels)
             throws Exception {
 
         ODFParser.log("ODFParser -> Creating empty template for given data");
@@ -241,7 +240,7 @@ public class ODFParser {
 
     }
 
-    public File create(Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages) throws Exception {
+    public File create(Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages) throws Exception {
         return this.create(fieldValues, valuesTable, valuesImages, true);
     }
 
@@ -276,12 +275,12 @@ public class ODFParser {
         return d.createElement(ODFParser.XML_TAG_TEXT);
     }
 
-    private Element[] createFieldElements(Document document, Hashtable fields, boolean createLabel) {
+    private Element[] createFieldElements(Document document, Map<?,?> fields, boolean createLabel) {
         if ((fields == null) || fields.isEmpty()) {
             return new Element[0];
         }
 
-        List elements = new ArrayList();
+        List<Object> elements = new ArrayList<>();
         // The keys contains the field names.
         Object[] keysOrder = AbstractTemplateGenerator.getKeysOrder(fields);
         for (int k = 0; k < keysOrder.length; k++) {
@@ -293,16 +292,16 @@ public class ODFParser {
             Object oValue = fields.get(oKey);
             String key = (String) oKey;
 
-            if (oValue instanceof Hashtable) {
+            if (oValue instanceof Map) {
                 // Create a group with a title in the template
                 Element eTitle = document.createElement(ODFParser.XML_TAG_TEXT); // Title
                 eTitle.appendChild(document.createTextNode(key));
                 elements.add(eTitle);
-                Object[] keysOrderGroup = AbstractTemplateGenerator.getKeysOrder((Hashtable) oValue);
+                Object[] keysOrderGroup = AbstractTemplateGenerator.getKeysOrder((Map<Object, Object>) oValue);
                 for (int j = 0; j < keysOrderGroup.length; j++) {
                     if (keysOrderGroup[j] instanceof String) {
                         String groupElementKey = (String) keysOrderGroup[j];
-                        Object groupElementValue = ((Hashtable) oValue).get(groupElementKey);
+                        Object groupElementValue = ((Map<?,?>) oValue).get(groupElementKey);
                         Element eText = document.createElement(ODFParser.XML_TAG_TEXT); // Text.
                         if (createLabel) {
                             eText.appendChild(document.createTextNode(groupElementValue + ": "));
@@ -343,20 +342,20 @@ public class ODFParser {
         return res;
     }
 
-    private Element[] createTableElements(Document d, Hashtable t) {
+    private Element[] createTableElements(Document d, Map<?,?> t) {
         if ((t == null) || t.isEmpty()) {
             return new Element[0];
         }
 
         Element[] l = new Element[t.size()];
 
-        Enumeration k = t.keys();
-        Collection c = t.values();
-        Iterator v = c.iterator();
+        Iterator<?> k = t.keySet().iterator();
+        Collection<?> c = t.values();
+        Iterator<?> v = c.iterator();
         int i = 0;
 
-        while (k.hasMoreElements()) {
-            Object o = k.nextElement();
+        while (k.hasNext()) {
+            Object o = k.next();
             if ((o == null) || !(o instanceof String)) {
                 v.next();
                 continue;
@@ -364,10 +363,10 @@ public class ODFParser {
             String key = (String) o; // Table name.
 
             o = v.next();
-            if ((o == null) || !(o instanceof Hashtable)) {
+            if ((o == null) || !(o instanceof Map)) {
                 continue;
             }
-            Hashtable value = (Hashtable) o; // Table.
+            Map<?,?> value = (Map<?,?>) o; // Table.
             int cols = value.size();
 
             Element table = d.createElement(ODFParser.XML_TAG_TABLE);
@@ -385,9 +384,9 @@ public class ODFParser {
             Element data = d.createElement(ODFParser.XML_TAG_TABLE_ROW);
             table.appendChild(data);
 
-            Enumeration e = value.keys();
-            while (e.hasMoreElements()) {
-                o = e.nextElement();
+            Iterator<?> e = value.keySet().iterator();
+            while (e.hasNext()) {
+                o = e.next();
                 if ((o == null) || !(o instanceof String)) {
                     continue;
                 }
@@ -427,7 +426,7 @@ public class ODFParser {
         return l;
     }
 
-    private Element[] createImageElements(Document d, Hashtable i) throws Exception {
+    private Element[] createImageElements(Document d, Map<Object, Object> i) throws Exception {
         if ((i == null) || i.isEmpty()) {
             return new Element[0];
         }
@@ -439,17 +438,17 @@ public class ODFParser {
             dImages.mkdirs();
         }
 
-        Enumeration k = i.keys();
+        Iterator<?> k = i.keySet().iterator();
         int c = 0;
 
         int imageIndex = 0;
 
-        while (k.hasMoreElements()) {
+        while (k.hasNext()) {
 
             InputStream empty = this.getEmptyImageInputStream(imageIndex);
             imageIndex = imageIndex + 1;
 
-            Object o = k.nextElement();
+            Object o = k.next();
             if ((o == null) || !(o instanceof String)) {
                 continue;
             }
@@ -674,18 +673,18 @@ public class ODFParser {
         return null;
     }
 
-    public static Hashtable translateTableDotFields(Hashtable valuesTable) {
+    public static Map<Object, Object> translateTableDotFields(Map<Object, Object> valuesTable) {
         valuesTable = ODFParser.translateDotFields(valuesTable);
-        Iterator it = valuesTable.keySet().iterator();
-        Vector vlist = new Vector();
+        Iterator<?> it = valuesTable.keySet().iterator();
+        List<Object> vlist = new ArrayList<>();
         while (it.hasNext()) {
             vlist.add(it.next());
         }
 
         for (int i = 0; i < vlist.size(); i++) {
             Object o = valuesTable.get(vlist.get(i));
-            if ((o != null) && (o instanceof Hashtable)) {
-                Hashtable newo = ODFParser.translateTableDotFields((Hashtable) o);
+            if ((o != null) && (o instanceof Map)) {
+                Map<Object, Object> newo = ODFParser.translateTableDotFields((Map<Object, Object>) o);
                 if ((newo != null) && !newo.equals(o)) {
                     valuesTable.put(vlist.get(i), newo);
                 }

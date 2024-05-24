@@ -1,10 +1,12 @@
 package com.ontimize.util.templates;
 
 import java.awt.event.ActionEvent;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
@@ -38,38 +40,38 @@ public class OpenTemplateAction extends AbstractAction {
 
     protected Form currentForm = null;
 
-    protected Vector fieldDataList;
+    protected List<Object> fieldDataList;
 
-    protected Vector imageDataList;
+    protected List<Object> imageDataList;
 
-    protected Vector tableDataList;
+    protected List<Object> tableDataList;
 
     protected String templateURL;
 
-    public OpenTemplateAction(Form f, Hashtable parameters) {
+    public OpenTemplateAction(Form f, Map<Object, Object> parameters) {
         this.currentForm = f;
         this.init(parameters);
     }
 
-    public OpenTemplateAction(Form f, Hashtable parameters, String name) {
+    public OpenTemplateAction(Form f, Map<Object, Object> parameters, String name) {
         super(name);
         this.currentForm = f;
         this.init(parameters);
     }
 
-    public OpenTemplateAction(Form f, Hashtable parameters, String name, Icon icon) {
+    public OpenTemplateAction(Form f, Map<Object, Object> parameters, String name, Icon icon) {
         super(name, icon);
         this.currentForm = f;
         this.init(parameters);
     }
 
-    protected void init(Hashtable parameters) {
+    protected void init(Map<Object, Object> parameters) {
         if (parameters.containsKey(OpenTemplateAction.TEMPLATE_PATH)) {
             this.templateURL = (String) parameters.get(OpenTemplateAction.TEMPLATE_PATH);
         }
 
         if (parameters.containsKey(OpenTemplateAction.FIELD_DATA)) {
-            this.fieldDataList = new Vector();
+            this.fieldDataList = new ArrayList<>();
             StringTokenizer temp = new StringTokenizer((String) parameters.get(OpenTemplateAction.FIELD_DATA), ";");
             while (temp.hasMoreTokens()) {
                 this.fieldDataList.add(temp.nextToken());
@@ -77,7 +79,7 @@ public class OpenTemplateAction extends AbstractAction {
         }
 
         if (parameters.containsKey(OpenTemplateAction.IMAGE_DATA)) {
-            this.imageDataList = new Vector();
+            this.imageDataList = new ArrayList<>();
             StringTokenizer temp = new StringTokenizer((String) parameters.get(OpenTemplateAction.IMAGE_DATA), ";");
             while (temp.hasMoreTokens()) {
                 this.imageDataList.add(temp.nextToken());
@@ -85,7 +87,7 @@ public class OpenTemplateAction extends AbstractAction {
         }
 
         if (parameters.containsKey(OpenTemplateAction.TABLE_DATA)) {
-            this.tableDataList = new Vector();
+            this.tableDataList = new ArrayList<>();
             StringTokenizer temp = new StringTokenizer((String) parameters.get(OpenTemplateAction.TABLE_DATA), ";");
             while (temp.hasMoreTokens()) {
                 this.tableDataList.add(temp.nextToken());
@@ -94,7 +96,7 @@ public class OpenTemplateAction extends AbstractAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         try {
             TemplateGenerator generator = this.getTemplateGenerator();
             generator.fillDocument(this.templateURL, this.createFieldData(), this.createTableData(),
@@ -108,8 +110,8 @@ public class OpenTemplateAction extends AbstractAction {
         return TemplateGeneratorFactory.templateGeneratorInstance(TemplateGeneratorFactory.WORD);
     }
 
-    protected Hashtable createFieldData() {
-        Hashtable data = new Hashtable();
+    protected Map<Object, Object> createFieldData() {
+    	Map<Object, Object> data = new HashMap<>();
         if ((this.fieldDataList == null) || (this.fieldDataList.size() == 0)) {
             if (AbstractTemplateGenerator.DEBUG) {
                 OpenTemplateAction.logger.debug("Warning " + this.getClass() + ":" + OpenTemplateAction.FIELD_DATA
@@ -123,23 +125,20 @@ public class OpenTemplateAction extends AbstractAction {
         if (data.isEmpty()) {
             return data;
         }
-        Enumeration keys = data.keys();
-        while (keys.hasMoreElements()) {
-            Object key = keys.nextElement();
-            Object value = data.get(key);
-            Vector v = new Vector();
-            v.add(value);
-            data.put(key, v);
+        for(Entry<Object, Object> entry:data.entrySet()) {
+        	List<Object> list = new ArrayList<>();
+        	list.add(entry.getValue());
+        	data.put(entry.getKey(), list);
         }
         return data;
     }
 
-    protected Hashtable createTableData() {
-        return new Hashtable();
+    protected Map<Object, Object> createTableData() {
+        return new HashMap<>();
     }
 
-    protected Hashtable createImageData() {
-        return new Hashtable();
+    protected Map<Object, Object> createImageData() {
+        return new HashMap<>();
     }
 
 }

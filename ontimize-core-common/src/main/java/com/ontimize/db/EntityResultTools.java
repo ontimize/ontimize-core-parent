@@ -96,4 +96,8 @@ public class EntityResultTools {
 		}
 	}
 
+	public static EntityResult mapToEntityResult(final Map<?, ?> value) {
+		return new EntityResultMapImpl(new HashMap<>(value));
+	}
+
 }

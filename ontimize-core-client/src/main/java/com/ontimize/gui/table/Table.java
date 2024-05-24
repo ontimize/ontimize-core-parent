@@ -5236,10 +5236,9 @@ public class Table extends JRootPane
 
     protected void checkNumberColumnVisibility(Object value) {
         // to hide the row number columns when the table is empty
-        if (value instanceof Hashtable) {
-            Hashtable h = (Hashtable) value;
-            if ((h == null) || h.isEmpty()
-                    || ((h instanceof EntityResult) && (((EntityResult) h).calculateRecordNumber() == 0))) {
+        if (value instanceof Map || value instanceof EntityResult) {
+            if ((value == null) || ((value instanceof Map) && ((Map<?,?>)value).isEmpty())
+                    || ((value instanceof EntityResult) && (((EntityResult) value).calculateRecordNumber() == 0))) {
                 this.setRowNumberColumnVisible(false);
             } else {
                 boolean visible = true;
@@ -5303,7 +5302,7 @@ public class Table extends JRootPane
                     // }
 
                     // and now we can add the new values
-                    Hashtable hValue = (Hashtable) value;
+                    Map<?, ?> hValue = (Map<?,?>) value;
 
                     // Enumeration eKeys = hValue.keys();
                     Iterator eKeys = null;
@@ -5465,9 +5464,9 @@ public class Table extends JRootPane
      * the table corresponding to those columns.
      * @return the table primary keys values
      */
-    public Map<Object, Object> getAllPrimaryKeys() {
+    public EntityResult getAllPrimaryKeys() {
         this.checkRefreshThread();
-        Map<Object, Object> h = new HashMap<>();
+        EntityResult h = new EntityResultMapImpl();
         // Search the column name in the table header
         List<Object> vKeys = this.getKeys();
         for (int i = 0; i < vKeys.size(); i++) {
@@ -8354,7 +8353,7 @@ public class Table extends JRootPane
     protected void createInsertDetailForm() {
         String sFormName = Table.this.insertFormName;
 
-        Vector vKeys = this.getKeys();
+        List<Object> vKeys = this.getKeys();
 
         Form formCopy = null;
         if (this.insertDetailFormBuilder != null) {
@@ -8369,9 +8368,9 @@ public class Table extends JRootPane
                 this.dynamicFormManager.setFormManager(this.parentForm.getFormManager());
             }
 
-            Hashtable filterKeys = this.getParentKeyValues();
+            Map<?,?> filterKeys = this.getParentKeyValues();
 
-            Hashtable hPrimaryKeys = new Hashtable();
+            Map<Object, Object> hPrimaryKeys = new HashMap<>();
             Window w = SwingUtilities.getWindowAncestor(this);
             if (w instanceof Frame) {
                 this.insertDetailForm = new DetailForm((Frame) w, this.detailFormTitleKey, true, formCopy, hPrimaryKeys,

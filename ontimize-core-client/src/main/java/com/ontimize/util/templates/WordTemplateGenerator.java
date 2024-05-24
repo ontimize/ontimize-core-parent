@@ -8,16 +8,19 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.EntityResult;
 import com.ontimize.gui.ApplicationManager;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.util.FileUtils;
 import com.ontimize.windows.office.ScriptUtilities;
 
@@ -40,8 +43,8 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
     protected boolean showTemplate = true;
 
     @Override
-    public File fillDocument(InputStream input, String nameFile, Hashtable fieldValues, Hashtable valuesTable,
-            Hashtable valuesImages, Hashtable valuesPivotTable)
+    public File fillDocument(InputStream input, String nameFile, Map<Object, Object> fieldValues, Map<Object, Object> valuesTable,
+    		Map<Object, Object> valuesImages, Map<Object, Object> valuesPivotTable)
             throws Exception {
 
         fieldValues = this.translateDotFields(fieldValues);
@@ -294,12 +297,12 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
      * <br>
      * It is possible to create groups with some fields and put a title for the group in the
      * template.<br>
-     * If some value in the <code>fieldValues</code> parameter is a Hashtable (or EntityResult) then the
+     * If some value in the <code>fieldValues</code> parameter is a Map (or EntityResult) then the
      * fields in this hashtable will be in a group in the template and the title will be the key of this
      * hashtable in the parameter <code>fieldValues</code>
      */
     @Override
-    public File createTemplate(Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages) {
+    public File createTemplate(Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages) {
         try {
             fieldValues = this.translateDotFields(fieldValues);
             valuesImages = this.translateDotFields(valuesImages);
@@ -373,13 +376,13 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
      * @param values
      * @return
      */
-    private Hashtable translateDotFields(Hashtable values) {
+    private Map<Object, Object> translateDotFields(Map<Object, Object> values) {
         try {
-            Hashtable translations = new Hashtable();
+        	Map<Object, Object> translations = new HashMap<>();
             if (values == null) {
                 return translations;
             }
-            Iterator valuesit = values.keySet().iterator();
+            Iterator<?> valuesit = values.keySet().iterator();
             while (valuesit.hasNext()) {
                 Object o = valuesit.next();
                 if ((o != null) && (o instanceof String)) {
@@ -396,10 +399,10 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
                 values.put(translations.get(val), values.remove(val));
             }
             if (values instanceof EntityResult) {
-                ((EntityResult) values).setColumnOrder(new Vector(translations.values()));
+                ((EntityResult) values).setColumnOrder(new ArrayList<>(translations.values()));
             }
-        } catch (Exception e) {
-            WordTemplateGenerator.logger.error(null, e);
+        } catch (Exception exc) {
+            WordTemplateGenerator.logger.error(null, exc);
         }
         return values;
     }
@@ -408,7 +411,7 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
             String pathImageD, String options) throws Exception {
 
         File script = ScriptUtilities.createTemporalFileForScript(WordTemplateGenerator.scriptCreateDocTemplate);
-        Vector parameters = new Vector(2);
+        List<Object> parameters = new ArrayList<>(2);
 
         StringBuilder bufferSetup = new StringBuilder();
         if (AbstractTemplateGenerator.DEBUG) {
@@ -455,7 +458,7 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
         }
     }
 
-    protected static String createFieldDataString(Hashtable data, String delimiter, DateFormat df) {
+    protected static String createFieldDataString(Map<Object, Object> data, String delimiter, DateFormat df) {
 
         // format : key1 + delimiter + value1 + delimiter + key2 + delimiter +
         // value2 + delimiter + ... + keyN + delimiter + valueN
@@ -478,8 +481,8 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
                 res.append(key);
                 res.append(delimiter);
 
-                if (value instanceof Vector) {
-                    if (((Vector) value).get(0) != null) {
+                if (value instanceof List) {
+                    if (((List<?>) value).get(0) != null) {
                         Object currentData = ((Vector) value).get(0);
                         if ((df != null) && (currentData instanceof Date)) {
                             res.append(df.format(currentData));
@@ -520,7 +523,7 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
      * @param df
      * @return
      */
-    protected static String createFieldsInGroups(Hashtable data, String delimiter, String groupDelimiter,
+    protected static String createFieldsInGroups(Map<Object, Object> data, String delimiter, String groupDelimiter,
             DateFormat df) {
 
         Object[] keys = AbstractTemplateGenerator.getKeysOrder(data);
@@ -528,12 +531,12 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
 
         // If one group exist then all fields must be in a group
 
-        EntityResult noGroupFields = new EntityResult();
-        List noGroupFieldsKeys = new ArrayList();
+        EntityResult noGroupFields = new EntityResultMapImpl();
+        List<Object> noGroupFieldsKeys = new ArrayList<>();
 
         // Search for fields out of any group and group all of them
         for (int i = 0; i < keys.length; i++) {
-            if (!(data.get(keys[i]) instanceof Hashtable)) {
+            if (!(data.get(keys[i]) instanceof Map)) {
                 noGroupFieldsKeys.add(keys[i]);
                 noGroupFields.put(keys[i], data.get(keys[i]));
                 data.remove(keys[i]);
@@ -560,7 +563,7 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
         return stringResult;
     }
 
-    protected static void addFieldGroupToDataString(Hashtable group, StringBuilder buffer, DateFormat df,
+    protected static void addFieldGroupToDataString(Map<Object, Object> group, StringBuilder buffer, DateFormat df,
             String delimiter) {
         Object[] keys = AbstractTemplateGenerator.getKeysOrder(group);
 
@@ -570,9 +573,9 @@ public class WordTemplateGenerator extends AbstractTemplateGenerator {
             buffer.append(delimiter);
 
             Object value = group.get(keys[i]);
-            if (value instanceof Vector) {
-                if (((Vector) value).get(0) != null) {
-                    Object currentData = ((Vector) value).get(0);
+            if (value instanceof List) {
+                if (((List<?>) value).get(0) != null) {
+                    Object currentData = ((List<?>) value).get(0);
                     if ((df != null) && (currentData instanceof Date)) {
                         buffer.append(df.format(currentData));
                     } else {

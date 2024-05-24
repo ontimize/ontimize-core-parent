@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -733,9 +734,9 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 		Map<?, ?> hData = (Map<?,?>) this.getValue();
 
 		List<Object> visibles = new ArrayList<>();
-		Enumeration enumKeys = hData.keys();
-		while (enumKeys.hasMoreElements()) {
-			visibles.add(enumKeys.nextElement());
+		Iterator<?> enumKeys = hData.keySet().iterator();
+		while (enumKeys.hasNext()) {
+			visibles.add(enumKeys.next());
 		}
 
 		if (this.ru == null) {

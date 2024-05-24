@@ -2,7 +2,7 @@ package com.ontimize.util.templates;
 
 import java.awt.Toolkit;
 import java.io.File;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 
@@ -15,7 +15,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.ontimize.gui.ApplicationManager;
-import com.ontimize.util.remote.BytesBlock;
+import com.ontimize.jee.common.util.remote.BytesBlock;
 
 /**
  * Check if a ODF file contains FreeMarker directives. FreeMarker directives are necessary to
@@ -48,7 +48,7 @@ public class ODFFreeMarkerParser extends ODFParser {
         return this.parse(null, null, null, null);
     }
 
-    public File parse(Hashtable fieldValues, Hashtable valuesTable, Hashtable valuesImages, Hashtable valuesPivotTable)
+    public File parse(Map<Object, Object> fieldValues, Map<Object, Object> valuesTable, Map<Object, Object> valuesImages, Map<Object, Object> valuesPivotTable)
             throws Exception {
         ODFParser.log("ODFFreeMarkerParser -> Parsing ODF document to insert FreeMarker directives.");
 
@@ -142,7 +142,7 @@ public class ODFFreeMarkerParser extends ODFParser {
         return this.get(null);
     }
 
-    protected void configureNormalTable(Node nTable, int tableIndex, Document document, Hashtable valuesTable) {
+    protected void configureNormalTable(Node nTable, int tableIndex, Document document, Map<Object, Object> valuesTable) {
         // Found the rows. Tag XML: table:table-row
         NodeList nlRows = ((Element) nTable).getElementsByTagName(ODFParser.XML_TAG_TABLE_ROW);
         int rowCount = nlRows.getLength();

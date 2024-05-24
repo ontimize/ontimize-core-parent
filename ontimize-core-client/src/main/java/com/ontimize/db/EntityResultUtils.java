@@ -55,19 +55,19 @@ public abstract class EntityResultUtils extends EntityResultTools {
 			super();
 			this.res = res;
 			this.rowsNumber = res.calculateRecordNumber();
-			Enumeration enumKeys = res.keys();
+			Enumeration<?> enumKeys = res.keys();
 			while (enumKeys.hasMoreElements()) {
 				Object oKey = enumKeys.nextElement();
 				this.columns.add(oKey);
 				this.dataVectors.add(res.get(oKey));
 				if (convertBytesBlockToIm || convertBooleanToIm) {
-					Vector vector = (Vector) res.get(oKey);
+					List<Object> vector = (List<Object>) res.get(oKey);
 					for (int i = 0; i < vector.size(); i++) {
 						Object v = vector.get(i);
 						if ((v instanceof BytesBlock) && convertBytesBlockToIm) {
 							try {
 								Image im = new ImageIcon(((BytesBlock) v).getBytes()).getImage();
-								vector.setElementAt(im, i);
+								vector.set(i, im);
 							} catch (Exception ex) {
 								EntityResultUtils.logger.trace(null, ex);
 							}
@@ -77,7 +77,7 @@ public abstract class EntityResultUtils extends EntityResultTools {
 								Image image = bValue ? EntityResultTableModel.check : EntityResultTableModel.uncheck;
 								BufferedImage bImage = com.ontimize.util.twain.TwainUtilities.toBufferedImage(image);
 								BooleanImage booleanImage = new BooleanImage(bValue, bImage);
-								vector.setElementAt(booleanImage, i);
+								vector.set(i,booleanImage);
 							} catch (Exception ex) {
 								EntityResultUtils.logger.trace(null, ex);
 							}
@@ -201,15 +201,15 @@ public abstract class EntityResultUtils extends EntityResultTools {
 		return new EntityResultTableModel(result, returnEmptyStrings, convertBB2Im, convertBooleanToIm);
 	}
 
-	public static TableModel createTableModel(Map<?, ?> res, Vector cols) {
+	public static TableModel createTableModel(Map<?, ?> res, List<?> cols) {
 		return EntityResultUtils.createTableModel(res, cols, false);
 	}
 
-	public static TableModel createTableModel(Map<?, ?> res, Vector cols, boolean returnEmptyStrings) {
+	public static TableModel createTableModel(Map<?, ?> res, List<?> cols, boolean returnEmptyStrings) {
 		return EntityResultUtils.createTableModel(res, cols, returnEmptyStrings, true);
 	}
 
-	public static TableModel createTableModel(Map<?, ?> res, Vector cols, boolean returnEmptyStrings, boolean convertBB2Im) {
+	public static TableModel createTableModel(Map<?, ?> res, List<?> cols, boolean returnEmptyStrings, boolean convertBB2Im) {
 		EntityResult resN = new EntityResultMapImpl();
 		for (Object col : cols) {
 			if (res.containsKey(col)) {
@@ -258,12 +258,12 @@ public abstract class EntityResultUtils extends EntityResultTools {
 		}
 		// None of them are empty
 		EntityResult res1 = r1.clone();
-		Enumeration enumKeys = res1.keys();
+		Enumeration<?> enumKeys = res1.keys();
 		int necordNumber2 = r2.calculateRecordNumber();
 		while (enumKeys.hasMoreElements()) {
 			Object oKey = enumKeys.nextElement();
-			Vector vValues1 = (Vector) res1.get(oKey);
-			Vector vValues2 = (Vector) r2.get(oKey);
+			List<Object> vValues1 = (List<Object>) res1.get(oKey);
+			List<?> vValues2 = (List<?>) r2.get(oKey);
 			if (vValues2 == null) {
 				for (int i = 0; i < necordNumber2; i++) {
 					vValues1.add(vValues1.size(), null);
@@ -507,7 +507,7 @@ public abstract class EntityResultUtils extends EntityResultTools {
 		 */
 		public int compareRowsByColumn(int rowIndex1, int rowIndex2, String columnName) {
 			if (this.entityResult.containsKey(columnName)) {
-				Vector columnData = (Vector) this.entityResult.get(columnName);
+				List<?> columnData = (List<?>) this.entityResult.get(columnName);
 				Object o1 = columnData.get(rowIndex1);
 				Object o2 = columnData.get(rowIndex2);
 

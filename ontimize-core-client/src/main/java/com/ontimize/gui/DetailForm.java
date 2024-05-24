@@ -30,6 +30,7 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ontimize.db.EntityResultTools;
 import com.ontimize.gui.container.EJDialog;
 import com.ontimize.gui.field.DataComponent;
 import com.ontimize.gui.i18n.Internationalization;
@@ -41,6 +42,7 @@ import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.gui.field.ReferenceFieldAttribute;
 import com.ontimize.jee.common.locator.EntityReferenceLocator;
+import com.ontimize.jee.common.tools.StringTools;
 
 /**
  * Form that is shown when user makes double click in a table component
@@ -270,13 +272,18 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	public Hashtable valuesToForm(Hashtable values) {
+	public Map<Object, Object> valuesToForm(EntityResult entityResult, int index) {
+		Map<?,?> values = entityResult.getRecordValues(index);
+		return this.valuesToForm(values);
+	}
+
+	@Override
+	public Map<Object, Object> valuesToForm(Map<?, ?> values) {
 		if (values != null) {
-			Hashtable clone = new Hashtable();
-			Enumeration enumeration = values.keys();
-			while (enumeration.hasMoreElements()) {
-				Object current = enumeration.nextElement();
-				clone.put(this.getFormFieldName(current.toString()), values.get(current));
+			Map<Object, Object> clone = new HashMap<>();
+			for (Entry<?, ?> entry : values.entrySet()) {
+				Object current = StringTools.toString(entry.getKey());
+				clone.put(this.getFormFieldName(current), entry.getValue());
 			}
 			return clone;
 		}
@@ -284,12 +291,11 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	public Hashtable valuesToTable(Hashtable values) {
-		Hashtable clone = new Hashtable();
-		Enumeration enumeration = values.keys();
-		while (enumeration.hasMoreElements()) {
-			Object current = enumeration.nextElement();
-			clone.put(this.getTableFieldName(current.toString()), values.get(current));
+	public Map<Object, Object> valuesToTable(Map<?, ?> values) {
+		Map<Object, Object> clone = new HashMap<>();
+		for (Entry<?, ?> entry : values.entrySet()) {
+			Object current = StringTools.toString(entry.getKey());
+			clone.put(this.getTableFieldName(current.toString()), entry.getValue());
 		}
 		return clone;
 	}
@@ -357,7 +363,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 			((BasicInteractionManager) form.getInteractionManager()).setDetailForm(true);
 		}
 
-		for(Entry<Object, Object> entry:this.parentkeys.entrySet()) {
+		for (Entry<Object, Object> entry : this.parentkeys.entrySet()) {
 			form.setModifiable(entry.getKey().toString(), false);
 		}
 		this.vectorIndex = 0;
@@ -392,7 +398,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 			// Save data in a hashtable with the vector index
 			this.vectorIndex = this.table.getSelectedRow();
 			if (this.form instanceof FormExt) {
-				((FormExt) this.form).updateDataFields(tableKeys, -1);
+				// ((FormExt) this.form).updateDataFields(tableKeys, -1);
+				((FormExt) this.form).updateDataFields(tableKeys);
 			} else {
 				this.data = this.query(this.vectorIndex);
 				this.form.updateDataFields(this.data);
@@ -401,8 +408,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 			// If there are more than one record
 			int recordNumber = 0;
 
-			Enumeration enumTableKeys = this.tableKeys.keys();
-			Vector vKeys = (Vector) this.tableKeys.get(enumTableKeys.nextElement());
+			Iterator<?> enumTableKeys = this.tableKeys.keySet().iterator();
+			List<?> vKeys = (List<?>) this.tableKeys.get(enumTableKeys.next());
 			recordNumber = vKeys.size();
 			if (recordNumber > 1) {
 				// If all buttons are not null and keys is greater than 1
@@ -441,16 +448,16 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @param index
 	 */
 	@Override
-	public void setKeys(Hashtable tableValues, int index) {
-		this.tableKeys = new Hashtable<Object, Object>();
-		Hashtable tempKeys = this.valuesToForm(tableValues);
-		Vector formKeys = this.form.getKeys();
-		Enumeration keys = tempKeys.keys();
-		while (keys.hasMoreElements()) {
-			Object key = keys.nextElement();
+	public void setKeys(EntityResult tableValues, int index) {
+		this.tableKeys = new HashMap<>();
+		Map<Object, Object> tempKeys = this.valuesToForm(tableValues, index);
+		List<String> formKeys = this.form.getKeys();
+		for (Entry<Object, Object> entry : tempKeys.entrySet()) {
+			Object key = entry.getKey();
 			if (formKeys.contains(key)) {
-				this.tableKeys.put(key, tempKeys.get(key));
+				this.tableKeys.put(key, entry.getValue());
 			}
+
 		}
 
 		// Reset the index of the selected element
@@ -493,13 +500,13 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 						}
 					}
 				} else {
-					this.form.updateDataFields(new Hashtable());
+					this.form.updateDataFields(new HashMap<>());
 				}
 			} else {
-				((FormExt) this.form).updateDataFields(this.tableKeys, this.vectorIndex);
+				((FormExt) this.form).updateDataFields(EntityResultTools.mapToEntityResult(this.tableKeys), this.vectorIndex);
 			}
 		} else {
-			this.form.updateDataFields(new Hashtable());
+			this.form.updateDataFields(new HashMap<>());
 		}
 		if (recordNumber == 0) {
 			this.setQueryInsertMode();
@@ -661,7 +668,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @param otherParentKeys
 	 */
 	@Deprecated
-	public void resetOthersParentKeys(Vector otherParentKeys) {
+	public void resetOthersParentKeys(List<?> otherParentKeys) {
 		if (otherParentKeys != null) {
 			for (int i = 0; i < otherParentKeys.size(); i++) {
 				String formAttr = this.getFormFieldName(otherParentKeys.get(i));
@@ -675,7 +682,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	public void resetParentkeys(List parentKeys) {
+	public void resetParentkeys(List<?> parentKeys) {
 		if (parentKeys != null) {
 			for (int i = 0; i < parentKeys.size(); i++) {
 				String formAttr = this.getFormFieldName(parentKeys.get(i));
@@ -691,10 +698,9 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	protected void updateFieldsParentkeys() {
 		// Fill form fields used as parent keys
 		if ((this.parentkeys != null) && !this.parentkeys.isEmpty()) {
-			Enumeration enumOtherParentKeys = this.parentkeys.keys();
-			while (enumOtherParentKeys.hasMoreElements()) {
-				Object oParentkey = enumOtherParentKeys.nextElement();
-				this.form.setDataFieldValue(oParentkey, this.parentkeys.get(oParentkey));
+			for (Entry<Object, Object> entry : this.parentkeys.entrySet()) {
+				Object oParentkey = entry.getKey();
+				this.form.setDataFieldValue(oParentkey, entry.getValue());
 				DataComponent comp = this.form.getDataFieldReference(oParentkey.toString());
 				if (comp != null) {
 					comp.setModifiable(false);
@@ -721,7 +727,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @param otherKeys
 	 */
 	@Deprecated
-	public void setOthersParentKeys(Hashtable otherKeys) {
+	public void setOthersParentKeys(Map<?, ?> otherKeys) {
 		// For each key set the form data fields associated as no modifiable
 		this.otherParentKeys = this.valuesToForm(otherKeys);
 		this.updateFieldsOthersParentKeys();
@@ -738,7 +744,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	public void setParentKeyValues(Hashtable parentKeyValues) {
+	public void setParentKeyValues(Map<?, ?> parentKeyValues) {
 		this.parentkeys = this.valuesToForm(parentKeyValues);
 		this.updateFieldsParentkeys();
 	}
@@ -750,7 +756,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 		Object keyField = this.fieldsKey.get(0);
 		int index = 0;
 		if (keyField != null) {
-			Vector vKeys = (Vector) this.table.getAllPrimaryKeys().get(keyField);
+			List<?> vKeys = (List<?>) this.table.getAllPrimaryKeys().get(keyField);
 			if (vKeys != null) {
 				index = vKeys.indexOf(this.form.getDataFieldValue(keyField.toString()));
 			}
@@ -762,8 +768,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	public Vector getTextsToTranslate() {
-		Vector v = this.form.getTextsToTranslate();
+	public List<String> getTextsToTranslate() {
+		List<String> v = this.form.getTextsToTranslate();
 		if (this.title != null) {
 			v.add(this.title);
 		}
@@ -807,8 +813,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 		if (this.tableKeys.isEmpty()) {
 			return 0;
 		} else {
-			Enumeration enumTableKeys = this.tableKeys.keys();
-			Vector vKeys = (Vector) this.tableKeys.get(enumTableKeys.nextElement());
+			Iterator<?> enumTableKeys = this.tableKeys.keySet().iterator();
+			List<?> vKeys = (List<?>) this.tableKeys.get(enumTableKeys.next());
 			return vKeys.size();
 		}
 	}
@@ -909,8 +915,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 				boolean dataExist = false;
 				int index = -1;
 				// Get each key and check if it exist in key vector
-				Enumeration enumKeys = DetailForm.this.data.keys();
-				Vector vAux = (Vector) DetailForm.this.data.get(enumKeys.nextElement());
+				Enumeration<?> enumKeys = DetailForm.this.data.keys();
+				List<?> vAux = (List<?>) DetailForm.this.data.get(enumKeys.nextElement());
 				int numberOfRecordsInData = vAux.size();
 				int keysNumber = DetailForm.this.fieldsKey.size();
 				for (int i = 0; i < numberOfRecordsInData; i++) {
@@ -919,8 +925,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					// record -i.
 					for (int j = 0; j < keysNumber; j++) {
 						Object oKeyField = DetailForm.this.fieldsKey.get(j);
-						Vector vDataKeyValues = (Vector) DetailForm.this.data.get(oKeyField);
-						Vector vKeyValues = (Vector) DetailForm.this.tableKeys.get(oKeyField);
+						List<?> vDataKeyValues = (List<?>) DetailForm.this.data.get(oKeyField);
+						List<?> vKeyValues = (List<?>) DetailForm.this.tableKeys.get(oKeyField);
 						Object oKey = vKeyValues.get(DetailForm.this.vectorIndex);
 						if (!vDataKeyValues.get(i).equals(oKey)) {
 							bAllMatch = false;
@@ -946,17 +952,17 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					return;
 				}
 				int newDataIndex = 0;
-				Enumeration keys = result.keys();
+				Enumeration<?> keys = result.keys();
 				while (keys.hasMoreElements()) {
 					Object key = keys.nextElement();
 					Object oValue = result.get(key);
-					if (oValue instanceof Vector) {
-						Vector vValues = (Vector) DetailForm.this.data.get(key);
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						vValues.add(newDataIndex, ((Vector) oValue).get(0));
+					if (oValue instanceof List<?>) {
+						List<Object> vValues = (List<Object>) DetailForm.this.data.get(key);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						vValues.add(newDataIndex, ((List<?>) oValue).get(0));
 					} else {
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						((Vector) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						((List<Object>) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
 					}
 				}
 				DetailForm.this.form.updateDataFields(DetailForm.this.data);
@@ -977,8 +983,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 				int existentDataIndex = -1;
 				// Get each key and check in the key vector if match with the
 				// record keys
-				Enumeration enumKeys = DetailForm.this.data.keys();
-				Vector vAux = (Vector) DetailForm.this.data.get(enumKeys.nextElement());
+				Enumeration<?> enumKeys = DetailForm.this.data.keys();
+				List<?> vAux = (List<?>) DetailForm.this.data.get(enumKeys.nextElement());
 				int numberOfRecordsInData = vAux.size();
 				int keysNumber = DetailForm.this.fieldsKey.size();
 				for (int i = 0; i < numberOfRecordsInData; i++) {
@@ -988,8 +994,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					// If record does not exist then query
 					for (int j = 0; j < keysNumber; j++) {
 						Object oKeyField = DetailForm.this.fieldsKey.get(j);
-						Vector vDataKeysValues = (Vector) DetailForm.this.data.get(oKeyField);
-						Vector vKeyValues = (Vector) DetailForm.this.tableKeys.get(oKeyField);
+						List<?> vDataKeysValues = (List<?>) DetailForm.this.data.get(oKeyField);
+						List<?> vKeyValues = (List<?>) DetailForm.this.tableKeys.get(oKeyField);
 						Object oKey = vKeyValues.get(DetailForm.this.vectorIndex);
 						if (!vDataKeysValues.get(i).equals(oKey)) {
 							bAllMatch = false;
@@ -1016,17 +1022,17 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					return;
 				}
 				int newDataIndex = 0;
-				Enumeration keys = result.keys();
+				Enumeration<?> keys = result.keys();
 				while (keys.hasMoreElements()) {
 					Object key = keys.nextElement();
 					Object oValue = result.get(key);
-					if (oValue instanceof Vector) {
-						Vector vValues = (Vector) DetailForm.this.data.get(key);
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						vValues.add(newDataIndex, ((Vector) oValue).get(0));
+					if (oValue instanceof List) {
+						List<Object> vValues = (List<Object>) DetailForm.this.data.get(key);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						vValues.add(newDataIndex, ((List<?>) oValue).get(0));
 					} else {
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						((Vector) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						((List<Object>) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
 					}
 				}
 				DetailForm.this.form.updateDataFields(DetailForm.this.data);
@@ -1043,7 +1049,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 				DetailForm.this.vectorIndex = 0;
 				boolean dataAlreadyExist = false;
 				int existentDataIndex = -1;
-				Enumeration enumKeys = DetailForm.this.data.keys();
+				Enumeration<?> enumKeys = DetailForm.this.data.keys();
 				List<?> vAux = (List<?>) DetailForm.this.data.get(enumKeys.nextElement());
 				int dataRecordNumber = vAux.size();
 				int keysNumber = DetailForm.this.fieldsKey.size();
@@ -1080,12 +1086,12 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					return;
 				}
 				int newDataIndex = 0;
-				Enumeration keys = result.keys();
+				Enumeration<?> keys = result.keys();
 				while (keys.hasMoreElements()) {
 					Object key = keys.nextElement();
 					Object oValue = result.get(key);
 					if (oValue instanceof List) {
-						List<?> vValues = (List<?>) DetailForm.this.data.get(key);
+						List<Object> vValues = (List<Object>) DetailForm.this.data.get(key);
 						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
 						vValues.add(newDataIndex, ((List<?>) oValue).get(0));
 					} else {
@@ -1111,8 +1117,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 				boolean alreadyExist = false;
 				int existDataIndex = -1;
 				// Get each key and check it
-				Enumeration enumKeys = DetailForm.this.data.keys();
-				Vector vAux = (Vector) DetailForm.this.data.get(enumKeys.nextElement());
+				Enumeration<?> enumKeys = DetailForm.this.data.keys();
+				List<?> vAux = (List<?>) DetailForm.this.data.get(enumKeys.nextElement());
 				int recordNumberInData = vAux.size();
 				int keysNumber = DetailForm.this.fieldsKey.size();
 				for (int i = 0; i < recordNumberInData; i++) {
@@ -1122,8 +1128,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					// When record does not exist then query it
 					for (int j = 0; j < keysNumber; j++) {
 						Object oKeyField = DetailForm.this.fieldsKey.get(j);
-						Vector vDataKeyValues = (Vector) DetailForm.this.data.get(oKeyField);
-						Vector vKeyvalues = (Vector) DetailForm.this.tableKeys.get(oKeyField);
+						List<?> vDataKeyValues = (List<?>) DetailForm.this.data.get(oKeyField);
+						List<?> vKeyvalues = (List<?>) DetailForm.this.tableKeys.get(oKeyField);
 						Object oKey = vKeyvalues.get(DetailForm.this.vectorIndex);
 						if (!vDataKeyValues.get(i).equals(oKey)) {
 							bAllMatch = false;
@@ -1149,17 +1155,17 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 					return;
 				}
 				int newDataIndex = 0;
-				Enumeration keys = result.keys();
+				Enumeration<?> keys = result.keys();
 				while (keys.hasMoreElements()) {
 					Object key = keys.nextElement();
 					Object oValue = result.get(key);
-					if (oValue instanceof Vector) {
-						Vector vValues = (Vector) DetailForm.this.data.get(key);
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						vValues.add(newDataIndex, ((Vector) oValue).get(0));
+					if (oValue instanceof List) {
+						List<Object> vValues = (List<Object>) DetailForm.this.data.get(key);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						vValues.add(newDataIndex, ((List<?>) oValue).get(0));
 					} else {
-						newDataIndex = ((Vector) DetailForm.this.data.get(key)).size();
-						((Vector) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
+						newDataIndex = ((List<?>) DetailForm.this.data.get(key)).size();
+						((List<Object>) DetailForm.this.data.get(key)).add(newDataIndex, oValue);
 					}
 				}
 				DetailForm.this.form.updateDataFields(DetailForm.this.data);
@@ -1199,11 +1205,11 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	}
 
 	@Override
-	protected void processKeyEvent(KeyEvent e) {
-		super.processKeyEvent(e);
+	protected void processKeyEvent(KeyEvent event) {
+		super.processKeyEvent(event);
 	}
 
-	public void changeDynamicForm(Hashtable dynamicFormData) {
+	public void changeDynamicForm(Map<?, ?> dynamicFormData) {
 		Form previousForm = this.form;
 		DynamicFormManager dynamicFormManager = previousForm.getDynamicFormManager();
 		if (dynamicFormManager != null) {
@@ -1237,9 +1243,9 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 			if ((this.form != null) && (this.form != previousForm)) {
 				// WARNING: Configure the no modifiable fields and the values
 				// for the fields that are not in the data list
-				Hashtable hFieldValues = previousForm.getDataFieldValues(false);
+				Map<Object, Object> hFieldValues = previousForm.getDataFieldValues(false);
 				this.form.setDataFieldValues(hFieldValues);
-				Vector v = previousForm.getDataFieldAttributeList();
+				List<Object> v = previousForm.getDataFieldAttributeList();
 				for (int i = 0; i < v.size(); i++) {
 					DataComponent component = previousForm.getDataFieldReference(v.get(i).toString());
 					if (component != null) {
@@ -1263,7 +1269,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 						this.form.updateDataFields(hDataList);
 					}
 					if ((previousForm instanceof FormExt) && (this.form instanceof FormExt)) {
-						((FormExt) this.form).queryRecordIndex = (Vector) ((FormExt) previousForm).queryRecordIndex.clone();
+						((FormExt) this.form).queryRecordIndex = new ArrayList<>(((FormExt) previousForm).queryRecordIndex);
 					}
 
 				} catch (Exception ex) {
@@ -1534,7 +1540,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	@Override
 	public void free() {
 		FreeableUtils.clearMap(this.tableKeys);
-//		FreeableUtils.clearMap(this.data);
+		// FreeableUtils.clearMap(this.data);
 		this.data.clear();
 		FreeableUtils.clearMap(this.otherParentKeys);
 		FreeableUtils.clearMap(this.parentkeys);
