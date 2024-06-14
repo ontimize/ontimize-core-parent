@@ -17,7 +17,6 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ontimize.db.OEntityResultImpl;
 import com.ontimize.gui.field.DataComponent;
 import com.ontimize.gui.table.Table;
 import com.ontimize.jee.common.db.Entity;
@@ -30,7 +29,7 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 
 	private static final Logger		logger				= LoggerFactory.getLogger(BaseDetailForm.class);
 
-	protected Map<Object, Object>	tableKeys			= null;
+	protected EntityResult			tableKeys			= null;
 
 	protected List<Object>			fieldsKey			= null;
 
@@ -44,11 +43,11 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 
 	protected String				title				= null;
 
-	protected EntityResult		data;
+	protected EntityResult			data;
 
-	protected Map<Object, Object>	codValues			= null;
+	protected Map<String, String>	codValues			= null;
 
-	protected Map<Object, Object>	reverseCodValues	= null;
+	protected Map<String, String>	reverseCodValues	= null;
 
 	@Override
 	public void setComponentLocale(Locale l) {
@@ -76,13 +75,13 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 		return this.table;
 	}
 
-	protected void initCodValues(Map<Object, Object> codValues) {
+	protected void initCodValues(Map<String, String> codValues) {
 		if (codValues == null) {
 			return;
 		}
 		this.codValues = codValues;
 		this.reverseCodValues = new HashMap<>();
-		for (Entry<Object, Object> entry : codValues.entrySet()) {
+		for (Entry<String, String> entry : codValues.entrySet()) {
 			this.reverseCodValues.put(entry.getValue(), entry.getKey());
 		}
 	}
@@ -127,6 +126,7 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 	public Map<Object, Object> valuesToForm(EntityResult entityResult, int index) {
 		return this.valuesToForm(entityResult.getRecordValues(index));
 	}
+
 	@Override
 	public Map<Object, Object> valuesToForm(Map<?, ?> values) {
 		if (values != null) {
@@ -238,7 +238,7 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 	 */
 	@Override
 	public void setKeys(EntityResult tableKeys, int index) {
-		this.tableKeys = this.valuesToForm(tableKeys, index);
+		this.tableKeys = new EntityResultMapImpl(new HashMap<>(this.valuesToForm(tableKeys, index)));
 		// Reset the index of the selected element
 		this.vectorIndex = 0;
 
@@ -297,7 +297,7 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 				// Parentkey;
 				if (this.parentkeys != null) {
 					// Other parent keys
-					Enumeration enumOtherKeys = Collections.enumeration(this.parentkeys.keySet());
+					Enumeration<?> enumOtherKeys = Collections.enumeration(this.parentkeys.keySet());
 					while (enumOtherKeys.hasMoreElements()) {
 						Object oParentkeyElement = enumOtherKeys.nextElement();
 						if (this.parentkeys.get(oParentkeyElement) == null) {
@@ -335,11 +335,11 @@ public abstract class BaseDetailForm extends JPanel implements IDetailForm {
 				}
 
 			} else {
-				return new OEntityResultImpl();
+				return new EntityResultMapImpl();
 			}
 			EntityReferenceLocator referenceLocator = this.form.getFormManager().getReferenceLocator();
 			Entity entity = referenceLocator.getEntityReference(this.form.getEntityName());
-			List<?> vAttributeList = (List<?>) this.form.getDataFieldAttributeList().clone();
+			List<Object> vAttributeList = new ArrayList<>(this.form.getDataFieldAttributeList());
 			// If key is not include then add it to the query fields, but it can
 			// be
 			// an ReferenceFieldAttribute

@@ -398,7 +398,7 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Map<Object, Object> hSumColumns = new HashMap<>();
+                Map<String, Object> hSumColumns = new HashMap<>();
                 for (int i = 0; i < SumRowSetupDialog.this.columnsList.getModel().getSize(); i++) {
                     if (SumRowSetupDialog.this.columnsList.getModel()
                         .getElementAt(i) instanceof SumRowSetupDialog.SelectableFunctionItem) {
@@ -435,7 +435,7 @@ public class SumRowSetupDialog extends EJDialog implements Internationalization 
     }
 
     public void setColumn() {
-        Map<Object, Object> h = null;
+        Map<String, Object> h = null;
         List<Object> operationCols = this.table.getOperationColumns();
         List<String> vFixedColumns = this.table.getOriginalSumRowCols();
 

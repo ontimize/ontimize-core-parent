@@ -2,11 +2,12 @@ package com.ontimize.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Window;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -18,6 +19,8 @@ import com.ontimize.gui.button.Button;
 import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.manager.ITabbedFormManager;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.util.FormatPattern;
 
 public class TabbedDetailForm extends BaseDetailForm {
@@ -26,13 +29,13 @@ public class TabbedDetailForm extends BaseDetailForm {
 
     private static final Logger logger = LoggerFactory.getLogger(TabbedDetailForm.class);
 
-    public TabbedDetailForm(Form form, Hashtable tableKeys, Vector keyFields, Table sourceTable, Hashtable parentkeys,
-            Hashtable codValues) {
+    public TabbedDetailForm(Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
+    		Map<String, String> codValues) {
         this.form = form;
         this.setLayout(new BorderLayout());
         this.add(form, BorderLayout.CENTER);
         this.initCodValues(codValues);
-        this.tableKeys = this.valuesToForm(tableKeys);
+        this.tableKeys = new EntityResultMapImpl(new HashMap<>(this.valuesToForm(tableKeys)));
         this.table = sourceTable;
         this.parentkeys = this.valuesToForm(parentkeys);
 
@@ -44,9 +47,9 @@ public class TabbedDetailForm extends BaseDetailForm {
             ((BasicInteractionManager) form.getInteractionManager()).setDetailForm(true);
         }
 
-        Enumeration c = this.parentkeys.keys();
-        while (c.hasMoreElements()) {
-            form.setModifiable(c.nextElement().toString(), false);
+        Iterator<?> c = this.parentkeys.keySet().iterator();
+        while (c.hasNext()) {
+            form.setModifiable(c.next().toString(), false);
         }
         this.vectorIndex = 0;
     }
@@ -65,7 +68,7 @@ public class TabbedDetailForm extends BaseDetailForm {
                 title = formatPattern.parse(0, this.tableKeys);
             } else {
                 StringBuilder buffer = new StringBuilder();
-                Vector keys = this.form.getKeys();
+                List<String> keys = this.form.getKeys();
                 for (Object current : keys) {
                     Object value = this.form.getDataFieldValue(current.toString());
                     if (buffer.length() > 0) {
@@ -105,7 +108,7 @@ public class TabbedDetailForm extends BaseDetailForm {
 
         if (formManager instanceof ITabbedFormManager) {
             ITabbedFormManager tabbedFormManager = (ITabbedFormManager) formManager;
-            int index = tabbedFormManager.indexOfKeys(this.tableKeys);
+            int index = tabbedFormManager.indexOfKeys(this.tableKeys.getRecordValues(0));
 
             if (index > 0) {
                 // If tab already exits.
@@ -186,8 +189,9 @@ public class TabbedDetailForm extends BaseDetailForm {
      * @param index
      */
     @Override
-    public void setKeys(Hashtable tableData, int index) {
-        this.tableKeys = this.valuesToForm(tableData);
+    public void setKeys(EntityResult tableData, int index) {
+//        this.tableKeys = this.valuesToForm(tableData, index);
+        this.tableKeys = new EntityResultMapImpl(new HashMap<>(this.valuesToForm(tableData, index)));
         // Reset the index of the selected element
         this.vectorIndex = 0;
 
@@ -198,12 +202,12 @@ public class TabbedDetailForm extends BaseDetailForm {
             this.form.disableButtons();
             this.form.disableDataFields();
         } else {
-            Enumeration enumTableKeys = this.tableKeys.keys();
+            Iterator<?> itTableKeys = this.tableKeys.keySet().iterator();
             recordNumber = 1;
-            while (enumTableKeys.hasMoreElements()) {
-                Object currentKey = enumTableKeys.nextElement();
-                Vector dataRow = (Vector) this.tableKeys.get(currentKey);
-                Vector newRow = new Vector();
+            while (itTableKeys.hasNext()) {
+                Object currentKey = itTableKeys.next();
+                List<?> dataRow = (List<?>) this.tableKeys.get(currentKey);
+                List<Object> newRow = new ArrayList<>();
                 if (dataRow.size() > 0) {
                     newRow.add(dataRow.get(index));
                     dataRow.clear();
@@ -240,13 +244,13 @@ public class TabbedDetailForm extends BaseDetailForm {
                         }
                     }
                 } else {
-                    this.form.updateDataFields(new Hashtable());
+                    this.form.updateDataFields(new HashMap<>());
                 }
             } else {
                 ((FormExt) this.form).updateDataFields(this.tableKeys, this.vectorIndex);
             }
         } else {
-            this.form.updateDataFields(new Hashtable());
+            this.form.updateDataFields(new HashMap<>());
         }
         if (recordNumber == 0) {
             this.setQueryInsertMode();

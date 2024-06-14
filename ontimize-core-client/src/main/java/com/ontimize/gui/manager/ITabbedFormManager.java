@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.swing.JFrame;
 
 import com.ontimize.gui.Form;
+import com.ontimize.jee.common.dto.EntityResult;
 
 public interface ITabbedFormManager extends IFormManager {
 

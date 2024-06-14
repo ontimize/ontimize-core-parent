@@ -13,15 +13,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -47,125 +44,60 @@ import com.ontimize.jee.common.gui.ConnectionManager;
 import com.ontimize.jee.common.locator.EntityReferenceLocator;
 
 /**
- * <p>
- * This button allows to query an entity and fill some form data fields with the query result. The
- * form values in the query moment are used as filter values. <BR>
- * This class uses Button parameters and Table parameters. the 'table_key' parameter is used as key
- * for the table because there is a conflict with the 'key' parameter'.<BR>
- * </p>
- * <p>
- * Company: IMATIA
- * </p>
+ * <p> This button allows to query an entity and fill some form data fields with the query result. The form values in the query moment are used as filter values. <BR> This class
+ * uses Button parameters and Table parameters. the 'table_key' parameter is used as key for the table because there is a conflict with the 'key' parameter'.<BR> </p> <p> Company:
+ * IMATIA </p>
  */
 
 public class QueryButton extends Button implements ReferenceComponent {
 
-	private static final Logger logger = LoggerFactory.getLogger(QueryButton.class);
+	private static final Logger			logger						= LoggerFactory.getLogger(QueryButton.class);
 
-	private static String MISSING_DATA_MESSAGE_KEY = "value_must_be_entered_message";
+	private static String				MISSING_DATA_MESSAGE_KEY	= "value_must_be_entered_message";
 
-	private static final int MIN_WIDTH_TABLE_WINDOW = 300;
+	private static final int			MIN_WIDTH_TABLE_WINDOW		= 300;
 
-	protected String entity = null;
+	protected String					entity						= null;
 
-	protected ArrayList<Object>			formAttributes				= new ArrayList<>(5);
+	protected ArrayList<String>			formAttributes				= new ArrayList<>(5);
 
-	protected ArrayList<Object>			queryAttributes				= new ArrayList<>(5);
+	protected ArrayList<String>			queryAttributes				= new ArrayList<>(5);
 
-	protected ArrayList<Object>			requiredQueryAttributes		= new ArrayList<>(5);
+	protected ArrayList<String>			requiredQueryAttributes		= new ArrayList<>(5);
 
-	protected ArrayList<Object>			listenedAttributeList		= new ArrayList<>(5);
+	protected ArrayList<String>			listenedAttributeList		= new ArrayList<>(5);
 
-	protected EntityReferenceLocator locator = null;
+	protected EntityReferenceLocator	locator						= null;
 
-	protected Table table = null;
+	protected Table						table						= null;
 
-	protected JDialog tableWindow = null;
+	protected JDialog					tableWindow					= null;
 
-	private static String okKey = "application.accept";
+	private static String				okKey						= "application.accept";
 
-	protected JButton oKButton = null;
+	protected JButton					oKButton					= null;
 
-	protected final String ASTERISK = "*";
+	protected final String				ASTERISK					= "*";
 
-	protected boolean addAsterisk = false;
+	protected boolean					addAsterisk					= false;
 
-	protected boolean someFieldChangeByUser = false;
+	protected boolean					someFieldChangeByUser		= false;
 
 	/**
-	 * @param parameters This class uses Button parameters and Table parameters. the 'table_key'
-	 *        parameter is used as key for the table because there is a conflict with the 'key'
-	 *        parameter'. Additional parameters:
-	 *        <p>
-	 *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX>
-	 *        <tr>
-	 *        <td><b>attribute</td>
-	 *        <td><b>values</td>
-	 *        <td><b>default</td>
-	 *        <td><b>required</td>
-	 *        <td><b>meaning</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>entity</td>
-	 *        <td></td>
-	 *        <td></td>
-	 *        <td>yes</td>
-	 *        <td>Associated entity.</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>source</td>
-	 *        <td>attr1;...;attrN</td>
-	 *        <td></td>
-	 *        <td>yes</td>
-	 *        <td>Data field attributes separated by ';'. This fields will be filled with the query
-	 *        result</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>search</td>
-	 *        <td><i></td>
-	 *        <td></td>
-	 *        <td>yes</td>
-	 *        <td>Field attributes used in the query to show the table.</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>searchrequired</td>
-	 *        <td></td>
-	 *        <td></td>
-	 *        <td>no</td>
-	 *        <td>Field attributes (separated by ';'), which are specified in 'search' and are necessary
-	 *        to make the query of data that will be shown in the table.It allows to force to intoduce
-	 *        search criterion</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>addasterisk</td>
-	 *        <td>yes,no</td>
-	 *        <td>no</td>
-	 *        <td>no</td>
-	 *        <td>Specifies if it automatically includes an * at the end of the string value when it
-	 *        searches for the query attributes</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>listen</td>
-	 *        <td></td>
-	 *        <td>The same as 'search'</td>
-	 *        <td>no</td>
-	 *        <td>Field attributes (subset as 'source') to listen for the button. If some of this fields
-	 *        changes the record select window will be shown</td>
-	 *        </tr>
-	 *        <tr>
-	 *        <td>table_key</td>
-	 *        <td></td>
-	 *        <td></td>
-	 *        <td>yes</td>
-	 *        <td>Name of the table primary key</td>
-	 *        </tr>
+	 * @param parameters
+	 *            This class uses Button parameters and Table parameters. the 'table_key' parameter is used as key for the table because there is a conflict with the 'key'
+	 *            parameter'. Additional parameters: <p> <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS FRAME=BOX> <tr> <td><b>attribute</td> <td><b>values</td>
+	 *            <td><b>default</td> <td><b>required</td> <td><b>meaning</td> </tr> <tr> <td>entity</td> <td></td> <td></td> <td>yes</td> <td>Associated entity.</td> </tr> <tr>
+	 *            <td>source</td> <td>attr1;...;attrN</td> <td></td> <td>yes</td> <td>Data field attributes separated by ';'. This fields will be filled with the query result</td>
+	 *            </tr> <tr> <td>search</td> <td><i></td> <td></td> <td>yes</td> <td>Field attributes used in the query to show the table.</td> </tr> <tr> <td>searchrequired</td>
+	 *            <td></td> <td></td> <td>no</td> <td>Field attributes (separated by ';'), which are specified in 'search' and are necessary to make the query of data that will be
+	 *            shown in the table.It allows to force to intoduce search criterion</td> </tr> <tr> <td>addasterisk</td> <td>yes,no</td> <td>no</td> <td>no</td> <td>Specifies if
+	 *            it automatically includes an * at the end of the string value when it searches for the query attributes</td> </tr> <tr> <td>listen</td> <td></td> <td>The same as
+	 *            'search'</td> <td>no</td> <td>Field attributes (subset as 'source') to listen for the button. If some of this fields changes the record select window will be
+	 *            shown</td> </tr> <tr> <td>table_key</td> <td></td> <td></td> <td>yes</td> <td>Name of the table primary key</td> </tr>
 	 *
 	 *
-	 *        </table>
-	 *        <br>
-	 *        </tr>
-	 *        <![if supportMisalignedColumns]>
-	 *        </table>
+	 *            </table> <br> </tr> <![if supportMisalignedColumns]> </table>
 	 */
 	public QueryButton(Map<Object, Object> parameters) {
 		super(parameters);
@@ -222,7 +154,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 				}
 			}
 		} else {
-			this.listenedAttributeList = (ArrayList<Object>) this.queryAttributes.clone();
+			this.listenedAttributeList = new ArrayList<>(this.queryAttributes);
 		}
 
 		Object tablekey = parameters.get("table_key");
@@ -292,10 +224,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 					}
 				}
 				Object[] args = { ApplicationManager.getTranslation(sText, QueryButton.this.resourcesFileName) };
-				String sTranslation = ApplicationManager.getTranslation(QueryButton.MISSING_DATA_MESSAGE_KEY,
-						QueryButton.this.resourcesFileName, args);
-				this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), sTranslation,
-						Form.WARNING_MESSAGE);
+				String sTranslation = ApplicationManager.getTranslation(QueryButton.MISSING_DATA_MESSAGE_KEY, QueryButton.this.resourcesFileName, args);
+				this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), sTranslation, Form.WARNING_MESSAGE);
 				this.deleteDataFields();
 				this.requestFocus();
 				return;
@@ -308,8 +238,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 		try {
 			Entity ent = this.locator.getEntityReference(this.entity);
 			Map<Object, Object> kv = new HashMap<>();
-			for (Object element : this.queryAttributes) {
-				Object v = this.parentForm.getDataFieldValue(element.toString());
+			for (String element : this.queryAttributes) {
+				Object v = this.parentForm.getDataFieldValue(element);
 				if (v != null) {
 					if ((v instanceof String) && (this.addAsterisk) && (((String) v).indexOf(this.ASTERISK) < 0)) {
 						v = v + this.ASTERISK;
@@ -320,17 +250,16 @@ public class QueryButton extends Button implements ReferenceComponent {
 
 			EntityResult res = ent.query(kv, this.table.getAttributeList(), this.locator.getSessionId());
 			if (res.getCode() == EntityResult.OPERATION_WRONG) {
-				this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), res.getMessage(),
-						Form.ERROR_MESSAGE);
+				this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), res.getMessage(), Form.ERROR_MESSAGE);
 			} else {
 				ConnectionManager.checkEntityResult(res, this.locator);
 				// Now look in the form the values of the keys. If these values
 				// exist then select the row
 				Map<Object, Object> hKeys = new HashMap<>();
-				List<Object> vKeys = this.table.getKeys();
+				List<String> vKeys = this.table.getKeys();
 				boolean all = true;
-				for (Object vKey : vKeys) {
-					Object v = this.parentForm.getDataFieldValue(vKey.toString());
+				for (String vKey : vKeys) {
+					Object v = this.parentForm.getDataFieldValue(vKey);
 					if (v == null) {
 						all = false;
 						break;
@@ -350,8 +279,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 			} else {
 				QueryButton.logger.trace(null, ex);
 			}
-			this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), ex.getMessage(),
-					Form.ERROR_MESSAGE);
+			this.parentForm.message(SwingUtilities.getWindowAncestor(QueryButton.this), ex.getMessage(), Form.ERROR_MESSAGE);
 		}
 	}
 
@@ -359,9 +287,9 @@ public class QueryButton extends Button implements ReferenceComponent {
 	public void setParentForm(Form f) {
 		super.setParentForm(f);
 
-		List<Object> vListenedAttributes = this.listenedAttributeList;
-		for (final Object at : vListenedAttributes) {
-			DataComponent c = this.parentForm.getDataFieldReference(at.toString());
+		List<String> vListenedAttributes = this.listenedAttributeList;
+		for (final String at : vListenedAttributes) {
+			DataComponent c = this.parentForm.getDataFieldReference(at);
 			if ((c != null) && (c instanceof DataField)) {
 				DataField dfField = (DataField) c;
 				dfField.addValueChangeListener(e -> {
@@ -384,8 +312,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 					@Override
 					public void focusLost(FocusEvent e) {
 						if (ApplicationManager.DEBUG) {
-							QueryButton.logger.debug(
-									this.getClass() + " focusLost en campo " + at + " temporary: " + e.isTemporary());
+							QueryButton.logger.debug(this.getClass() + " focusLost en campo " + at + " temporary: " + e.isTemporary());
 						}
 						if (!QueryButton.this.someFieldChangeByUser && (e.isTemporary())) {
 							QueryButton.this.processingAction();
@@ -411,32 +338,26 @@ public class QueryButton extends Button implements ReferenceComponent {
 	protected void createTableWindow() {
 		Window w = SwingUtilities.getWindowAncestor(this);
 		if ((w instanceof Frame) || (w == null)) {
-			this.tableWindow = new EJDialog((Frame) w,
-					ApplicationManager.getTranslation(this.entity, this.resourcesFileName), true) {
+			this.tableWindow = new EJDialog((Frame) w, ApplicationManager.getTranslation(this.entity, this.resourcesFileName), true) {
 
 				@Override
-				public void processWindowEvent(WindowEvent e) {
-					super.processWindowEvent(e);
-					if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+				public void processWindowEvent(WindowEvent evt) {
+					super.processWindowEvent(evt);
+					if (evt.getID() == WindowEvent.WINDOW_CLOSING) {
 						try {
 							QueryButton.this.someFieldChangeByUser = false;
 							// Set the value for the selected index
 							Map<Object, Object> hKeysValues = new HashMap<>();
-							List<Object> vTableKeys = QueryButton.this.table.getKeys();
-							for (Object element : QueryButton.this.formAttributes) {
-								if (vTableKeys.contains(element)
-										&& (QueryButton.this.parentForm.getDataFieldValueFromFormCache(
-												element.toString()) != null)) {
-									hKeysValues.put(element,
-											QueryButton.this.parentForm.getDataFieldValueFromFormCache(
-													element.toString()));
+							List<String> vTableKeys = QueryButton.this.table.getKeys();
+							for (String element : QueryButton.this.formAttributes) {
+								if (vTableKeys.contains(element) && (QueryButton.this.parentForm.getDataFieldValueFromFormCache(element) != null)) {
+									hKeysValues.put(element, QueryButton.this.parentForm.getDataFieldValueFromFormCache(element));
 								}
 							}
 							// If hKeysValues is empty then not data found
 							if (hKeysValues.isEmpty()) {
-								for (Object element : QueryButton.this.formAttributes) {
-									QueryButton.this.parentForm
-									.deleteDataField(element.toString());
+								for (String element : QueryButton.this.formAttributes) {
+									QueryButton.this.parentForm.deleteDataField(element);
 								}
 								return;
 							}
@@ -445,9 +366,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 								Map<?, ?> hData = res.getRecordValues(0);
 								QueryButton.this.parentForm.setDataFieldValues(hData);
 							} else {
-								for (Object element : QueryButton.this.formAttributes) {
-									QueryButton.this.parentForm
-									.deleteDataField(element.toString());
+								for (String element : QueryButton.this.formAttributes) {
+									QueryButton.this.parentForm.deleteDataField(element);
 								}
 								return;
 							}
@@ -458,8 +378,7 @@ public class QueryButton extends Button implements ReferenceComponent {
 				}
 			};
 		} else {
-			this.tableWindow = new EJDialog((Dialog) w,
-					ApplicationManager.getTranslation(this.entity, this.resourcesFileName), true) {
+			this.tableWindow = new EJDialog((Dialog) w, ApplicationManager.getTranslation(this.entity, this.resourcesFileName), true) {
 
 				@Override
 				public void processWindowEvent(WindowEvent e) {
@@ -469,21 +388,16 @@ public class QueryButton extends Button implements ReferenceComponent {
 							QueryButton.this.someFieldChangeByUser = false;
 							// Set the value for the current selection
 							Map<Object, Object> hKVs = new HashMap<>();
-							List<Object> vTableKeys = QueryButton.this.table.getKeys();
-							for (Object element : QueryButton.this.formAttributes) {
-								if (vTableKeys.contains(element)
-										&& (QueryButton.this.parentForm.getDataFieldValueFromFormCache(
-												element.toString()) != null)) {
-									hKVs.put(element,
-											QueryButton.this.parentForm.getDataFieldValueFromFormCache(
-													element.toString()));
+							List<String> vTableKeys = QueryButton.this.table.getKeys();
+							for (String element : QueryButton.this.formAttributes) {
+								if (vTableKeys.contains(element) && (QueryButton.this.parentForm.getDataFieldValueFromFormCache(element) != null)) {
+									hKVs.put(element, QueryButton.this.parentForm.getDataFieldValueFromFormCache(element));
 								}
 							}
 							// If hKVs is empty then not data found
 							if (hKVs.isEmpty() || (vTableKeys.size() != hKVs.size())) {
-								for (Object element : QueryButton.this.formAttributes) {
-									QueryButton.this.parentForm
-									.deleteDataField(element.toString());
+								for (String element : QueryButton.this.formAttributes) {
+									QueryButton.this.parentForm.deleteDataField(element);
 								}
 								return;
 							}
@@ -492,9 +406,8 @@ public class QueryButton extends Button implements ReferenceComponent {
 								Map<?, ?> hData = res.getRecordValues(0);
 								QueryButton.this.parentForm.setDataFieldValues(hData);
 							} else {
-								for (Object element : QueryButton.this.formAttributes) {
-									QueryButton.this.parentForm
-									.deleteDataField(element.toString());
+								for (String element : QueryButton.this.formAttributes) {
+									QueryButton.this.parentForm.deleteDataField(element);
 								}
 								return;
 							}

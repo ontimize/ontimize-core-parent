@@ -20,29 +20,30 @@ import javax.swing.table.TableCellRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ontimize.db.EntityResultTools;
+import com.ontimize.db.EntityResultUtils;
 import com.ontimize.gui.ApplicationManager;
 import com.ontimize.gui.i18n.Internationalization;
 import com.ontimize.jee.common.db.NullValue;
 import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.util.JEPUtils;
 import com.ontimize.util.math.MathExpressionParser;
 import com.ontimize.util.math.MathExpressionParserFactory;
 
 /*
- * Implementation of a table model to represent the basic data types. version 1.0 01/05/2001. Added
- * support to line numbers
- *
+ * Implementation of a table model to represent the basic data types. version 1.0 01/05/2001. Added support to line numbers
  * @deprecated
  */
 public class ExtendedTableModel extends AbstractTableModel {
 
 	// Additional total operations registered
-	private static final Logger logger = LoggerFactory.getLogger(ExtendedTableModel.class);
+	private static final Logger	logger							= LoggerFactory.getLogger(ExtendedTableModel.class);
 
 	/**
 	 * @since 5.2078EN-0.4
 	 */
-	protected List<Object> additionalTotalRowOperations = new ArrayList<>();
+	protected List<Object>		additionalTotalRowOperations	= new ArrayList<>();
 
 	public List<Object> getTotalRowOperation() {
 		return this.additionalTotalRowOperations;
@@ -52,28 +53,28 @@ public class ExtendedTableModel extends AbstractTableModel {
 		this.additionalTotalRowOperations.add(totalOperation);
 	}
 
-	public static Pattern availableCalculatedColumnNameCharacterPattern = Pattern.compile("[A-Z[a-z[0-9][_]]]");
+	public static Pattern			availableCalculatedColumnNameCharacterPattern	= Pattern.compile("[A-Z[a-z[0-9][_]]]");
 
-	public static String ASTERISK = "*";
+	public static String			ASTERISK										= "*";
 
-	public static String TOTAL = "table.total";
+	public static String			TOTAL											= "table.total";
 
-	static Map<Object, Object>	pSumCellRenderer								= new HashMap<>();
+	static Map<Object, Object>		pSumCellRenderer								= new HashMap<>();
 
-	protected TableCellRenderer sumCurrencyCellRenderer = null;
+	protected TableCellRenderer		sumCurrencyCellRenderer							= null;
 
-	protected TableCellRenderer sumCellRenderer = null;
+	protected TableCellRenderer		sumCellRenderer									= null;
 
-	protected Class[] columnsClass = null;
+	protected Class[]				columnsClass									= null;
 
-	protected List<Object>		rowNumbers										= new ArrayList<>();
+	protected List<Object>			rowNumbers										= new ArrayList<>();
 
 	/**
 	 * Hashtable with the data model values
 	 */
-	protected Map<Object, Object> data = new HashMap<>();
+	protected EntityResult	data											= new EntityResultMapImpl();
 
-	protected List<Object>				columnNames										= null;
+	protected List<Object>			columnNames										= null;
 
 	public List<Object> getColumnNames() {
 		return this.columnNames;
@@ -103,32 +104,31 @@ public class ExtendedTableModel extends AbstractTableModel {
 		this.rowsNumber = rowsNumber;
 	}
 
-	protected int columnsNumber = 0;
+	protected int				columnsNumber					= 0;
 
-	protected List<Object> editableColumns = new ArrayList<>(0);
+	protected List<Object>		editableColumns					= new ArrayList<>(0);
 
-	protected List<Object> calculatedColumnsNames = new ArrayList<>(0);
+	protected List<Object>		calculatedColumnsNames			= new ArrayList<>(0);
 
-	protected List<Object> calculatedColumnsExpressions = new ArrayList<>(0);
+	protected List<Object>		calculatedColumnsExpressions	= new ArrayList<>(0);
 
 	// Required columns for calculated columns
-	protected List<Object> colsReqCalc = new ArrayList<>(0);
+	protected List<String>		colsReqCalc						= new ArrayList<>(0);
 
-	protected List<Object> parsers = new ArrayList<>(0);
+	protected List<Object>		parsers							= new ArrayList<>(0);
 
-	protected boolean editable = false;
+	protected boolean			editable						= false;
 
 	/**
 	 * Name of the column with the rows number
 	 */
-	public static final String ROW_NUMBERS_COLUMN = "ROW_NUMBERS_COLUMN";
+	public static final String	ROW_NUMBERS_COLUMN				= "ROW_NUMBERS_COLUMN";
 
 	/**
 	 * @deprecated
 	 */
 	@Deprecated
-	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, List<Object> columnTexts,
-			Map<Object, Object> calculatedColumns) {
+	public ExtendedTableModel(EntityResult tableData, List<String> columnNames, List<String> columnTexts, Map<Object, Object> calculatedColumns) {
 		this(tableData, columnNames, columnTexts, calculatedColumns, false, null);
 	}
 
@@ -136,30 +136,25 @@ public class ExtendedTableModel extends AbstractTableModel {
 	 * @deprecated
 	 */
 	@Deprecated
-	public ExtendedTableModel(EntityResult tableData, List<Object> columNames, List<Object> columnTexts, Map<Object, Object> calculatedColumns,
-			boolean editable) {
+	public ExtendedTableModel(EntityResult tableData, List<String> columNames, List<String> columnTexts, Map<Object, Object> calculatedColumns, boolean editable) {
 		this(tableData, columNames, columnTexts, calculatedColumns, editable, null);
 	}
 
-	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable) {
+	public ExtendedTableModel(EntityResult tableData, List<String> columnNames, Map<Object, Object> calculatedColumns, boolean editable) {
 		this(tableData, columnNames, new ArrayList<>(columnNames), calculatedColumns, editable);
 	}
 
-	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, Map<Object, Object> calculatedColumns, boolean editable,
-			List<Object> colsReqCalc) {
+	public ExtendedTableModel(EntityResult tableData, List<String> columnNames, Map<Object, Object> calculatedColumns, boolean editable, List<String> colsReqCalc) {
 		this(tableData, columnNames, new ArrayList<>(columnNames), calculatedColumns, editable, colsReqCalc);
 	}
 
 	/*
-	 * Constructor: 'tableData' contains all the table data. It uses a Hashtable because this is the
-	 * object that a database query returns. The keys in the Hashtable are the column names, and values
-	 * are list with each column data. It is possible that the list contains null values.
-	 *
+	 * Constructor: 'tableData' contains all the table data. It uses a Hashtable because this is the object that a database query returns. The keys in the Hashtable are the column
+	 * names, and values are list with each column data. It is possible that the list contains null values.
 	 * @deprecated
 	 */
-	public ExtendedTableModel(EntityResult tableData, List<Object> columnNames, List<Object> columnTexts,
-			Map<Object, Object> calculatedColumns,
-			boolean editable, List<Object> colsReqCalc) {
+	public ExtendedTableModel(EntityResult tableData, List<String> columnNames, List<String> columnTexts, Map<Object, Object> calculatedColumns, boolean editable,
+			List<String> colsReqCalc) {
 		this.colsReqCalc = colsReqCalc;
 		this.editable = editable;
 
@@ -190,8 +185,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 			// This is here (before create the calculated column names list to
 			// add the calculated columns as variables to the parser too
 			for (int i = 0; i < this.calculatedColumnsNames.size(); i++) {
-				MathExpressionParser parser = this.createParser(this.calculatedColumnsNames.get(i),
-						this.calculatedColumnsExpressions.get(i));
+				MathExpressionParser parser = this.createParser(this.calculatedColumnsNames.get(i), this.calculatedColumnsExpressions.get(i));
 				this.parsers.add(parser);
 			}
 		}
@@ -230,7 +224,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		MathExpressionParser parser = MathExpressionParserFactory.getInstance();
 		parser.setTraverse(ApplicationManager.DEBUG);
 		Map<Object, Object> custom = JEPUtils.getCustomFunctions();
-		for(Entry<Object, Object> entry:custom.entrySet()) {
+		for (Entry<Object, Object> entry : custom.entrySet()) {
 			String key = (String) entry.getKey();
 			Object value = entry.getValue();
 			ExtendedTableModel.logger.debug("Add expression parser function: {} -> {}", key, value);
@@ -254,8 +248,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 		parser.parseExpression(expr.toString());
 		if (parser.hasError()) {
-			ExtendedTableModel.logger.debug("Error in calculated column: {}. Expression: {}. Error: {}", col, expr,
-					parser.getErrorInfo());
+			ExtendedTableModel.logger.debug("Error in calculated column: {}. Expression: {}. Error: {}", col, expr, parser.getErrorInfo());
 		}
 
 		return parser;
@@ -267,8 +260,13 @@ public class ExtendedTableModel extends AbstractTableModel {
 		return this.rowNumbers.size();
 	}
 
-	public Map<Object, Object> getData() {
-		Map<Object, Object> totalData = new HashMap<>(this.data);
+	public EntityResult getData() {
+		EntityResult totalData = new EntityResultMapImpl();
+		Enumeration<?> eKeys = data.keys();
+		while(eKeys.hasMoreElements()) {
+			Object key = eKeys.nextElement();
+			totalData.put(key, data.get(key));
+		}
 		// Put the calculated columns
 		if (this.calculatedColumnsNames != null) {
 			int n = this.columnNames.size();
@@ -331,9 +329,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				if (previousNumber != 0) {
 					if (this.rowsNumber != previousNumber) {
 						// TODO translate the message
-						ExtendedTableModel.logger.error(
-								"No all the lists with the column information have the same size. Wrong key: {} ",
-								oKey);
+						ExtendedTableModel.logger.error("No all the lists with the column information have the same size. Wrong key: {} ", oKey);
 						if (this.rowsNumber < 100) {
 							ExtendedTableModel.logger.debug(oValue.toString());
 						}
@@ -434,9 +430,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				List<?> vColData = (List<?>) oColumnData;
 				if (row >= vColData.size()) {
 					if (ApplicationManager.DEBUG) {
-						ExtendedTableModel.logger
-						.debug("Requeste value for row: " + row + " and column: " + this.columnNames.get(column)
-						+ " . List size is : " + vColData.size());
+						ExtendedTableModel.logger.debug("Requeste value for row: " + row + " and column: " + this.columnNames.get(column) + " . List size is : " + vColData.size());
 					}
 					return null;
 				} else {
@@ -453,8 +447,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 			boolean someNull = false;
 			for (Object element : this.colsReqCalc) {
 				String c = (String) element;
-				if (ExtendedTableModel.expressionContainsColName(c, expression.toString(),
-						ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
+				if (ExtendedTableModel.expressionContainsColName(c, expression.toString(), ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
 					int columnIndex = this.columnNames.indexOf(c);
 					if (columnIndex >= 0) {
 						Object oValue = this.getValueAt(row, columnIndex);
@@ -471,8 +464,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 			MathExpressionParser parser = (MathExpressionParser) this.parsers.get(column - this.columnNames.size());
 
-			Map<Object, Object> rowValuesForExpression = this.getRowValuesForExpression(
-					(String) this.calculatedColumnsExpressions.get(column - this.columnNames.size()), row);
+			Map<Object, Object> rowValuesForExpression = this.getRowValuesForExpression((String) this.calculatedColumnsExpressions.get(column - this.columnNames.size()), row);
 			Iterator<?> columnKeys = rowValuesForExpression.keySet().iterator();
 			while (columnKeys.hasNext()) {
 				String col = (String) columnKeys.next();
@@ -491,8 +483,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 			if (parser.hasError()) {
 				if (ApplicationManager.DEBUG) {
 					ExtendedTableModel.logger.debug(
-							this.getClass().toString() + ". Error in calculated column: " + oColumnName
-							+ ". Expression: " + expression + ". Error: " + parser.getErrorInfo());
+							this.getClass().toString() + ". Error in calculated column: " + oColumnName + ". Expression: " + expression + ". Error: " + parser.getErrorInfo());
 				}
 			}
 
@@ -505,8 +496,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 		for (int i = 0; i < this.columnsNumber; i++) {
 			String col = this.getColumnName(i);
-			if (ExtendedTableModel.expressionContainsColName(col, expression,
-					ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
+			if (ExtendedTableModel.expressionContainsColName(col, expression, ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
 				Object oValue = this.getValueAt(row, i);
 				if ((oValue != null) && (oValue instanceof Number)) {
 					values.put(col, new Double(((Number) oValue).doubleValue()));
@@ -548,8 +538,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 	}
 
 	/**
-	 * Overwrite the method to set the appropriate renderer to the supported data types.
-	 * DefaultCellRenderer is used for all the not supported data types.
+	 * Overwrite the method to set the appropriate renderer to the supported data types. DefaultCellRenderer is used for all the not supported data types.
 	 */
 	@Override
 	public Class<?> getColumnClass(int column) {
@@ -650,10 +639,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				for (int row : rows) {
 					if (row >= vValues.size()) {
 						if (ApplicationManager.DEBUG) {
-							ExtendedTableModel.logger
-							.debug(this.getClass().toString()
-									+ ": the row index is bigger than the max rows in the table" + row + "/"
-									+ vValues.size());
+							ExtendedTableModel.logger.debug(this.getClass().toString() + ": the row index is bigger than the max rows in the table" + row + "/" + vValues.size());
 						}
 						continue;
 					}
@@ -666,7 +652,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		}
 	}
 
-	public Map<Object, Object> getRowDataForKeys(List<?> keys, Map<?,?> keysValues) {
+	public Map<Object, Object> getRowDataForKeys(List<?> keys, Map<?, ?> keysValues) {
 		boolean allKeysMatch = true;
 		for (int i = 0; i < this.getRowCount(); i++) {
 			Iterator<?> iKeys = keys.iterator();
@@ -716,9 +702,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				List<?> vValues = (List<?>) this.data.get(oKey);
 				if (row >= vValues.size()) {
 					if (ApplicationManager.DEBUG) {
-						ExtendedTableModel.logger.debug(
-								this.getClass().toString() + ": the row index is bigger than the max rows in the table."
-										+ row + "/" + vValues.size());
+						ExtendedTableModel.logger.debug(this.getClass().toString() + ": the row index is bigger than the max rows in the table." + row + "/" + vValues.size());
 					}
 					continue;
 				}
@@ -773,8 +757,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 					}
 					Object oSentValue = keysValues.get(oKeyName);
 					Object oValue = v.get(i);
-					if (((oSentValue == null) && (oValue != null)) || ((oSentValue != null) && (oValue == null))
-							|| !oSentValue.equals(oValue)) {
+					if (((oSentValue == null) && (oValue != null)) || ((oSentValue != null) && (oValue == null)) || !oSentValue.equals(oValue)) {
 						keysMatch = false;
 						break;
 					}
@@ -787,9 +770,8 @@ public class ExtendedTableModel extends AbstractTableModel {
 						List<Object> vData = (List<Object>) this.data.get(oKeyl);
 						if (vData.size() <= i) {
 							ExtendedTableModel.logger
-							.debug(this.getClass().toString() + " -> Data list for the column: " + oKeyl
-									+ " has not the required element number " + vData.size());
-//							vData.setSize(i + 1);
+									.debug(this.getClass().toString() + " -> Data list for the column: " + oKeyl + " has not the required element number " + vData.size());
+							// vData.setSize(i + 1);
 						}
 						if ((columns != null) && !columns.contains(oKeyl)) {
 							continue;
@@ -803,7 +785,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		}
 	}
 
-	public void updateRowData(Map<?,?> rowData, List<?> keys) {
+	public void updateRowData(Map<?, ?> rowData, List<?> keys) {
 		if (keys.size() == 0) {
 			return;
 		}
@@ -823,8 +805,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 					}
 					Object oSentValue = rowData.get(oKeyName);
 					Object oValue = v.get(i);
-					if (((oSentValue == null) && (oValue != null)) || ((oSentValue != null) && (oValue == null))
-							|| !oSentValue.equals(oValue)) {
+					if (((oSentValue == null) && (oValue != null)) || ((oSentValue != null) && (oValue == null)) || !oSentValue.equals(oValue)) {
 						keysMatch = false;
 						break;
 					}
@@ -837,9 +818,8 @@ public class ExtendedTableModel extends AbstractTableModel {
 						List<Object> vData = (List<Object>) this.data.get(oKeyl);
 						if (vData.size() <= i) {
 							ExtendedTableModel.logger
-							.debug(this.getClass().toString() + " -> Data list for the column: " + oKeyl
-									+ " has not the required element number " + vData.size());
-//							vData.setSize(i + 1);
+									.debug(this.getClass().toString() + " -> Data list for the column: " + oKeyl + " has not the required element number " + vData.size());
+							// vData.setSize(i + 1);
 						}
 						vData.set(i, rowData.get(oKeyl));
 					}
@@ -850,14 +830,13 @@ public class ExtendedTableModel extends AbstractTableModel {
 		}
 	}
 
-	public void addRow(Map<?,?> rowData) {
+	public void addRow(Map<?, ?> rowData) {
 		this.addInnerRow(rowData);
 		this.updateRowsNumbers();
-		this.fireTableChanged(new TableModelEvent(this, this.getRowCount() - 1, this.getRowCount() - 1,
-				TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
+		this.fireTableChanged(new TableModelEvent(this, this.getRowCount() - 1, this.getRowCount() - 1, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 	}
 
-	protected void addInnerRow(Map<?,?> rowData) {
+	protected void addInnerRow(Map<?, ?> rowData) {
 		if (rowData == null) {
 			return;
 		}
@@ -888,14 +867,13 @@ public class ExtendedTableModel extends AbstractTableModel {
 			return;
 		}
 		for (Object rowValue : rowValues) {
-			Map<?,?> rowData = (Map<?,?>) rowValue;
+			Map<?, ?> rowData = (Map<?, ?>) rowValue;
 			if (rowData != null) {
 				this.addInnerRow(rowData);
 			}
 		}
 		this.updateRowsNumbers();
-		this.fireTableChanged(new TableModelEvent(this, oldRowNumber, oldRowNumber + rowValues.size(),
-				TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
+		this.fireTableChanged(new TableModelEvent(this, oldRowNumber, oldRowNumber + rowValues.size(), TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 	}
 
 	public void addRows(int[] pos, List<?> rowsData) {
@@ -926,13 +904,12 @@ public class ExtendedTableModel extends AbstractTableModel {
 			}
 		}
 		this.updateRowsNumbers();
-		this.fireTableChanged(
-				new TableModelEvent(this, index, index, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
+		this.fireTableChanged(new TableModelEvent(this, index, index, TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 	}
 
-	public void setData(Map<Object, Object> data) {
+	public void setData(EntityResult data) {
 		if (data == null) {
-			this.data = new HashMap<>();
+			this.data = new EntityResultMapImpl();
 		} else {
 			this.data = data;
 		}
@@ -994,8 +971,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 	public void addCalculatedColumn(String col, String expression) {
 		// Add a new column if this does not exist
 		if (ApplicationManager.DEBUG) {
-			ExtendedTableModel.logger.debug(this.getClass().getName() + " Adding calculated column: " + col
-					+ ". Previous column count = " + this.columnsNumber);
+			ExtendedTableModel.logger.debug(this.getClass().getName() + " Adding calculated column: " + col + ". Previous column count = " + this.columnsNumber);
 		}
 
 		if (!this.calculatedColumnsNames.contains(col)) {
@@ -1016,8 +992,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 			this.updateColumnClasses();
 			this.fireTableStructureChanged();
 			if (ApplicationManager.DEBUG) {
-				ExtendedTableModel.logger.debug(this.getClass().getName() + " Added calculated column: " + col
-						+ ". Current column count = " + this.columnsNumber);
+				ExtendedTableModel.logger.debug(this.getClass().getName() + " Added calculated column: " + col + ". Current column count = " + this.columnsNumber);
 			}
 		}
 	}
@@ -1028,8 +1003,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 	public void deleteColumn(String col, boolean fireEvent) {
 		if (ApplicationManager.DEBUG) {
-			ExtendedTableModel.logger.debug(this.getClass().getName() + " Removing column: " + col
-					+ ". Previous column count = " + this.columnsNumber);
+			ExtendedTableModel.logger.debug(this.getClass().getName() + " Removing column: " + col + ". Previous column count = " + this.columnsNumber);
 		}
 		if (this.columnNames.contains(col)) {
 			this.columnNames.remove(col);
@@ -1040,16 +1014,14 @@ public class ExtendedTableModel extends AbstractTableModel {
 				this.fireTableStructureChanged();
 			}
 			if (ApplicationManager.DEBUG) {
-				ExtendedTableModel.logger.debug(this.getClass().getName() + " Removed column: " + col
-						+ ". Current column count = " + this.columnsNumber);
+				ExtendedTableModel.logger.debug(this.getClass().getName() + " Removed column: " + col + ". Current column count = " + this.columnsNumber);
 			}
 		}
 	}
 
 	public void deleteCalculatedColumn(String col) {
 		if (ApplicationManager.DEBUG) {
-			ExtendedTableModel.logger.debug(this.getClass().getName() + " Removing calculated column: " + col
-					+ ". Previous column count = " + this.columnsNumber);
+			ExtendedTableModel.logger.debug(this.getClass().getName() + " Removing calculated column: " + col + ". Previous column count = " + this.columnsNumber);
 		}
 		int index = this.calculatedColumnsNames.indexOf(col);
 		if (index >= 0) {
@@ -1061,8 +1033,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 			this.updateColumnClasses();
 			this.fireTableStructureChanged();
 			if (ApplicationManager.DEBUG) {
-				ExtendedTableModel.logger.debug(this.getClass().getName() + " Removed calculated column: " + col
-						+ ". Current column count = " + this.columnsNumber);
+				ExtendedTableModel.logger.debug(this.getClass().getName() + " Removed calculated column: " + col + ". Current column count = " + this.columnsNumber);
 			}
 		}
 	}
@@ -1079,7 +1050,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		return this.calculatedColumnsNames;
 	}
 
-	public List<Object> getRequiredColumnsToCalculatedColumns() {
+	public List<String> getRequiredColumnsToCalculatedColumns() {
 		return this.colsReqCalc;
 	}
 
@@ -1112,8 +1083,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		boolean someNull = false;
 		for (Object element : this.colsReqCalc) {
 			String c = (String) element;
-			if (ExtendedTableModel.expressionContainsColName(c, expression.toString(),
-					ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
+			if (ExtendedTableModel.expressionContainsColName(c, expression.toString(), ExtendedTableModel.availableCalculatedColumnNameCharacterPattern)) {
 				Object oValue = rowValues.get(c);
 				if (oValue == null) {
 					someNull = true;
@@ -1148,8 +1118,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		if (parser.hasError()) {
 			if (ApplicationManager.DEBUG) {
 				ExtendedTableModel.logger
-				.debug(this.getClass().toString() + ". Error in calculated column: " + oColumnName
-						+ ". Expression: " + expression + ". Error: " + parser.getErrorInfo());
+						.debug(this.getClass().toString() + ". Error in calculated column: " + oColumnName + ". Expression: " + expression + ". Error: " + parser.getErrorInfo());
 			}
 		}
 		Object valueAsObject = parser.getValueAsObject();
@@ -1161,8 +1130,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 		return valueAsObject;
 	}
 
-	public static boolean expressionContainsColName(String colName, String expression,
-			Pattern validCharactersInColumnName) {
+	public static boolean expressionContainsColName(String colName, String expression, Pattern validCharactersInColumnName) {
 		int index = expression.indexOf(colName);
 		while (index >= 0) {
 			// If the expression contains the column then can be this columns
@@ -1170,30 +1138,29 @@ public class ExtendedTableModel extends AbstractTableModel {
 			// e.g Expression = 2*TEST2 contains the text TEST but not the
 			// TEST columns (contains TEST2 but not TEST)
 			char previousChar = index > 0 ? expression.charAt(index - 1) : '(';
-			char nextChar = (index + colName.length()) < expression.length()
-					? expression.charAt(index + colName.length()) : ')';
+			char nextChar = (index + colName.length()) < expression.length() ? expression.charAt(index + colName.length()) : ')';
 
-					Matcher matcherPrev = validCharactersInColumnName.matcher("" + previousChar);
-					Matcher matcherNext = validCharactersInColumnName.matcher("" + nextChar);
-					if (matcherPrev.find() || matcherNext.find()) {
-						expression = expression.substring(index + colName.length());
-					} else {
-						return true;
-					}
-					index = expression.indexOf(colName);
+			Matcher matcherPrev = validCharactersInColumnName.matcher("" + previousChar);
+			Matcher matcherNext = validCharactersInColumnName.matcher("" + nextChar);
+			if (matcherPrev.find() || matcherNext.find()) {
+				expression = expression.substring(index + colName.length());
+			} else {
+				return true;
+			}
+			index = expression.indexOf(colName);
 		}
 		return false;
 	}
 
-	public static final String SUM_OPERATION = "SUM";
+	public static final String	SUM_OPERATION		= "SUM";
 
-	public static final String AVG_OPERATION = "AVG";
+	public static final String	AVG_OPERATION		= "AVG";
 
-	public static final String MAX_OPERATION = "MAX";
+	public static final String	MAX_OPERATION		= "MAX";
 
-	public static final String MIN_OPERATION = "MIN";
+	public static final String	MIN_OPERATION		= "MIN";
 
-	public static final String CONCAT_OPERATION = "CONCAT";
+	public static final String	CONCAT_OPERATION	= "CONCAT";
 
 	public Object getColumnOperation(String columnIdentifier, String operation) {
 		if (ExtendedTableModel.SUM_OPERATION.equalsIgnoreCase(operation)) {
@@ -1220,8 +1187,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				// find column index
 				int colIndex = this.getColumnIndex(columnIdentifier);
 				if (colIndex < 0) {
-					ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier
-							+ " column name doesn't exist in table model");
+					ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + " column name doesn't exist in table model");
 					return null;
 				}
 				// get column values
@@ -1235,8 +1201,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 					for (int i = 0; i < columns.size(); i++) {
 						int currentIndex = this.getColumnIndex(columns.get(i));
 						if (currentIndex < 0) {
-							ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columns.get(i)
-							+ " column name doesn't exist in table model");
+							ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columns.get(i) + " column name doesn't exist in table model");
 							return null;
 						}
 						columnIndexes[i] = currentIndex;
@@ -1252,8 +1217,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 						continue;
 					}
 					if (!(oValue instanceof Number)) {
-						ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier
-								+ "in row " + i + " isn't a NUMBER instance.");
+						ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + "in row " + i + " isn't a NUMBER instance.");
 						return null;
 					}
 					listValues.add(oValue);
@@ -1264,11 +1228,10 @@ public class ExtendedTableModel extends AbstractTableModel {
 							continue;
 						}
 						if (!(oValue instanceof Number)) {
-							ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columns.get(k)
-							+ "in row " + i + " isn't a NUMBER instance.");
+							ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columns.get(k) + "in row " + i + " isn't a NUMBER instance.");
 							return null;
 						}
-						requiredColumnValues.get(columns.get(k)).add(i, (Number)oValue);
+						requiredColumnValues.get(columns.get(k)).add(i, (Number) oValue);
 					}
 				}
 
@@ -1288,6 +1251,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 	/**
 	 * Sums all the values for a specified column.
+	 * 
 	 * @param columnIdentifier
 	 * @return the sum of the values, or null in case the column does not exist
 	 */
@@ -1295,8 +1259,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 	protected Object getColumnSumAverage(Object columnIdentifier, boolean average) {
 		int colIndex = this.getColumnIndex(columnIdentifier);
 		if (colIndex < 0) {
-			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier
-					+ " column name doesn't exist in table model");
+			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + " column name doesn't exist in table model");
 			return null;
 		}
 
@@ -1308,8 +1271,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				continue;
 			}
 			if (!(oValue instanceof Number)) {
-				ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + "in row "
-						+ i + " isn't a Number instance.");
+				ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + "in row " + i + " isn't a Number instance.");
 				return null;
 			}
 			total = total + ((Number) oValue).doubleValue();
@@ -1328,13 +1290,14 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 	/**
 	 * Gets the maximum or minimum value for a specified column.
-	 * @param max . true if return value is maximum.
+	 * 
+	 * @param max
+	 *            . true if return value is maximum.
 	 */
 	protected Number getColumnMaximumMinimum(Object columnIdentifier, boolean max) {
 		int colIndex = this.getColumnIndex(columnIdentifier);
 		if (colIndex < 0) {
-			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier
-					+ " column name doesn't exist in table model");
+			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + " column name doesn't exist in table model");
 			return null;
 		}
 
@@ -1346,8 +1309,7 @@ public class ExtendedTableModel extends AbstractTableModel {
 				continue;
 			}
 			if (!(oValue instanceof Number)) {
-				ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + "in row "
-						+ i + " isn't a NUMBER instance.");
+				ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + "in row " + i + " isn't a NUMBER instance.");
 				return null;
 			}
 			listValues.add(((Number) oValue).intValue());
@@ -1366,13 +1328,14 @@ public class ExtendedTableModel extends AbstractTableModel {
 
 	/**
 	 * Gets the maximum or minimum value for a specified column.
-	 * @param max . true if return value is maximum.
+	 * 
+	 * @param max
+	 *            . true if return value is maximum.
 	 */
 	protected String getColumnConcat(Object columnIdentifier) {
 		int colIndex = this.getColumnIndex(columnIdentifier);
 		if (colIndex < 0) {
-			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier
-					+ " column name doesn't exist in table model");
+			ExtendedTableModel.logger.debug(ExtendedTableModel.class.getName() + ":" + columnIdentifier + " column name doesn't exist in table model");
 			return null;
 		}
 

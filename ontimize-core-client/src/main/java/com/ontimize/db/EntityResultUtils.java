@@ -8,7 +8,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.table.AbstractTableModel;
@@ -30,8 +29,6 @@ public abstract class EntityResultUtils extends EntityResultTools {
 	private static final Logger logger = LoggerFactory.getLogger(EntityResultUtils.class);
 
 	public static class EntityResultTableModel extends AbstractTableModel {
-
-		private static final Logger	logger				= LoggerFactory.getLogger(EntityResultUtils.EntityResultTableModel.class);
 
 		private static final Image	check				= ImageManager.getIcon(ImageManager.CHECK_SELECTED).getImage();
 
@@ -166,7 +163,7 @@ public abstract class EntityResultUtils extends EntityResultTools {
 	}
 
 	public static TableModel createTableModel(EntityResult res, List<?> cols, boolean returnEmptyStrings) {
-		return EntityResultUtils.createTableModel(res, cols, returnEmptyStrings, true);
+		return EntityResultUtils.createTableModel(res, cols, returnEmptyStrings, true, true);
 	}
 
 	public static TableModel createTableModel(EntityResult res, List<?> cols, boolean returnEmptyStrings, boolean convertBytesBlockToIm, boolean convertBooleanToIm) {

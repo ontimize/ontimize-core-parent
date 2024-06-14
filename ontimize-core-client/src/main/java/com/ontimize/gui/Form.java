@@ -706,12 +706,12 @@ public class Form extends JPanel
 	/**
 	 * Default column list that is shown in table view. This list is defined by 'columns' XML parameter See {@link #init}
 	 */
-	protected List<Object>				tableViewColumns				= new ArrayList<>();
+	protected List<String>				tableViewColumns				= new ArrayList<>();
 
 	/**
 	 * Column list that are added to default column list from table view.
 	 */
-	protected List<Object>				additionalTableViewColumns		= null;
+	protected List<String>				additionalTableViewColumns		= null;
 
 	/**
 	 * Dialog window where the form is contained in. see {@link #putInModalDialog}
@@ -1846,7 +1846,7 @@ public class Form extends JPanel
 
 	protected List<String>	keys					= new ArrayList<>();
 
-	protected List<Object>	parentKeys				= new ArrayList<>();
+	protected List<String>	parentKeys				= new ArrayList<>();
 
 	static class ScrollableColumn extends Column implements Scrollable {
 
@@ -2657,7 +2657,7 @@ public class Form extends JPanel
 		String configurationSource = configuration;
 		try {
 			if (configuration != null) {
-				List collapsibles = new ArrayList();
+				List<String> collapsibles = new ArrayList<>();
 				while (configuration.indexOf(Form.COLLAPSIBLE_KEY + "(") >= 0) {
 					int start = configuration.indexOf(Form.COLLAPSIBLE_KEY + "(");
 					int end = configuration.indexOf(")", start);
@@ -3898,7 +3898,7 @@ public class Form extends JPanel
 	 */
 	public Map<Object, Object> getParentKeyValues() {
 		Map<Object, Object> current = new HashMap<>();
-		List<Object> parentkeys = this.getParentKeys();
+		List<String> parentkeys = this.getParentKeys();
 		if ((parentkeys != null) && (parentkeys.size() > 0)) {
 			for (Object currentKey : parentkeys) {
 				Object currentValue = this.getDataFieldValue(currentKey.toString());
@@ -3937,7 +3937,7 @@ public class Form extends JPanel
 
 	public void setParentKeyValues(Map<Object, Object> values) {
 		if ((values != null) && (values.size() > 0)) {
-			List<Object> parentkeys = this.getParentKeys();
+			List<String> parentkeys = this.getParentKeys();
 			for (Entry<Object, Object> entry : values.entrySet()) {
 				Object currentKey = entry.getKey();
 				if (parentkeys.contains(currentKey)) {
@@ -6015,7 +6015,7 @@ public class Form extends JPanel
 				}
 				EntityResult hFormData = this.getDataList();
 				EntityResult hTableData = new EntityResultMapImpl();
-				Enumeration enumKeys = hFormData.keys();
+				Enumeration<?> enumKeys = hFormData.keys();
 				while (enumKeys.hasMoreElements()) {
 					Object oKey = enumKeys.nextElement();
 					List<?> vValue = (List<?>) hFormData.get(oKey);
@@ -6142,7 +6142,7 @@ public class Form extends JPanel
 	 * @param parentKeys
 	 *            the parent key attributes to fix
 	 */
-	public void setParentKeys(List<Object> parentKeys) {
+	public void setParentKeys(List<String> parentKeys) {
 		this.parentKeys = parentKeys;
 	}
 
@@ -6152,7 +6152,7 @@ public class Form extends JPanel
 	 * @see #init
 	 * @return the parent key names
 	 */
-	public List<Object> getParentKeys() {
+	public List<String> getParentKeys() {
 		return new ArrayList<>(this.parentKeys);
 	}
 
@@ -6224,7 +6224,7 @@ public class Form extends JPanel
 
 	public void addDataRecordListener(DataRecordListener listener) {
 		if (this.dataRecordListeners == null) {
-			this.dataRecordListeners = new ArrayList();
+			this.dataRecordListeners = new ArrayList<>();
 		}
 		if (!this.dataRecordListeners.contains(listener)) {
 			this.dataRecordListeners.add(listener);
@@ -6919,7 +6919,7 @@ public class Form extends JPanel
 	 *            a {@link ApplicationPreferences} instance that manager the application preferences
 	 * @return a <code>List</code> with the column list to table view table.
 	 */
-	protected List<Object> loadTableViewPreference(ApplicationPreferences prefs) {
+	protected List<String> loadTableViewPreference(ApplicationPreferences prefs) {
 		String sKey = this.getTableViewPreferenceKey();
 		String preference = PreferenceUtils.loadPreference(sKey, prefs);
 		if (preference != null) {
@@ -6936,11 +6936,11 @@ public class Form extends JPanel
 	 *            a <code>List</code> with the column list to table view table.
 	 */
 
-	protected void saveTableViewPreferenceForm(List<Object> columns) {
+	protected void saveTableViewPreferenceForm(List<String> columns) {
 		String sKey = this.getTableViewPreferenceKey();
 		String preference = null;
 		if (columns != null) {
-			preference = ApplicationManager.vectorToStringSeparateBy(columns, ";");
+			preference = ApplicationManager.listToStringSeparateBy(columns, ";");
 		}
 		PreferenceUtils.savePreference(sKey, preference);
 	}
@@ -6963,7 +6963,7 @@ public class Form extends JPanel
 			}
 		}
 
-		ArrayList list = this.getVisibleDataComponentAttributes();
+		List<Object> list = this.getVisibleDataComponentAttributes();
 		if ((list != null) && (list.size() > 0)) {
 			this.tableButton.setSelectionColumns(true);
 		} else {
@@ -7468,11 +7468,11 @@ public class Form extends JPanel
 	protected void installScriptButton() {
 		try {
 			if (this.checkApplicationScriptButton()) {
-				Class scriptButtonClass = Class.forName("com.ontimize.scripting.gui.ScriptButton");
+				Class<?> scriptButtonClass = Class.forName("com.ontimize.scripting.gui.ScriptButton");
 				Map<Object, Object> parameters = DefaultXMLParametersManager.getParameters("com.ontimize.scripting.gui.ScriptButton");
 				parameters.put(Button.KEY, "com.ontimize.scripting.gui.ScriptButton");
 				parameters.put("margin", "1;1;1;1");
-				Constructor scriptButtonConstructor = scriptButtonClass.getConstructor(new Class[] { HashMap.class });
+				Constructor<?> scriptButtonConstructor = scriptButtonClass.getConstructor(new Class[] { HashMap.class });
 				Object obj = scriptButtonConstructor.newInstance(new Object[] { parameters });
 				if (obj instanceof JButton) {
 					this.scriptButton = (JButton) obj;
@@ -7921,7 +7921,7 @@ public class Form extends JPanel
 	 * @param result
 	 *            List in which the components are stored
 	 */
-	protected void findComponentInContainer(Container container, java.util.List result) {
+	protected void findComponentInContainer(Container container, List<Object> result) {
 		for (int i = 0; i < container.getComponentCount(); i++) {
 			Component c = container.getComponent(i);
 			result.add(c);
@@ -7939,7 +7939,7 @@ public class Form extends JPanel
 	 * @param result
 	 *            List in which the components are stored
 	 */
-	protected void findVisibleComponentInContainer(Container container, java.util.List result) {
+	protected void findVisibleComponentInContainer(Container container, List<Object> result) {
 		if (container.isVisible()) {
 			for (int i = 0; i < container.getComponentCount(); i++) {
 				Component c = container.getComponent(i);
@@ -8498,7 +8498,7 @@ public class Form extends JPanel
 	 *            the column list to be added
 	 */
 
-	public void addColumnsToTableView(List<Object> cols) {
+	public void addColumnsToTableView(List<String> cols) {
 		this.resetTableViewColumns();
 		this.additionalTableViewColumns = cols;
 		if (this.table != null) {
@@ -8533,7 +8533,7 @@ public class Form extends JPanel
 	public Button[] getButtons() {
 		int n = this.buttonList.size();
 		Button[] buttons = new Button[n];
-		Collection bots = this.buttonList.values();
+		Collection<?> bots = this.buttonList.values();
 		Object[] b = bots.toArray();
 		for (int i = 0; i < n; i++) {
 			buttons[i] = (Button) b[i];
@@ -8687,7 +8687,7 @@ public class Form extends JPanel
 
 		private final JList			columnJList			= new JList();
 
-		private ArrayList<Object>	columnList			= null;
+		private List<Object>	columnList			= null;
 
 		private List<Object>		defaultColumnList	= null;
 
@@ -8737,7 +8737,7 @@ public class Form extends JPanel
 		private class ColumnSelectionListener extends MouseAdapter {
 
 			private int[] removeValue(int value) {
-				ArrayList l = new ArrayList();
+				ArrayList<Object> l = new ArrayList<>();
 
 				int[] out = new int[l.size()];
 				for (int i = 0, a = l.size(); i < a; i++) {
@@ -8797,8 +8797,8 @@ public class Form extends JPanel
 				if (res != null) {
 					try {
 						this.translatedText = res.getString(this.text);
-					} catch (Exception e) {
-						Form.logger.error(null, e);
+					} catch (Exception exc) {
+						Form.logger.error(null, exc);
 						this.translatedText = this.text;
 					}
 				}
@@ -8908,7 +8908,7 @@ public class Form extends JPanel
 
 		};
 
-		public SelColumnsDialog(Frame f, ArrayList<Object> l, List<Object> defaultValue, ResourceBundle res) {
+		public SelColumnsDialog(Frame f, List<Object> l, List<Object> defaultValue, ResourceBundle res) {
 			super(f, "form.selection_of_columns_for_tabular_view", true);
 			this.columnList = l;
 			this.defaultColumnList = defaultValue;
@@ -8916,7 +8916,7 @@ public class Form extends JPanel
 			this.init(res);
 		}
 
-		public SelColumnsDialog(Dialog f, ArrayList<Object> l, List<Object> defaultValue, ResourceBundle res) {
+		public SelColumnsDialog(Dialog f, List<Object> l, List<Object> defaultValue, ResourceBundle res) {
 			super(f, "form.selection_of_columns_for_tabular_view", true);
 			this.columnList = l;
 			this.defaultColumnList = defaultValue;
@@ -8938,20 +8938,20 @@ public class Form extends JPanel
 			ApplicationManager.center(this);
 			this.bCancel.addActionListener(e -> SelColumnsDialog.this.setVisible(false));
 			this.bOK.addActionListener(e -> {
-				List<Object> l = SelColumnsDialog.this.selectionColumns();
+				List<String> l = SelColumnsDialog.this.selectionColumns();
 				Form.this.saveTableViewPreferenceForm(l);
 			});
 
 			this.bSavePreference.addActionListener(e -> {
-				List<Object> l = SelColumnsDialog.this.selectionColumns();
+				List<String> l = SelColumnsDialog.this.selectionColumns();
 				Form.this.saveTableViewPreferenceForm(l);
 			});
 			this.columnJList.addMouseListener(new ColumnSelectionListener());
 			this.columnJList.setCellRenderer(new SelectableItemsListCellRenderer());
 		}
 
-		protected List<Object> selectionColumns() {
-			List<Object> l = new ArrayList<>();
+		protected List<String> selectionColumns() {
+			List<String> l = new ArrayList<>();
 			for (int i = 0; i < this.columnJList.getModel().getSize(); i++) {
 				if (((SelectableItem) this.columnJList.getModel().getElementAt(i)).isSelected()) {
 					l.add(((SelectableItem) this.columnJList.getModel().getElementAt(i)).getText());
@@ -8962,7 +8962,7 @@ public class Form extends JPanel
 			return l;
 		}
 
-		protected void updateModel(ArrayList<Object> l, List<Object> lDef, ResourceBundle res) {
+		protected void updateModel(List<Object> l, List<Object> lDef, ResourceBundle res) {
 			DefaultListModel m = new DefaultListModel();
 			List<SelectableItem> order = new ArrayList<>();
 			try {
@@ -9011,7 +9011,7 @@ public class Form extends JPanel
 			return null;
 		}
 
-		public void setSelected(java.util.List v) {
+		public void setSelected(List<?> v) {
 			DefaultListModel m = (DefaultListModel) this.columnJList.getModel();
 			try {
 				for (int i = 0; i < m.size(); i++) {
@@ -9044,7 +9044,7 @@ public class Form extends JPanel
 			this.createTableViewTable();
 		}
 
-		ArrayList<Object> visibleComponentsList = this.getVisibleDataComponentAttributes();
+		List<Object> visibleComponentsList = this.getVisibleDataComponentAttributes();
 		List<Object> visibleTableViewColumns = this.getVisibleComponentsAttributes(this.tableViewColumns, visibleComponentsList);
 		List<Object> visibleAdditionalTableViewColumns = this.getVisibleComponentsAttributes(this.additionalTableViewColumns, visibleComponentsList);
 
@@ -9069,7 +9069,7 @@ public class Form extends JPanel
 		this.selColumnsDialog.setVisible(true);
 	}
 
-	protected List<Object> getVisibleComponentsAttributes(List<?> columnsVector, ArrayList<?> visibleComponentsAttrList) {
+	protected List<Object> getVisibleComponentsAttributes(List<?> columnsVector, List<?> visibleComponentsAttrList) {
 		List<Object> toRet = new ArrayList<>();
 		for (Object componentAttr : visibleComponentsAttrList) {
 			if (columnsVector.contains(componentAttr)) {
@@ -9085,8 +9085,8 @@ public class Form extends JPanel
 	 *
 	 * @return a <code>ArrayList</code> with all visible components
 	 */
-	protected ArrayList getVisibleDataComponentAttributes() {
-		ArrayList l = new ArrayList();
+	protected List<Object> getVisibleDataComponentAttributes() {
+		List<Object> l = new ArrayList<>();
 		List<Object> v = this.getDataComponents();
 		for (int i = 0; i < v.size(); i++) {
 			DataComponent cD = (DataComponent) v.get(i);

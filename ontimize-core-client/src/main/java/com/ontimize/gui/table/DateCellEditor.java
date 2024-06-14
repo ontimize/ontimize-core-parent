@@ -5,7 +5,7 @@ import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -22,7 +22,7 @@ import com.ontimize.util.ParseUtils;
 
 /**
  * Class to manage edition of dates in table components. It wraps a <code>DateDataField</code> whose
- * parameters are passed in <code>Hashtable</code> parameter in constructor. It allows to manage
+ * parameters are passed in <code>Map</code> parameter in constructor. It allows to manage
  * some date patterns: including date and hour.
  *
  * @author Imatia Innovation SL
@@ -84,8 +84,8 @@ public class DateCellEditor extends CellEditor implements OpenDialog {
 
     /**
      * Constructor of class.
-     * @param parameters the <code>Hashtable</code> with parameters. They are allowed parameters of
-     *        <code>DateDataField</code>: {@link DateDataField#init(Hashtable)} and additionally:
+     * @param parameters the <code>Map</code> with parameters. They are allowed parameters of
+     *        <code>DateDataField</code>: {@link DateDataField#init(Map)} and additionally:
      *        <p>
      *        <Table BORDER=1 CELLPADDING=3 CELLSPACING=1 RULES=ROWS * FRAME=BOX>
      *        <tr>
@@ -126,7 +126,7 @@ public class DateCellEditor extends CellEditor implements OpenDialog {
      *        </tr>
      *        </table>
      */
-    public DateCellEditor(Hashtable parameters) {
+    public DateCellEditor(Map<Object, Object> parameters) {
         super(parameters.get(CellEditor.COLUMN_PARAMETER), DateCellEditor.createDataField(parameters));
         this.showCalendar = ParseUtils.getBoolean((String) parameters.get(DateCellEditor.SHOWCALENDAR), false);
         if (this.showCalendar || DateCellEditor.SHOW_CALENDAR) {
@@ -165,10 +165,10 @@ public class DateCellEditor extends CellEditor implements OpenDialog {
 
     /**
      * This method creates the data field for building the cell editor.
-     * @param parameters <code>Hashtable</code> with parameters
+     * @param parameters <code>Map</code> with parameters
      * @return the data field
      */
-    public static DateDataField createDataField(Hashtable parameters) {
+    public static DateDataField createDataField(Map<Object, Object> parameters) {
         DateDataField dataField = new DateDataField(parameters);
         if (ParseUtils.getBoolean((String) parameters.get(DateCellEditor.WITH_HOUR), false)) {
             dataField.setDocument(new HourDateDocument(

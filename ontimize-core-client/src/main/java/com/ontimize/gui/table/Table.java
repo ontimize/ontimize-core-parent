@@ -222,6 +222,7 @@ import com.ontimize.jee.common.locator.UtilReferenceLocator;
 import com.ontimize.jee.common.security.FormPermission;
 import com.ontimize.jee.common.security.TableFormPermission;
 import com.ontimize.jee.common.tools.Pair;
+import com.ontimize.jee.common.util.Base64Utils;
 import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.jee.common.util.share.IShareRemoteReference;
 import com.ontimize.jee.common.util.share.SharedElement;
@@ -1624,9 +1625,9 @@ public class Table extends JRootPane
 
     protected String keyField = null;
 
-    protected List<Object> keyFields = null;
+    protected List<String> keyFields = null;
 
-    protected Map<Object, Object> codValues = null;
+    protected Map<String, String> codValues = null;
 
     /**
      * @deprecated. Now must use {@link #parentkeys}
@@ -1641,9 +1642,9 @@ public class Table extends JRootPane
     /**
      * List with all the fields in the parent form used to filter the table values
      */
-    protected List<Object> parentkeys;
+    protected List<String> parentkeys;
 
-    protected Map<Object, Object> hParentkeyEquivalences;
+    protected Map<String, String> hParentkeyEquivalences;
 
     /**
      * The vector with attributes to update when data field value changed. By default, null.
@@ -1655,7 +1656,7 @@ public class Table extends JRootPane
      * entity) when structure of parameter <code>onsetvalueset</code> is:
      * "fieldonset1:SUM(fieldentitypk1);fieldonset2:CONCAT(fieldentitypk2);...fieldonsetn:MAX(fieldentitypkn)"
      */
-    protected Map<Object, Object> hOnSetValueSetEquivalences = new HashMap<>();
+    protected Map<String, String> hOnSetValueSetEquivalences = new HashMap<>();
 
     /**
      * This object is used to store onsetvalueset attributes and function when structure of parameter
@@ -1926,7 +1927,7 @@ public class Table extends JRootPane
 
     protected List<Object> editableColumnsUpdateEntity = new ArrayList<>(0);
 
-    protected List<Object> editableColumns = new ArrayList<>(0);
+    protected List<String> editableColumns = new ArrayList<>(0);
 
     protected JMenuItem filter = new JMenuItem("Filtrar");
 
@@ -2998,13 +2999,12 @@ public class Table extends JRootPane
                 // Renderer configuration
                 String rendererConfig = (String) this.parameters.get("renderers");
                 if (rendererConfig != null) {
-                    List allTokens = ApplicationManager.getTokensAt(rendererConfig, ";");
-                    for (Object allToken : allTokens) {
-                        String tokenI = (String) allToken;
-                        List elementI = ApplicationManager.getTokensAt(tokenI, ":");
+                    List<String> allTokens = ApplicationManager.getTokensAt(rendererConfig, ";");
+                    for (String tokenI : allTokens) {
+                        List<String> elementI = ApplicationManager.getTokensAt(tokenI, ":");
                         if (elementI.size() == 2) {
-                            String columnName = (String) elementI.get(0);
-                            String elementId = (String) elementI.get(1);
+                            String columnName = elementI.get(0);
+                            String elementId = elementI.get(1);
                             TableCellRenderer cellRenderer = tableConfigurationManager.getCellRenderer(elementId);
                             if (cellRenderer != null) {
                                 this.setRendererForColumn(columnName, cellRenderer);
@@ -3018,10 +3018,10 @@ public class Table extends JRootPane
 
                 String editorConfig = (String) this.parameters.get("editors");
                 if (editorConfig != null) {
-                    List allTokens = ApplicationManager.getTokensAt(editorConfig, ";");
+                    List<String> allTokens = ApplicationManager.getTokensAt(editorConfig, ";");
                     for (Object allToken : allTokens) {
                         String tokenI = (String) allToken;
-                        List elementI = ApplicationManager.getTokensAt(tokenI, ":");
+                        List<String> elementI = ApplicationManager.getTokensAt(tokenI, ":");
                         if (elementI.size() == 2) {
                             String columnName = (String) elementI.get(0);
                             String elementId = (String) elementI.get(1);
@@ -3267,7 +3267,7 @@ public class Table extends JRootPane
      * <td>no</td>
      * <td>no</td>
      * <td>Defines the table as a autoinsertable table. The last row in this table allows to insert
-     * records directly into database. See {@link #configureInsertTable(Hashtable)}</td>
+     * records directly into database. See {@link #configureInsertTable(Map)}</td>
      * </tr>
      * <tr>
      * <td>key</td>
@@ -3776,7 +3776,7 @@ public class Table extends JRootPane
 
             this.onsetvaluesetAttributes = new ArrayList<>();
 
-            // We can't use the keys of the hashtable to get the attribute names
+            // We can't use the keys of the Map to get the attribute names
             // because we have to use the same order that is in the xml
             List<String> valueNamesOrder = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";");
             for (int i = 0; i < valueNamesOrder.size(); i++) {
@@ -3888,7 +3888,7 @@ public class Table extends JRootPane
         if (sParentkeys != null) {
             this.hParentkeyEquivalences = ApplicationManager.getTokensAt(sParentkeys, ";", ":");
             this.parentkeys = new ArrayList<>(this.hParentkeyEquivalences.size());
-            for(Entry<Object,Object> entry:this.hParentkeyEquivalences.entrySet()) {
+            for(Entry<String, String> entry:this.hParentkeyEquivalences.entrySet()) {
             	this.parentkeys.add(entry.getKey());
             }
         } else {
@@ -3931,7 +3931,7 @@ public class Table extends JRootPane
         if (dynamicForm != null) {
             try {
                 String sStringClass = dynamicForm.toString();
-                Class cFormClass = Class.forName(sStringClass);
+                Class<?> cFormClass = Class.forName(sStringClass);
                 DynamicFormManager dFDynamicForm = (DynamicFormManager) cFormClass.newInstance();
                 dFDynamicForm.setBaseName(this.formName);
                 this.dinamicFormClass = sStringClass;
@@ -3999,8 +3999,7 @@ public class Table extends JRootPane
 
         Object calculedcolsrequiredfields = parameters.get(Table.CALCULED_COLS_REQUIRED_FIELDS);
         if (calculedcolsrequiredfields != null) {
-            this.requiredColumnsCalculedColumns = ApplicationManager.getTokensAt(calculedcolsrequiredfields.toString(),
-                    ";");
+			this.requiredColumnsCalculedColumns = ApplicationManager.getTokensAt(calculedcolsrequiredfields.toString(), ";");
         }
     }
 
@@ -4144,19 +4143,19 @@ public class Table extends JRootPane
         buffer.append("<B>" + Table.ENTITY + "</B>" + ":  " + this.getEntityName());
         buffer.append("<br>");
         buffer.append("<B>" + Table.COLS + "</B>" + ":  "
-                + ApplicationManager.vectorToStringSeparateBy(this.attributes, ";"));
+                + ApplicationManager.listToStringSeparateBy(this.attributes, ";"));
         buffer.append("<br>");
         buffer.append("<B>" + Table.VISIBLE_COLS + "</B>" + ":  "
-                + ApplicationManager.vectorToStringSeparateBy(this.visibleColumns, ";"));
+                + ApplicationManager.listToStringSeparateBy(this.visibleColumns, ";"));
         buffer.append("<br>");
         buffer.append("<B>" + Table.EDITABLE_COLUMNS + "</B>" + ":  "
-                + ApplicationManager.vectorToStringSeparateBy(this.editableColumns, ";"));
+                + ApplicationManager.listToStringSeparateBy(this.editableColumns, ";"));
         buffer.append("<br>");
         buffer.append("<B>" + Table.UPDATE_ENTITY_EDITABLE_COLUMNS + "</B>" + ":  "
-                + ApplicationManager.vectorToStringSeparateBy(this.editableColumnsUpdateEntity, ";"));
+                + ApplicationManager.listToStringSeparateBy(this.editableColumnsUpdateEntity, ";"));
         buffer.append("<br>");
         buffer.append("<B>" + "parentkeys" + "</B>" + ":  "
-                + ApplicationManager.vectorToStringSeparateBy(this.parentkeys, ";"));
+                + ApplicationManager.listToStringSeparateBy(this.parentkeys, ";"));
         buffer.append("<br>");
         buffer.append("<B>" + "detailForm" + "</B>" + ":  " + this.formName);
         if (this.insertFormName != null) {
@@ -4179,7 +4178,7 @@ public class Table extends JRootPane
     /**
      * This method configure parameters for insertable table. This method is called only when
      * 'inserttable' parameter is enabled in .xml definition file.
-     * @param params the <code> Hashtable</code> with parameters
+     * @param params the <code> Map</code> with parameters
      *
      *        <p>
      *        The attributes allowed are:
@@ -4493,7 +4492,7 @@ public class Table extends JRootPane
         ChartInfoRepository repository = this.chartUtilities.getChartInfoRepository();
 
         if (repository != null) {
-            Enumeration descriptions = repository.keys();
+            Enumeration<?> descriptions = repository.keys();
             while (descriptions.hasMoreElements()) {
                 final String description = descriptions.nextElement().toString();
                 ChartInfo info = repository.getChartInfo(description);
@@ -4658,7 +4657,7 @@ public class Table extends JRootPane
      * @return
      */
 
-    public Object getValueToReport() {
+    public EntityResult getValueToReport() {
         EntityResult result = new EntityResultMapImpl();
         List<Object> columnNames = new ArrayList<>();
         List<Object> visibleColumnNames = new ArrayList<>();
@@ -5039,7 +5038,7 @@ public class Table extends JRootPane
         TableCellRenderer renderer = null;
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             String sKey = this.table.getColumnName(i);
-            Class columnClass = this.table.getColumnClass(i);
+            Class<?> columnClass = this.table.getColumnClass(i);
             if ((columnClass != null) && Number.class.isAssignableFrom(columnClass)) {
                 if (!vColumns.contains(sKey)) {
                     if (vVisibleColumns.contains(sKey)) {
@@ -5058,7 +5057,7 @@ public class Table extends JRootPane
     }
 
     /**
-     * Sets values for the table. The <code>value</code> must be a Hashtable, an EntityResult or an
+     * Sets values for the table. The <code>value</code> must be a Map, an EntityResult or an
      * AdvancedEntityResult.
      *
      * @see #setInnerValue
@@ -5084,7 +5083,7 @@ public class Table extends JRootPane
     }
 
     /**
-     * Sets values for the table. The <code>value</code> must be a Hashtable, an EntityResult or an
+     * Sets values for the table. The <code>value</code> must be a Map, an EntityResult or an
      * AdvancedEntityResult.
      * @param value the value to set
      * @param autoSizeColumns if true, the column size will be adjusted to its new contents
@@ -5130,7 +5129,7 @@ public class Table extends JRootPane
     }
 
     /**
-     * Sets the information the table will manage. The information must be a Hashtable instance, where
+     * Sets the information the table will manage. The information must be a Map instance, where
      * keys are the column names, and values must be vectors containing the information corresponding to
      * each column. All vectors must have the same size. Only the information keys that are configured
      * as table attributes in the table definition will be processed.
@@ -5173,10 +5172,10 @@ public class Table extends JRootPane
             }
 
             // Remove values that not belongs to the table attributes
-            Map<Object, Object> hData = (Hashtable) ((Hashtable) value).clone();
-            Enumeration enumKeys = hData.keys();
-            while (enumKeys.hasMoreElements()) {
-                Object oKey = enumKeys.nextElement();
+            EntityResult hData = ((EntityResult)value).clone();
+            Iterator<?> enumKeys = hData.keySet().iterator();
+            while (enumKeys.hasNext()) {
+                Object oKey = enumKeys.next();
                 if ((!this.attributes.contains(oKey)) && !oKey.equals(this.keyField)) {
                     hData.remove(oKey);
                 }
@@ -5217,13 +5216,13 @@ public class Table extends JRootPane
                 Entity ent = ApplicationManager.getApplication()
                     .getReferenceLocator()
                     .getEntityReference(this.getEntityName());
-                if ((ent instanceof DynamicMemoryEntity) && (value instanceof Hashtable)) {
-                    EntityResult data = new EntityResult(EntityResult.OPERATION_SUCCESSFUL,
+                if ((ent instanceof DynamicMemoryEntity) && (value instanceof Map)) {
+                    EntityResult data = new EntityResultMapImpl(EntityResult.OPERATION_SUCCESSFUL,
                             EntityResult.BEST_COMPRESSION);
-                    Hashtable hValue = (Hashtable) value;
-                    Set entries = hValue.entrySet();
+                    Map<?,?> hValue = (Map<?,?>) value;
+                    Set<?> entries = hValue.entrySet();
                     for (Object entry : entries) {
-                        Map.Entry current = (Map.Entry) entry;
+                        Map.Entry<?,?> current = (Map.Entry<?,?>) entry;
                         data.put(current.getKey(), current.getValue());
                     }
                     ((DynamicMemoryEntity) ent).setValue(data);
@@ -5261,7 +5260,7 @@ public class Table extends JRootPane
         if (value instanceof Map) {
             Map<?,?> h = (Map<?,?>) value;
             if ((h == null) || h.isEmpty()) {
-                // this means the hashtable is empty
+                // this means the Map is empty
                 // 1remove the filtering and the sorting and the grouping
                 this.resetGroup();
                 this.resetFilter();
@@ -5280,11 +5279,11 @@ public class Table extends JRootPane
                 // we have to check whether the new columns are the same to the
                 // old
                 // ones just replace the values
-                List<String> hashtableKeys = value == null ? new ArrayList<>() : Arrays.asList(h.keySet().toArray(new String[] {}));
+                List<String> MapKeys = value == null ? new ArrayList<>() : Arrays.asList(h.keySet().toArray(new String[] {}));
                 List<String> attributesClone = new ArrayList<>(this.attributes);
-                Collections.sort(hashtableKeys);
+                Collections.sort(MapKeys);
                 Collections.sort(attributesClone);
-                if (!hashtableKeys.equals(attributesClone)) {
+                if (!MapKeys.equals(attributesClone)) {
                     // the new values and the columns in the table are different
                     // we need to
                     // remove the old sorting
@@ -5349,13 +5348,13 @@ public class Table extends JRootPane
      * @see TableSorter#getShowedValue
      * @return
      */
-    public Object getShownValue() {
+    public EntityResult getShownValue() {
         this.checkRefreshThread();
         TableModel model = this.table.getModel();
         return ((TableSorter) model).getShownValue();
     }
 
-    public Object getShownValue(String cols[]) {
+    public EntityResult getShownValue(String cols[]) {
         this.checkRefreshThread();
         TableModel model = this.table.getModel();
         return ((TableSorter) model).getShownValue(cols);
@@ -5450,7 +5449,7 @@ public class Table extends JRootPane
     @Deprecated
     public List<Object> getPrimaryKeys() {
         this.checkRefreshThread();
-        Map<Object, Object> hAllKeys = this.getAllPrimaryKeys();
+        EntityResult hAllKeys = this.getAllPrimaryKeys();
         if (hAllKeys.containsKey(this.keyField)) {
             return (List<Object>) hAllKeys.get(this.keyField);
         } else {
@@ -5460,7 +5459,7 @@ public class Table extends JRootPane
 
     /**
      * Returns all the values for the columns configured as key and keys for the table. In the returned
-     * Hashtable, the keys will be the columns mentioned previously, and the values, all the values in
+     * Map, the keys will be the columns mentioned previously, and the values, all the values in
      * the table corresponding to those columns.
      * @return the table primary keys values
      */
@@ -5468,7 +5467,7 @@ public class Table extends JRootPane
         this.checkRefreshThread();
         EntityResult h = new EntityResultMapImpl();
         // Search the column name in the table header
-        List<Object> vKeys = this.getKeys();
+        List<String> vKeys = this.getKeys();
         for (int i = 0; i < vKeys.size(); i++) {
             TableColumn tc = this.table.getColumn(vKeys.get(i));
             if (tc != null) {
@@ -5497,12 +5496,12 @@ public class Table extends JRootPane
      * the table.
      * @return the table columns information
      */
-    public Hashtable getAttributesAndKeysData() {
+    public EntityResult getAttributesAndKeysData() {
         this.checkRefreshThread();
-        Hashtable h = new Hashtable();
+        EntityResult h = new EntityResultMapImpl();
         // Search the column in the table header
-        Vector vKeys = this.getKeys();
-        for (Object element : this.attributes) {
+        List<String> vKeys = this.getKeys();
+        for (String element : this.attributes) {
             if (!vKeys.contains(element)) {
                 vKeys.add(element);
             }
@@ -5522,14 +5521,14 @@ public class Table extends JRootPane
                     if (tableSorter.isInsertingEnabled()) {
                         rowCount = rowCount - 1;
                     }
-                    Vector vKeyValues = new Vector();
+                    List<Object> vKeyValues = new ArrayList<>();
                     for (int j = 0; j < rowCount; j++) {
                         vKeyValues.add(vKeyValues.size(), ((TableSorter) tableModel).getValueAt(j, columnModelIndex));
                     }
                     h.put(vKeys.get(i), vKeyValues);
                 }
-            } catch (Exception e) {
-                Table.logger.error("getAttributesAndKeysData error", e);
+            } catch (Exception exc) {
+                Table.logger.error("getAttributesAndKeysData error", exc);
             }
         }
         return h;
@@ -5548,15 +5547,15 @@ public class Table extends JRootPane
      * attributes key and keys.
      * @return the configured keys for the table
      */
-    public List<Object> getKeys() {
+    public List<String> getKeys() {
         if (this.keyFields != null) {
-        	List<Object> v = new ArrayList<>(this.keyFields);
+        	List<String> v = new ArrayList<>(this.keyFields);
             if (!v.contains(this.keyField)) {
                 v.add(this.keyField);
             }
             return v;
         } else {
-            List<Object> v = new ArrayList<>();
+            List<String> v = new ArrayList<>();
             v.add(this.keyField);
             return v;
         }
@@ -5790,8 +5789,8 @@ public class Table extends JRootPane
      */
     public Object getRowKey(int rowIndex, String keyName) {
         this.checkRefreshThread();
-        Hashtable h = this.getAllPrimaryKeys();
-        Vector v = (Vector) h.get(keyName);
+        EntityResult h = this.getAllPrimaryKeys();
+        List<?> v = (List<?>) h.get(keyName);
         if (v != null) {
             return v.get(rowIndex);
         } else {
@@ -5836,20 +5835,20 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns the values of the keys for the index specified. The result is a {@link #Hashtable}
-     * containing the keys as the Hashtable keys, and the key value in the TableModel as value for each
-     * entry in the Hashtable.
+     * Returns the values of the keys for the index specified. The result is a {@link #Map}
+     * containing the keys as the Map keys, and the key value in the TableModel as value for each
+     * entry in the Map.
      * <p>
      * In case that the asked key is not present in the model, the key will not be in the result
-     * Hashtable.
+     * Map.
      * @param rowIndex the model row index that specifies the row to query
-     * @return a Hastable with the key values. The value will be null if the rowIndex is bigger than the
+     * @return a Map with the key values. The value will be null if the rowIndex is bigger than the
      *         total amount of records in the grid.
      */
     public Map<Object, Object> getRowKeys(int rowIndex) {
         this.checkRefreshThread();
         Map<Object, Object> rowKeys = new HashMap<>();
-        List<Object> vKeys = this.getKeys();
+        List<String> vKeys = this.getKeys();
         TableSorter tableSorter = this.getTableSorter();
         int rowCount = tableSorter.getRowCount();
         // if (tableSorter.isSum()) {
@@ -5860,7 +5859,7 @@ public class Table extends JRootPane
             return null;
         }
 
-        for (Object vKey : vKeys) {
+        for (String vKey : vKeys) {
             TableColumn tc = this.table.getColumn(vKey);
             int columnModelIndex = tc.getModelIndex();
             if (tc != null) {
@@ -5941,7 +5940,7 @@ public class Table extends JRootPane
     /**
      * Deletes the row which key is passed as parameter.
      * @deprecated
-     * @see #deleteRow(Hashtable)
+     * @see #deleteRow(Map)
      */
     @Deprecated
     public void deleteRow(Object key) {
@@ -5960,12 +5959,12 @@ public class Table extends JRootPane
      * Deletes the row specified as parameter
      * @param keysValues stores pairs key-value that defines the record to delete
      */
-    public void deleteRow(Hashtable keysValues) {
+    public void deleteRow(Map<?,?> keysValues) {
         this.checkRefreshThread();
         for (int i = 0; i < this.table.getRowCount(); i++) {
             boolean keysMatch = true;
-            Vector v = this.getKeys();
-            for (Object element : v) {
+            List<String> v = this.getKeys();
+            for (String element : v) {
                 int iColIndex = this.table.convertColumnIndexToView(this.table.getColumn(element).getModelIndex());
                 Object oTableValue = this.table.getValueAt(i, iColIndex);
                 Object oKeysValues = keysValues.get(element);
@@ -5993,7 +5992,7 @@ public class Table extends JRootPane
     public int getRowForKeys(Map<?,?> keysValues) {
         this.checkRefreshThread();
         // Get the first key
-        List<Object> v = this.getKeys();
+        List<String> v = this.getKeys();
         if (v.isEmpty()) {
             return -1;
         }
@@ -6038,18 +6037,18 @@ public class Table extends JRootPane
     }
 
     /**
-     * For each Hashtable passed as parameter in the array, the method will search the row in which the
-     * keys have the same value that the ones stored in the Hashtable.
+     * For each Map passed as parameter in the array, the method will search the row in which the
+     * keys have the same value that the ones stored in the Map.
      * <p>
-     * Each Hashtable must have, for every element, as key a column name (that is, a table's key) and as
+     * Each Map must have, for every element, as key a column name (that is, a table's key) and as
      * value the concrete value corresponding to that key.
      * <p>
      * The indexes of all these coincidences will be returned in the response int array.
-     * @param keysValuesToQuery an array of {@link #Hashtable} that stores in each element the
+     * @param keysValuesToQuery an array of {@link #Map} that stores in each element the
      *        keys-values combination to search
      * @return the indexes of the rows that matches the keys in the param
      */
-    public int[] getRowsForKeys(Hashtable[] keysValuesToQuery) {
+    public int[] getRowsForKeys(Map<?,?>[] keysValuesToQuery) {
         this.checkRefreshThread();
 
         if ((keysValuesToQuery == null) || (keysValuesToQuery.length == 0)) {
@@ -6057,7 +6056,7 @@ public class Table extends JRootPane
         }
         int[] result = new int[keysValuesToQuery.length];
         // Get the first key in the vector
-        Vector v = this.getKeys();
+        List<String> v = this.getKeys();
         if (v.isEmpty()) {
             return null;
         }
@@ -6082,10 +6081,10 @@ public class Table extends JRootPane
 
         for (int i = 0; i < keysValuesToQuery.length; i++) {
             result[i] = -1;
-            Hashtable hKeysI = keysValuesToQuery[i];
+            Map<?,?> hKeysI = keysValuesToQuery[i];
             Object oKey1 = v.get(0);
             Object oKeyValue1 = hKeysI.get(oKey1);
-            ArrayList column0ValueList = keyList[0];
+            List<?> column0ValueList = keyList[0];
             for (int j = 0; j < column0ValueList.size(); j++) {
                 Object oValue = column0ValueList.get(j);
                 if (oKeyValue1.equals(oValue)) {
@@ -6094,7 +6093,7 @@ public class Table extends JRootPane
                     for (int k = 1; k < v.size(); k++) {
                         Object oKeyk = v.get(k);
                         Object oKeyValuek = hKeysI.get(oKeyk);
-                        ArrayList columnkValueList = keyList[k];
+                        List<?> columnkValueList = keyList[k];
                         Object oTableValuek = columnkValueList.get(j);
                         if (!oKeyValuek.equals(oTableValuek)) {
                             allKeysMatch = false;
@@ -6559,8 +6558,8 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns the data contained by the asked columns. The response is a {@link #Hashtable} in which
-     * the keys will be the columns asked as a method parameter, and the values are {@link #Vector} of
+     * Returns the data contained by the asked columns. The response is a {@link #Map} in which
+     * the keys will be the columns asked as a method parameter, and the values are {@link #List} of
      * String containing the printable data for each column.
      * <p>
      * If the column asked is not in the table, the response will not contain that column.
@@ -6570,13 +6569,13 @@ public class Table extends JRootPane
      * @param askedColumns the column names
      * @return the values of each column
      */
-    public Hashtable getPrintingData(Vector askedColumns) {
+    public EntityResult getPrintingData(List<?> askedColumns) {
         this.checkRefreshThread();
-        Hashtable hData = new Hashtable();
-        RealDataField realDataField = new RealDataField(new Hashtable(0));
-        DateDataField dateDataField = new DateDataField(new Hashtable(0));
-        IntegerDataField integerDataField = new IntegerDataField(new Hashtable(0));
-        CurrencyDataField currencyDataField = new CurrencyDataField(new Hashtable(0));
+        EntityResult hData = new EntityResultMapImpl();
+        RealDataField realDataField = new RealDataField(new HashMap<>(0));
+        DateDataField dateDataField = new DateDataField(new HashMap<>(0));
+        IntegerDataField integerDataField = new IntegerDataField(new HashMap<>(0));
+        CurrencyDataField currencyDataField = new CurrencyDataField(new HashMap<>(0));
         realDataField.setComponentLocale(this.locale);
         dateDataField.setComponentLocale(this.locale);
         integerDataField.setComponentLocale(this.locale);
@@ -6585,7 +6584,7 @@ public class Table extends JRootPane
             String sColumnName = this.table.getColumnName(i);
             if (askedColumns.contains(sColumnName)) {
                 if (this.attributes.contains(sColumnName)) {
-                    Vector vColumnData = new Vector();
+                    List<Object> vColumnData = new ArrayList<>();
                     long t = System.currentTimeMillis();
                     long tRendersTotal = 0;
                     long tGetValueTotal = 0;
@@ -6676,18 +6675,18 @@ public class Table extends JRootPane
      * @return the data contained in the specified row
      */
     protected String getRowText(int rowIndex) {
-        Hashtable hData = new Hashtable();
-        RealDataField realDataField = new RealDataField(new Hashtable(0));
-        DateDataField dateDataField = new DateDataField(new Hashtable(0));
-        IntegerDataField integerDataField = new IntegerDataField(new Hashtable(0));
-        CurrencyDataField currencyDataField = new CurrencyDataField(new Hashtable(0));
+        Map<Object, Object> hData = new HashMap<>();
+        RealDataField realDataField = new RealDataField(new HashMap<>(0));
+        DateDataField dateDataField = new DateDataField(new HashMap<>(0));
+        IntegerDataField integerDataField = new IntegerDataField(new HashMap<>(0));
+        CurrencyDataField currencyDataField = new CurrencyDataField(new HashMap<>(0));
         realDataField.setComponentLocale(this.locale);
         dateDataField.setComponentLocale(this.locale);
         integerDataField.setComponentLocale(this.locale);
         currencyDataField.setComponentLocale(this.locale);
         for (Object element : this.attributes) {
             String sColumnName = element.toString();
-            Vector vColumnData = (Vector) ((Hashtable) this.getValue()).get(sColumnName);
+            List<Object> vColumnData = (List<Object>) ((EntityResult) this.getValue()).get(sColumnName);
             Object oValue = vColumnData.get(rowIndex);
             if (this.currencyColumns.contains(sColumnName)) {
                 currencyDataField.setValue(oValue);
@@ -6730,15 +6729,15 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns a {@link #Hashtable} with all the data of the visible columns.
+     * Returns a {@link #Map} with all the data of the visible columns.
      *
-     * @see #getPrintingData(Vector)
-     * @return a {@link #Hashtable} with all the data of the visible columns.
+     * @see #getPrintingData(List)
+     * @return a {@link #Map} with all the data of the visible columns.
      */
-    public Hashtable getPrintingData() {
+    public EntityResult getPrintingData() {
         this.checkRefreshThread();
         int rejected = 0;
-        Vector orderColumnNames = new Vector();
+        List<String> orderColumnNames = new ArrayList<>();
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             // Get the column
             TableColumn tableColumn = this.table.getColumnModel().getColumn(i);
@@ -6956,13 +6955,13 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns a {@link #Vector} with the column names of all the visible columns. The column order is
+     * Returns a {@link #List} with the column names of all the visible columns. The column order is
      * the same they have in the ColumnModel
-     * @return a {@link #Vector} containing the visible column names in the same order in which they are
+     * @return a {@link #List} containing the visible column names in the same order in which they are
      *         been displayed
      */
-    public Vector getOrderColumnName() {
-        Vector sortColumnNames = new Vector();
+    public List<Object> getOrderColumnName() {
+        List<Object> sortColumnNames = new ArrayList<>();
         int rejeted = 0;
         for (int i = 0; i < this.table.getColumnCount(); i++) {
             // Get the column
@@ -7031,11 +7030,11 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns the data contained in the specified row. The result is a {@link #Hashtable} with pairs
+     * Returns the data contained in the specified row. The result is a {@link #Map} with pairs
      * key-value, where the keys are the column names, containing the row data. If the table is
      * filtered, returns the data as well.
      * @param rowIndex the model index for the column
-     * @return a {@link #Hashtable} with the row data
+     * @return a {@link #Map} with the row data
      */
     public Map<Object, Object> getRowData(int rowIndex) {
         this.checkRefreshThread();
@@ -7043,7 +7042,7 @@ public class Table extends JRootPane
         return model.getRowData(rowIndex);
     }
 
-    public Map<Object, Object> getRowDataForKeys(Hashtable keysValues) {
+    public Map<Object, Object> getRowDataForKeys(Map<Object, Object> keysValues) {
         this.checkRefreshThread();
         TableSorter model = (TableSorter) this.table.getModel();
         return model.getRowDataForKeys(this.getKeys(), keysValues);
@@ -7061,13 +7060,13 @@ public class Table extends JRootPane
     }
 
     /**
-     * Returns a Hashtable containing the data associated to the row calculated columns. The Hashtable
-     * keys are the calculated column names. The Hashtable values are the values in the table
+     * Returns a Map containing the data associated to the row calculated columns. The Map
+     * keys are the calculated column names. The Map values are the values in the table
      * corresponding to the row passed as parameter.
      * @param rowIndex
      * @return
      */
-    public Hashtable getCalculatedRowData(int rowIndex) {
+    public Map<Object, Object> getCalculatedRowData(int rowIndex) {
         this.checkRefreshThread();
         TableSorter model = (TableSorter) this.table.getModel();
         return model.getCalculatedRowData(rowIndex);
@@ -7133,7 +7132,7 @@ public class Table extends JRootPane
             this.rBoolean = new BooleanCellRenderer();
             this.rReal = new RealCellRenderer();
             this.rObject = new ObjectCellRenderer();
-            Hashtable pImagen = new Hashtable(2);
+            Map<Object, Object> pImagen = new HashMap<>(2);
             pImagen.put("keepaspectratio", "yes");
             pImagen.put("allowzoom", "no");
             pImagen.put("height", "50");
@@ -7221,16 +7220,16 @@ public class Table extends JRootPane
     protected void setEditors() {
         if (this.editableColumns != null) {
             for (int i = 0; i < this.editableColumns.size(); i++) {
-                String colName = (String) this.editableColumns.get(i);
+                String colName = this.editableColumns.get(i);
                 // Set the currency editors
                 if ((this.currencyColumns != null) && this.currencyColumns.contains(colName)) {
-                    Hashtable h = new Hashtable();
+                	Map<Object, Object> h = new HashMap<>();
                     h.put(CellEditor.COLUMN_PARAMETER, colName);
                     CurrencyCellEditor editor = new CurrencyCellEditor(h);
                     this.setColumnEditor(colName, editor);
                 } else if ((this.hourRenderColumns != null) && this.hourRenderColumns.contains(colName)) {
                     // Set the time editors
-                    Hashtable h = new Hashtable();
+                	Map<Object, Object> h = new HashMap<>();
                     h.put(CellEditor.COLUMN_PARAMETER, colName);
                     DateCellEditor editor = new DateCellEditor(h);
                     this.setColumnEditor(colName, editor);
@@ -7953,7 +7952,7 @@ public class Table extends JRootPane
             this.translateGroupedFunctions();
             this.menuGroupFunction.setVisible(false);
             if (column > 0) {
-                Class columnClass = this.table.getModel().getColumnClass(column);
+                Class<?> columnClass = this.table.getModel().getColumnClass(column);
                 if ((columnClass == Date.class) || (columnClass == Timestamp.class)) {
                     this.menuGroupDate.setVisible(true);
                     this.menuGroup.setVisible(false);
@@ -8016,7 +8015,7 @@ public class Table extends JRootPane
 
             if (chartInforRepository != null) {
 
-                Enumeration enumDescriptions = chartInforRepository.keys();
+                Enumeration<?> enumDescriptions = chartInforRepository.keys();
 
                 while (enumDescriptions.hasMoreElements()) {
                     final String description = enumDescriptions.nextElement().toString();
@@ -8270,10 +8269,10 @@ public class Table extends JRootPane
     }
 
     protected void translateGroupedFunctions() {
-        Hashtable operations = this.getTableSorter().getOperations();
-        List listOperations = new ArrayList(operations.keySet());
-        for (Object listOperation : listOperations) {
-            GroupOperation operation = (GroupOperation) operations.get(listOperation);
+         Map<Integer, GroupOperation> operations = this.getTableSorter().getOperations();
+        List<Integer> listOperations = new ArrayList<>(operations.keySet());
+        for (Integer listOperation : listOperations) {
+            GroupOperation operation = operations.get(listOperation);
             // operations with id=0,1,2,3,4 are reserved for AVG, COUNT, MIN...
             if (operation.getOperationId() > 4) {
                 JMenuItem item = operation.getItem();
@@ -8292,8 +8291,8 @@ public class Table extends JRootPane
             }
             if (!Table.CHART_V1) {
                 try {
-                    Class clazz = Class.forName("com.ontimize.chart.ChartUtilities");
-                    Constructor constructor = clazz.getConstructor(new Class[] { Table.class });
+                    Class<?> clazz = Class.forName("com.ontimize.chart.ChartUtilities");
+                    Constructor<?> constructor = clazz.getConstructor(new Class[] { Table.class });
                     this.chartUtilities = (IChartUtilities) constructor.newInstance(new Object[] { this });
                 } catch (Exception e1) {
                     Table.logger.trace(null, e1);
@@ -8311,7 +8310,7 @@ public class Table extends JRootPane
     protected void createDetailForm() {
         String sFormName = Table.this.formName;
 
-        Vector vKeys = this.getKeys();
+        List<String> vKeys = this.getKeys();
 
         Form formCopy = null;
         if (this.detailFormBuilder != null) {
@@ -8326,9 +8325,9 @@ public class Table extends JRootPane
                 this.dynamicFormManager.setFormManager(this.parentForm.getFormManager());
             }
 
-            Hashtable filterKeys = this.getParentKeyValues();
+            Map<Object, Object> filterKeys = this.getParentKeyValues();
 
-            Hashtable hPrimaryKeys = new Hashtable();
+            Map<Object, Object> hPrimaryKeys = new HashMap<>();
             Window w = SwingUtilities.getWindowAncestor(this);
             if (w instanceof Frame) {
                 this.detailForm = new DetailForm((Frame) w, this.detailFormTitleKey, true, formCopy, hPrimaryKeys,
@@ -8353,7 +8352,7 @@ public class Table extends JRootPane
     protected void createInsertDetailForm() {
         String sFormName = Table.this.insertFormName;
 
-        List<Object> vKeys = this.getKeys();
+        List<String> vKeys = this.getKeys();
 
         Form formCopy = null;
         if (this.insertDetailFormBuilder != null) {
@@ -8368,7 +8367,7 @@ public class Table extends JRootPane
                 this.dynamicFormManager.setFormManager(this.parentForm.getFormManager());
             }
 
-            Map<?,?> filterKeys = this.getParentKeyValues();
+			Map<Object, Object> filterKeys = this.getParentKeyValues();
 
             Map<Object, Object> hPrimaryKeys = new HashMap<>();
             Window w = SwingUtilities.getWindowAncestor(this);
@@ -8411,14 +8410,14 @@ public class Table extends JRootPane
      * Creates the detail form for this table.
      */
     protected IDetailForm createTabbedDetailForm(String sFormName) {
-        Vector vKeys = this.getKeys();
+        List<String> vKeys = this.getKeys();
 
         Form formCopy = this.parentForm.getFormManager().getFormCopy(sFormName);
 
         if (formCopy != null) {
-            Hashtable filterKeys = this.getParentKeyValues();
+            Map<Object, Object> filterKeys = this.getParentKeyValues();
 
-            Hashtable hPrimaryKeys = new Hashtable();
+            Map<Object, Object> hPrimaryKeys = new HashMap<>();
             IDetailForm detailForm = new TabbedDetailForm(formCopy, hPrimaryKeys, vKeys, Table.this, filterKeys,
                     this.codValues);
             detailForm.setResourceBundle(this.resourcesFile);
@@ -8443,7 +8442,7 @@ public class Table extends JRootPane
      * @param rowIndex the row index
      * @return the result of the execution of the delete instruction
      * @throws Exception
-     * @see Entity#delete(Hashtable, int)
+     * @see Entity#delete(Map, int)
      */
     protected EntityResult deleteEntityRow(int rowIndex) throws Exception {
         if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
@@ -8453,9 +8452,9 @@ public class Table extends JRootPane
             EntityReferenceLocator referenceLocator = this.parentForm.getFormManager().getReferenceLocator();
             Entity ent = referenceLocator.getEntityReference(this.getEntityName());
             Map<Object, Object> kv = this.getParentKeyValues();
-            List<Object> vKeys = this.getKeys();
-            for (Object vKey : vKeys) {
-                kv.put(vKey, this.getRowKey(rowIndex, vKey.toString()));
+            List<String> vKeys = this.getKeys();
+            for (String vKey : vKeys) {
+                kv.put(vKey, this.getRowKey(rowIndex, vKey));
             }
             EntityResult eR = ent.delete(kv, referenceLocator.getSessionId());
             if ((eR.getCode() == EntityResult.OPERATION_SUCCESSFUL)
@@ -8561,11 +8560,11 @@ public class Table extends JRootPane
     /**
      * Adds a new row with data in a concrete position in the table
      *
-     * @see TableSorter#addRow(int, Hashtable)
-     * @param rowData a {@link #Hashtable} containing the data to add
+     * @see TableSorter#addRow(int, Map)
+     * @param rowData a {@link #Map} containing the data to add
      * @param row the position in the model in which the row will be added
      */
-    public void addRow(int row, Hashtable rowData) {
+    public void addRow(int row, Map<Object, Object> rowData) {
         this.checkRefreshThread();
         TableSorter ts = (TableSorter) this.table.getModel();
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
@@ -8581,14 +8580,14 @@ public class Table extends JRootPane
     /**
      * Adds several rows to the table.
      * @param rows and array with the position of the rows in which the new rows will be inserted
-     * @param rowsData a {@link #Vector} containing {@link #Hashtable}. Each position of the Vector is a
-     *        Hashtable containing information for a row
+     * @param rowsData a {@link #List} containing {@link #Map}. Each position of the Vector is a
+     *        Map containing information for a row
      * @deprecated
-     * @see #addRows(Vector)
-     * @see TableSorter#addRows(int[], Vector)
+     * @see #addRows(List)
+     * @see TableSorter#addRows(int[], List)
      */
     @Deprecated
-    public void addRows(int[] rows, Vector rowsData) {
+    public void addRows(int[] rows, List<Object> rowsData) {
         this.checkRefreshThread();
         TableSorter ts = (TableSorter) this.table.getModel();
         if ((this.table != null) && this.table.isEditing() && (((EJTable) this.table).getCellEditor() != null)) {
@@ -8600,9 +8599,9 @@ public class Table extends JRootPane
 
     /**
      * Adds several rows to the table.
-     * @param rowsData a {@link #Vector} containing {@link #Hashtable}. Each position of the Vector is a
-     *        Hashtable containing information for a row
-     * @see TableSorter#addRows(Vector)
+     * @param rowsData a {@link #List} containing {@link #Map}. Each position of the Vector is a
+     *        Map containing information for a row
+     * @see TableSorter#addRows(List)
      */
     public void addRows(List<Object> rowsData) {
         this.checkRefreshThread();
@@ -8625,24 +8624,24 @@ public class Table extends JRootPane
             this.checkRefreshThread();
             EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
             Entity ent = this.locator.getEntityReference(this.getEntityName());
-            Hashtable kv = this.getParentKeyValues();
-            Vector vKeys = this.getKeys();
+            Map<Object, Object> kv = this.getParentKeyValues();
+            List<String> vKeys = this.getKeys();
             BasicExpression bexp = null;
             EntityResult mapIndexKey = new EntityResultMapImpl();
 
             for (int objectRowIndex : viewRowIndexes) {
-                Hashtable indexKeysHash = new Hashtable();
+                Map<Object, Object> indexKeysHash = new HashMap<>();
                 indexKeysHash.put(indexKeyString, objectRowIndex);
                 BasicExpression bexpIndex = null;
-                for (Object oKey : vKeys) {
-                    Object rowKeyValue = this.getRowKey(objectRowIndex, oKey.toString());
+                for (String oKey : vKeys) {
+                    Object rowKeyValue = this.getRowKey(objectRowIndex, oKey);
                     indexKeysHash.put(oKey, rowKeyValue);
                     if (bexpIndex != null) {
-                        BasicExpression bexpAux = new BasicExpression(new BasicField((String) oKey),
+                        BasicExpression bexpAux = new BasicExpression(new BasicField(oKey),
                                 BasicOperator.EQUAL_OP, rowKeyValue);
                         bexpIndex = new BasicExpression(bexpIndex, BasicOperator.AND_OP, bexpAux);
                     } else {
-                        bexpIndex = new BasicExpression(new BasicField((String) oKey), BasicOperator.EQUAL_OP,
+                        bexpIndex = new BasicExpression(new BasicField(oKey), BasicOperator.EQUAL_OP,
                                 rowKeyValue);
                     }
                 }
@@ -8670,8 +8669,8 @@ public class Table extends JRootPane
 
                 List<Integer> deleteIndex = new ArrayList<Integer>();
                 for (int i = 0; i < mapIndexKey.calculateRecordNumber(); i++) {
-                    Map<String, Integer> actualIndexRecord = mapIndexKey.getRecordValues(i);
-                    int actualIndexRow = actualIndexRecord.remove(indexKeyString);
+                    Map<?, ?> actualIndexRecord = mapIndexKey.getRecordValues(i);
+                    int actualIndexRow = (int) actualIndexRecord.remove(indexKeyString);
                     Map<?,?> rowData = res.getRecordValues(res.getRecordIndex(actualIndexRecord));
                     if (rowData != null) {
                         this.updateRowData(rowData, actualIndexRecord);
@@ -8690,8 +8689,8 @@ public class Table extends JRootPane
                 Table.logger.trace("Table: Query time: {}  ,  deleteRow-addRow time: {}", t2 - t, t3 - t2);
             }
 
-        } catch (Exception e) {
-            Table.logger.error("refreshRow:", e);
+        } catch (Exception exc) {
+            Table.logger.error("refreshRow:", exc);
         }
     }
 
@@ -8708,18 +8707,18 @@ public class Table extends JRootPane
      * @param viewRowIndex the index to refresh
      * @param oldkv
      */
-    public void refreshRow(int viewRowIndex, Hashtable oldkv) {
+    public void refreshRow(int viewRowIndex, Map<Object, Object> oldkv) {
         try {
             this.checkRefreshThread();
             Entity ent = this.locator.getEntityReference(this.getEntityName());
-            Hashtable kv = this.getParentKeyValues();
+            Map<Object, Object> kv = this.getParentKeyValues();
             // Put the row keys
-            Vector vKeys = this.getKeys();
-            for (Object oKey : vKeys) {
+            List<String> vKeys = this.getKeys();
+            for (String oKey : vKeys) {
                 if ((oldkv != null) && oldkv.containsKey(oKey)) {
                     kv.put(oKey, oldkv.get(oKey));
                 } else {
-                    kv.put(oKey, this.getRowKey(viewRowIndex, oKey.toString()));
+                    kv.put(oKey, this.getRowKey(viewRowIndex, oKey));
                 }
             }
             long t = System.currentTimeMillis();
@@ -8732,8 +8731,8 @@ public class Table extends JRootPane
             } else {
                 long t2 = System.currentTimeMillis();
                 // Update row data
-                Hashtable hRowData = res.getRecordValues(0);
-                Hashtable newkv = new Hashtable();
+                Map<?,?> hRowData = res.getRecordValues(0);
+                Map<Object, Object> newkv = new HashMap<>();
                 for (Object oKey : vKeys) {
                     newkv.put(oKey, this.getRowKey(viewRowIndex, oKey.toString()));
                 }
@@ -8843,7 +8842,7 @@ public class Table extends JRootPane
             this.checkRefreshThread();
             EntityReferenceLocator locator = this.parentForm.getFormManager().getReferenceLocator();
             Entity ent = locator.getEntityReference(this.getEntityName());
-            Hashtable kv = new Hashtable();
+            Map<Object, Object> kv = new HashMap<>();
             kv = this.getParentKeyValues();
             if (ent == null) {
                 if (Table.logger.isDebugEnabled()) {
@@ -8887,7 +8886,7 @@ public class Table extends JRootPane
                 this.setValue(res, autoSizeColumns);
                 // Update the data in parentkform cache
                 if (this.parentForm != null) {
-                    Hashtable av = new Hashtable();
+                	Map<Object, Object> av = new HashMap<>();
                     av.put(this.getAttribute(), res);
                     this.parentForm.updateDataListDataCurrentRecord(av, false);
                 }
@@ -9109,7 +9108,7 @@ public class Table extends JRootPane
     }
 
     protected ExtendedTableModel createExtendedTableModel() {
-        return new ExtendedTableModel(new Hashtable(0), this.attributes, this.calculedColumns, false,
+        return new ExtendedTableModel(new EntityResultMapImpl(), this.attributes, this.calculedColumns, false,
                 this.requiredColumnsCalculedColumns);
     }
 
@@ -9436,7 +9435,7 @@ public class Table extends JRootPane
         this.addTableHeaderMouseListener(eJTable);
 
         sorter.setResourceBundle(this.resourcesFile);
-        sorter.setData(new Hashtable());
+        sorter.setData(new EntityResultMapImpl());
         sorter.setSourceTable(eJTable);
 
         eJTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -9526,7 +9525,7 @@ public class Table extends JRootPane
         }
     }
 
-    protected EJTable createEJTable(TableSorter sorter, List<Object> visibleColumns) {
+    protected EJTable createEJTable(TableSorter sorter, List<String> visibleColumns) {
         return new EJTable(this, sorter, this.visibleColumns);
     }
 
@@ -9605,10 +9604,10 @@ public class Table extends JRootPane
             try {
                 String renderClassName = (String) this.parameters.get("tableheaderrenderer");
                 if (renderClassName != null) {
-                    Class renderClass = Class.forName(renderClassName);
-                    Constructor constructor = null;
+                    Class<?> renderClass = Class.forName(renderClassName);
+                    Constructor<?> constructor = null;
                     try {
-                        constructor = renderClass.getConstructor(new Class[] { JTable.class, Hashtable.class });
+                        constructor = renderClass.getConstructor(new Class[] { JTable.class, HashMap.class });
                         rend = constructor.newInstance(new Object[] { table, this.parameters });
                     } catch (Exception e) {
                         Table.logger.trace(null, e);
@@ -9959,8 +9958,8 @@ public class Table extends JRootPane
         return null;
     }
 
-    public List getTableComponentReferences() {
-        List result = new ArrayList();
+    public List<Object> getTableComponentReferences() {
+        List<Object> result = new ArrayList<>();
         for (int i = 0; i < this.controlsPanel.getComponentCount(); i++) {
             Component c = this.controlsPanel.getComponent(i);
             if (c instanceof TableComponent) {
@@ -10378,7 +10377,7 @@ public class Table extends JRootPane
             ImageIcon icon = ParseUtils.getImageIcon(iconpath, (ImageIcon) button.getIcon());
             if ((iconpath != null) && (button instanceof TableComponent)) {
                 if (this.buttonIcons == null) {
-                    this.buttonIcons = new Hashtable();
+                    this.buttonIcons = new HashMap<>();
                 }
                 this.buttonIcons.put(((TableComponent) button).getKey(), icon);
             }
@@ -10484,7 +10483,7 @@ public class Table extends JRootPane
 			                        String sErrorDeletingText = ApplicationManager
 			                            .getTranslation("ErrorDeletingRow", Table.this.resourcesFile);
 			                        Thread.yield();
-			                        Vector vRemovedRowsIndex = new Vector();
+			                        List<Integer> vRemovedRowsIndex = new ArrayList<>();
 			                        long t = System.currentTimeMillis();
 			                        for (int i = 0; i < selectedRows.length; i++) {
 			                            int iSelectedRow = selectedRows[i];
@@ -10517,7 +10516,7 @@ public class Table extends JRootPane
 			                        // Update the table
 			                        int[] index = new int[vRemovedRowsIndex.size()];
 			                        for (int i = 0; i < vRemovedRowsIndex.size(); i++) {
-			                            index[i] = ((Integer) vRemovedRowsIndex.get(i)).intValue();
+			                            index[i] = vRemovedRowsIndex.get(i).intValue();
 			                        }
 			                        Table.this.deleteRows(index);
 			                    }
@@ -10741,8 +10740,8 @@ public class Table extends JRootPane
 		                                EntityResult res = Table.this.getValueToExport(true, true, true);
 		                                XLSExporter exporter = XLSExporterFactory
 		                                    .instanceXLSExporter(Table.XLS_EXPORT_CLASS);
-		                                List orderColumns = res.getOrderColumns();
-		                                Hashtable renderers = Table.this.getAllColumnRenderer();
+										List<?> orderColumns = res.getOrderColumns();
+		                                 Map<String, TableCellRenderer> renderers = Table.this.getAllColumnRenderer();
 		                                for (Object current : orderColumns) {
 		                                    if (current instanceof Table.KeyObject) {
 		                                        KeyObject currentKO = (KeyObject) current;
@@ -10754,8 +10753,8 @@ public class Table extends JRootPane
 		                                }
 		                                exporter.createXLS(res, finalFile, null, renderers, res.getOrderColumns(),
 		                                        true, xlsx, true);
-		                            } catch (Exception e) {
-		                                Table.logger.error(null, e);
+		                            } catch (Exception exc) {
+		                                Table.logger.error(null, exc);
 		                                MessageDialog.showErrorMessage(SwingUtilities.getWindowAncestor(Table.this),
 		                                        "table.error_generating_xls_file");
 		                            } finally {
@@ -11243,7 +11242,7 @@ public class Table extends JRootPane
                                 this.parentForm.getDataFieldValue(element));
                     }
                 }
-                Hashtable hFilterKeys = this.getParentKeyValues();
+                Map<Object, Object> hFilterKeys = this.getParentKeyValues();
                 detailForm.resetParentkeys(this.getParentKeys(true));
 
                 detailForm.setParentKeyValues(hFilterKeys);
@@ -11265,7 +11264,7 @@ public class Table extends JRootPane
 
                 this.detailForm.setQueryInsertMode();
 
-                Hashtable hFilterKeys = this.getParentKeyValues();
+                Map<Object, Object> hFilterKeys = this.getParentKeyValues();
                 this.detailForm.resetParentkeys(this.getParentKeys(true));
 
                 this.detailForm.setParentKeyValues(hFilterKeys);
@@ -11291,7 +11290,7 @@ public class Table extends JRootPane
             if ((this.parentForm.getFormManager() instanceof ITabbedFormManager)
                     && this.parentForm.equals(((ITabbedFormManager) this.parentForm.getFormManager()).getMainForm())) {
                 IDetailForm detailForm = this.createInsertTabbedDetailForm();
-                detailForm.setKeys(new Hashtable(0), 0);
+                detailForm.setKeys(new EntityResultMapImpl(), 0);
 
                 if (this.attributesToFix != null) {
                     for (String element : this.attributesToFix) {
@@ -11300,7 +11299,7 @@ public class Table extends JRootPane
                     }
                 }
 
-                Hashtable hFilterKeys = this.getParentKeyValues();
+                Map<Object, Object> hFilterKeys = this.getParentKeyValues();
                 detailForm.resetParentkeys(this.getParentKeys(true));
                 detailForm.setParentKeyValues(hFilterKeys);
                 detailForm.setInsertMode();
@@ -11329,12 +11328,12 @@ public class Table extends JRootPane
                     detailform.resetEntityName();
                 }
 
-                detailform.setKeys(new Hashtable(0), 0);
+                detailform.setKeys(new EntityResultMapImpl(), 0);
 
                 this.setAttributesToFix();
                 detailform.resetParentkeys(this.getParentKeys(true));
-                // Create a hashtable with all filter keys
-                Hashtable hFilterKeys = this.getParentKeyValues();
+                // Create a Map with all filter keys
+                Map<Object, Object> hFilterKeys = this.getParentKeyValues();
 
                 detailform.setParentKeyValues(hFilterKeys);
                 detailform.setInsertMode();
@@ -11487,7 +11486,7 @@ public class Table extends JRootPane
 	 * 
 	 * @return the names of the filtered columns
 	 */
-	public Vector getFilterColumn() {
+	public List<Object> getFilterColumn() {
 		return ((TableSorter) this.table.getModel()).getFilteredColumns();
 	}
 
@@ -11760,7 +11759,7 @@ public class Table extends JRootPane
 	 *            a vector containing the column names
 	 * @return
 	 */
-	protected int[] setPreferredTableColumnWidths(Vector visibleColumns) {
+	protected int[] setPreferredTableColumnWidths(List<Object> visibleColumns) {
 		return this.setPreferredTableColumnWidths(visibleColumns, null);
 	}
 
@@ -11773,7 +11772,7 @@ public class Table extends JRootPane
 	 *            a progress bar to show the process
 	 * @return
 	 */
-	protected int[] setPreferredTableColumnWidths(Vector visibleColumns, final JProgressBar progressBar) {
+	protected int[] setPreferredTableColumnWidths(List<Object> visibleColumns, final JProgressBar progressBar) {
 		// Calculate the minimun table width to ensure that values are visible
 
 		Table.logger.trace("Table: setting columns preferred width: Memory used: {} kbytes", (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0);
@@ -12074,7 +12073,7 @@ public class Table extends JRootPane
 		if ((model != null) && (model instanceof TableSorter)) {
 			TableSorter sorter = (TableSorter) model;
 			Object value = sorter.getValueAt(row, col);
-			Class columnClass = sorter.getColumnClass(col);
+			Class<?> columnClass = sorter.getColumnClass(col);
 
 			if (this.getJTable().getCellRenderer(0, this.colPress) instanceof ComboReferenceCellRenderer) {
 				value = ((ComboReferenceCellRenderer) this.getJTable().getCellRenderer(0, this.colPress)).getCodeDescription(value);
@@ -12163,7 +12162,7 @@ public class Table extends JRootPane
 	 */
 	protected void printSelection() {
 		try {
-			Hashtable hSelectedData = Table.this.getSelectedRowData();
+			EntityResult hSelectedData = Table.this.getSelectedRowData();
 			if (this.tAux == null) {
 				this.tAux = new Table(Table.this.getParameters());
 				this.tAux.setParentForm(this.parentForm);
@@ -12233,7 +12232,7 @@ public class Table extends JRootPane
 	 * @see ImageCellRenderer
 	 */
 	public void setImageRendererHeight(int pixels) {
-		Hashtable pImage = new Hashtable();
+		Map<Object, Object> pImage = new HashMap<>();
 		pImage.put("height", Integer.toString(pixels));
 		this.table.setDefaultRenderer(BytesBlock.class, new ImageCellRenderer(pImage));
 		this.table.repaint();
@@ -12270,7 +12269,7 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Returns a {@link #Hashtable} in which the keys are the field names configured as table parent keys (using the names in the table entity if they are different that the form
+	 * Returns a {@link #Map} in which the keys are the field names configured as table parent keys (using the names in the table entity if they are different that the form
 	 * fields), and the values are the values those fields have in the table's parent form.
 	 * 
 	 * @return all the parent keys values
@@ -12282,9 +12281,9 @@ public class Table extends JRootPane
 	}
 
 	@Override
-	public Vector getParentKeyList() {
+	public List<String> getParentKeyList() {
 		if (this.parentkeys != null) {
-			Vector temp = new Vector();
+			List<String> temp = new ArrayList<>();
 			temp.addAll(this.parentkeys);
 			return temp;
 		}
@@ -12313,10 +12312,10 @@ public class Table extends JRootPane
 
 		Map<Object, Object> kv = new HashMap<>();
 		if (this.parentkeys != null) {
-			for (Object element : this.parentkeys) {
+			for (String element : this.parentkeys) {
 				Object v = this.parentForm.getDataFieldValue(element.toString());
 				if (v != null) {
-					Object pkName = element;
+					String pkName = element;
 					if (applyEquivalences) {
 						pkName = this.getParentkeyEquivalentValue(pkName);
 					}
@@ -12492,10 +12491,10 @@ public class Table extends JRootPane
 		if (this.formName != null) {
 			if (this.detailForm == null) {
 				this.createDetailForm();
-				this.detailForm.setKeys(new Hashtable(0), 0);
+				this.detailForm.setKeys(new EntityResultMapImpl(), 0);
 
 				this.detailForm.resetParentkeys(this.parentkeys);
-				Hashtable hOtherKeys = new Hashtable();
+				Map<Object, Object> hOtherKeys = new HashMap<>();
 				for (Object element : this.parentkeys) {
 					Object vParentKey = Table.this.parentForm.getDataFieldValueFromFormCache(element.toString());
 					if (Table.logger.isDebugEnabled() && (vParentKey == null)) {
@@ -12618,19 +12617,19 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Returns the information contained in the selected rows in a {@link #Hashtable}. The {@link #Hashtable} keys are the table attributes, and the values are {@link #Vector} with
+	 * Returns the information contained in the selected rows in a {@link #Map}. The {@link #Map} keys are the table attributes, and the values are {@link #List} with
 	 * the row values.
 	 * 
 	 * @return the information contained by the selected rows, and null when there is no selection
 	 */
-	public Map<Object, Object> getSelectedRowData() {
+	public EntityResult getSelectedRowData() {
 		if (this.table.getSelectedRowCount() == 0) {
 			return null;
 		}
 		// Return a new hastable with the data
 		int[] selectedRows = this.table.getSelectedRows();
 		List<Object> attributes = this.getAttributeList();
-		Map<Object, Object> hData = new HashMap<>();
+		EntityResult hData = new EntityResultMapImpl();
 		for (int i = 0; i < selectedRows.length; i++) {
 			int row = selectedRows[i];
 			Map<Object, Object> hRowData = this.getRowData(row);
@@ -12642,7 +12641,7 @@ public class Table extends JRootPane
 				Object oValue = hRowData.get(oKey);
 				List<Object> v = (List<Object>) hData.get(oKey);
 				if (v == null) {
-					Vector vAux = new Vector();
+					List<Object> vAux = new ArrayList<>();
 					vAux.add(0, oValue);
 					hData.put(oKey, vAux);
 				} else {
@@ -13114,12 +13113,12 @@ public class Table extends JRootPane
 			// configure the current calculated columns
 
 			// Parse the calculated columns stored in preferences
-			Vector calculatedColsUserConf = ApplicationManager.getTokensAt(calcColsPref, ";");
-			Vector calcColNames = new Vector(calculatedColsUserConf.size());
-			Vector expressions = new Vector(calculatedColsUserConf.size());
-			Vector renderKey = new Vector(calculatedColsUserConf.size());
+			List<String> calculatedColsUserConf = ApplicationManager.getTokensAt(calcColsPref, ";");
+			List<String> calcColNames = new ArrayList<>(calculatedColsUserConf.size());
+			List<String> expressions = new ArrayList<>(calculatedColsUserConf.size());
+			List<String> renderKey = new ArrayList<>(calculatedColsUserConf.size());
 			for (int i = 0; i < calculatedColsUserConf.size(); i++) {
-				Vector tokensAt = ApplicationManager.getTokensAt((String) calculatedColsUserConf.get(i), ":");
+				List<String> tokensAt = ApplicationManager.getTokensAt((String) calculatedColsUserConf.get(i), ":");
 				if (tokensAt.size() >= 2) {
 					calcColNames.add(tokensAt.get(0));
 					expressions.add(tokensAt.get(1));
@@ -13139,7 +13138,7 @@ public class Table extends JRootPane
 	protected void initVisibleColumnsPreferences(ApplicationPreferences aPrefs, String user) {
 		String tvc = aPrefs.getPreference(user, this.getVisibleColumnsPreferenceKey());
 		if (tvc != null) {
-			Vector cols = ApplicationManager.getTokensAt(tvc, ";");
+			List<String> cols = ApplicationManager.getTokensAt(tvc, ";");
 			this.setVisibleColumns(cols);
 		} else if ((this.defaultVisibleColumns != null) && (this.defaultVisibleColumns.size() >= 0)) {
 			this.setVisibleColumns(this.defaultVisibleColumns);
@@ -13230,15 +13229,15 @@ public class Table extends JRootPane
 		String sf = aPrefs.getPreference(user, this.getFilterOrderConfPreferenceKey(null));
 		if (sf != null) {
 			// Disable the filter
-			Vector cols = ApplicationManager.getTokensAt(sf, ";");
+			List<String> cols = ApplicationManager.getTokensAt(sf, ";");
 			if (cols.size() >= 2) {
 				String col = (String) cols.get(0);
 				String asc = (String) cols.get(1);
 				try {
 					if (!"null".equals(col)) {
 						if (col.indexOf(":") >= 0) {
-							Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-							Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+							List<String> otherCols = ApplicationManager.getTokensAt(col, ":");
+							List<String> ascends = ApplicationManager.getTokensAt(asc, ":");
 							if (otherCols.size() != ascends.size()) {
 								Table.logger.info("Error in preference: {} -> {} has a different size from {}", sf, otherCols, ascends);
 							} else {
@@ -13281,17 +13280,17 @@ public class Table extends JRootPane
 							f = f.substring("BASE64".length());
 						}
 
-						bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+						bytes = Base64Utils.decode(f.toCharArray());
 						ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
 						ObjectInputStream in = new ObjectInputStream(bIn);
 						Object o = in.readObject();
-						if (o instanceof Hashtable) {
+						if (o instanceof Map) {
 							// To avoid serialization problems
-							Hashtable hNews = new Hashtable();
-							Hashtable g = (Hashtable) o;
-							Enumeration enumKeys = g.keys();
-							while (enumKeys.hasMoreElements()) {
-								Object oKey = enumKeys.nextElement();
+							Map<Object, Object> hNews = new HashMap<>();
+							Map<Object, Object> g = (Map<Object, Object>) o;
+							Iterator<?> enumKeys = g.keySet().iterator();
+							while (enumKeys.hasNext()) {
+								Object oKey = enumKeys.next();
 								Object oValue = g.get(oKey);
 								if (oValue instanceof TableSorter.Filter) {
 									TableSorter.Filter v = (TableSorter.Filter) oValue;
@@ -13308,8 +13307,8 @@ public class Table extends JRootPane
 							this.applyFilter(hNews);
 						}
 					}
-				} catch (Exception e) {
-					Table.logger.error("Error reading preference " + this.getFilterOrderConfPreferenceKey(null), e);
+				} catch (Exception exc) {
+					Table.logger.error("Error reading preference " + this.getFilterOrderConfPreferenceKey(null), exc);
 					aPrefs.setPreference(user, this.getFilterOrderConfPreferenceKey(null), null);
 				}
 			}
@@ -13319,8 +13318,8 @@ public class Table extends JRootPane
 	protected void configureCalculatedCols(List calcColNames, List expressions, List rendersKey, boolean savePreferences) {
 		// First of all check the existing ones to update the expression or
 		// delete the column
-		Vector vCurrentCalcCols = this.getCalculatedColumns();
-		Vector vOriginalCaclCols = this.getOriginalCalculatedColumns();
+		List<Object> vCurrentCalcCols = this.getCalculatedColumns();
+		List<Object> vOriginalCaclCols = this.getOriginalCalculatedColumns();
 		for (int i = 0; i < vCurrentCalcCols.size(); i++) {
 			String currentColName = (String) vCurrentCalcCols.get(i);
 			int index = calcColNames.indexOf(currentColName);
@@ -13330,8 +13329,8 @@ public class Table extends JRootPane
 					String exp = (String) expressions.get(index);
 					String renderKey = (String) rendersKey.get(index);
 					this.getTableSorter().setCalculatedColumnExpression(col, exp);
-					Hashtable allRender = this.getAllColumnRenderer();
-					Hashtable allEditor = this.getAllColumnEditors();
+					Map<String, TableCellRenderer> allRender = this.getAllColumnRenderer();
+					Map<String, TableCellEditor> allEditor = this.getAllColumnEditors();
 					if (!Table.DEFAULT_CELL_RENDERER.equalsIgnoreCase(renderKey)) {
 						allRender.put(col, Table.getRendererMap().get(renderKey));
 					} else {
@@ -13373,14 +13372,14 @@ public class Table extends JRootPane
 
 	protected String getCalculatedColsPreferenceStringValue() {
 		if (this.calculedColumns != null) {
-			Enumeration calcCols = this.calculedColumns.keys();
-			Vector value = new Vector(this.calculedColumns.size());
-			while (calcCols.hasMoreElements()) {
-				String col = (String) calcCols.nextElement();
+			Iterator<?> calcCols = this.calculedColumns.keySet().iterator();
+			List<String> value = new ArrayList<>(this.calculedColumns.size());
+			while (calcCols.hasNext()) {
+				String col = (String) calcCols.next();
 				String expression = (String) this.calculedColumns.get(col);
 				value.add(col + ":" + expression);
 			}
-			return ApplicationManager.vectorToStringSeparateBy(value, ";");
+			return ApplicationManager.listToStringSeparateBy(value, ";");
 		}
 		return null;
 	}
@@ -13391,7 +13390,7 @@ public class Table extends JRootPane
 	 * @param visibleColumns
 	 *            a List containing the column names to show.
 	 */
-	public void setVisibleColumns(List<Object> visibleColumns) {
+	public void setVisibleColumns(List<String> visibleColumns) {
 		this.setVisibleColumns(visibleColumns, true);
 	}
 
@@ -13403,7 +13402,7 @@ public class Table extends JRootPane
 	 * @param autoSizeColumns
 	 *            if true, the column size will be adjusted to its new contents
 	 */
-	public void setVisibleColumns(List<?> visibleColumns, boolean autoSizeColumns) {
+	public void setVisibleColumns(List<String> visibleColumns, boolean autoSizeColumns) {
 		if (visibleColumns == null) {
 			throw new IllegalArgumentException("visiblecols can not be NULL");
 		}
@@ -13551,13 +13550,13 @@ public class Table extends JRootPane
 	 * 
 	 * @return the columns used to build reports.
 	 */
-	public Vector getReportColumns() {
-		return (Vector) this.reportCols.clone();
+	public List<Object> getReportColumns() {
+		return new ArrayList<>(this.reportCols);
 	}
 
-	public void setReportColumns(Vector columns) {
+	public void setReportColumns(List<Object> columns) {
 		if (this.reportCols == null) {
-			this.reportCols = new Vector();
+			this.reportCols = new ArrayList<>();
 		}
 		this.reportCols.clear();
 		this.reportCols.addAll(columns);
@@ -13585,13 +13584,13 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Returns a {@link #Vector} with the column names that have been set as visible columns in the XML, and that are visible in the table as well.
+	 * Returns a {@link #List} with the column names that have been set as visible columns in the XML, and that are visible in the table as well.
 	 * 
 	 * @return he column names set as visible columns in the XML, and that are visible in the table as well
 	 */
 	public List<Object> getRealColumns() {
 		// TODO maybe is a good idea to chage this method's name
-		Vector cols = new Vector();
+		List<Object> cols = new ArrayList<>();
 		for (int i = 0; i < this.table.getColumnCount(); i++) {
 			String name = this.table.getColumnName(i);
 			if (this.originalVisibleColumns.contains(name)) {
@@ -13607,7 +13606,7 @@ public class Table extends JRootPane
 	 * @return the current visible columns managed by the table
 	 */
 	public List<Object> getCurrentColumns() {
-		Vector cols = new Vector();
+		List<Object> cols = new ArrayList<>();
 		for (int i = 0; i < this.table.getColumnCount(); i++) {
 			String name = this.table.getColumnName(i);
 			if (this.visibleColumns.contains(name)) {
@@ -13617,14 +13616,14 @@ public class Table extends JRootPane
 		return cols;
 	}
 
-	public Vector getCalculatedColumns() {
+	public List<Object> getCalculatedColumns() {
 		if (this.calculedColumns != null) {
-			return new Vector(Arrays.asList(this.calculedColumns.keySet().toArray()));
+			return Arrays.asList(this.calculedColumns.keySet().toArray());
 		}
 		return null;
 	}
 
-	public Vector getOriginalCalculatedColumns() {
+	public List<Object> getOriginalCalculatedColumns() {
 		return this.originalCalculatedColumns;
 	}
 
@@ -13653,9 +13652,9 @@ public class Table extends JRootPane
 		long t = System.currentTimeMillis();
 		try {
 			Class.forName("com.jrefinery.data.DefaultXYDataset");
-		} catch (Exception e) {
+		} catch (Exception exc) {
 			Table.logger.info("0.9.3 Charting classes not found");
-			Table.logger.debug(null, e);
+			Table.logger.debug(null, exc);
 			Table.CHART_ENABLED = false;
 		}
 		Table.logger.trace("Check time: {}", System.currentTimeMillis() - t);
@@ -13889,18 +13888,18 @@ public class Table extends JRootPane
 	public void updateRowData(Map<Object, Object> rowData) {
 		this.checkRefreshThread();
 		TableSorter ts = (TableSorter) this.table.getModel();
-		ts.updateRowData(rowData, (Vector) this.getKeys().clone());
+		ts.updateRowData(rowData, new ArrayList<>(this.getKeys()));
 		this.table.repaint();
 	}
 
-	public void updateRowData(Map<Object, Object> rowData, Map<Object, Object> newkv) {
+	public void updateRowData(Map<?, ?> rowData, Map<?, ?> newkv) {
 		this.checkRefreshThread();
 		TableSorter ts = (TableSorter) this.table.getModel();
 		ts.updateRowData(rowData, newkv);
 		this.table.repaint();
 	}
 
-	public void updateRowData(Map<Object, Object> rowData, List columns, Map<Object, Object> newkv) {
+	public void updateRowData(Map<Object, Object> rowData, List<?> columns, Map<Object, Object> newkv) {
 		this.checkRefreshThread();
 		TableSorter ts = (TableSorter) this.table.getModel();
 		ts.updateRowData(rowData, columns, newkv);
@@ -14021,13 +14020,13 @@ public class Table extends JRootPane
 	/**
 	 * Applies filters to the current table.
 	 *
-	 * @see TableSorter#applyFilter(Hashtable)
+	 * @see TableSorter#applyFilter(Map)
 	 * @see Filter
 	 * @param filters
-	 *            is a Hashtable containing the filters. The key is the columns name and the value must be an instance of the classes {@link MultipleFilter}, {@link Filter} ,
+	 *            is a Map containing the filters. The key is the columns name and the value must be an instance of the classes {@link MultipleFilter}, {@link Filter} ,
 	 *            {@link SimpleFilter} , {@link DateFilter}
 	 */
-	public void applyFilter(Hashtable filters) {
+	public void applyFilter(Map<?, ?> filters) {
 
 		if (this.table.getModel() instanceof TableSorter) {
 			TableSorter ts = (TableSorter) this.table.getModel();
@@ -14088,8 +14087,8 @@ public class Table extends JRootPane
 
 				// This is needed to conserve all the renderes and editor after
 				// adding the column
-				Hashtable allRender = this.getAllColumnRenderer();
-				Hashtable allEditor = this.getAllColumnEditors();
+				Map<String, TableCellRenderer> allRender = this.getAllColumnRenderer();
+				Map<String, TableCellEditor> allEditor = this.getAllColumnEditors();
 
 				TableSorter ts = (TableSorter) this.table.getModel();
 				this.attributes.add(column);
@@ -14124,8 +14123,8 @@ public class Table extends JRootPane
 
 			// This is needed to conserve all the renderes and editor after
 			// adding the column
-			Hashtable allRender = this.getAllColumnRenderer();
-			Hashtable allEditor = this.getAllColumnEditors();
+			Map<String, TableCellRenderer> allRender = this.getAllColumnRenderer();
+			Map<String, TableCellEditor> allEditor = this.getAllColumnEditors();
 
 			if (sorter != null) {
 				Table.logger.debug("Table: Adding calculated column: {} previous column number = {}", columnName, this.table.getColumnCount());
@@ -14150,13 +14149,13 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Creates a Hashtable with all the columns that have a renderer.<br> Hashtable key is the column name and value is the column renderer
+	 * Creates a Map with all the columns that have a renderer.<br> Map key is the column name and value is the column renderer
 	 * 
 	 * @return
 	 */
-	protected Hashtable getAllColumnRenderer() {
+	protected Map<String, TableCellRenderer> getAllColumnRenderer() {
 		int count = this.table.getColumnCount();
-		Hashtable renderers = new Hashtable();
+		Map<String, TableCellRenderer> renderers = new HashMap<>();
 		for (int i = 0; i < count; i++) {
 			String cName = this.getColumnName(i);
 			TableCellRenderer rendererForColumn = this.getRendererForColumn(cName);
@@ -14168,13 +14167,13 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Creates a Hashtable with all the columns that have an editor.<br> Hashtable key is the column name and value is the column editor
+	 * Creates a Map with all the columns that have an editor.<br> Map key is the column name and value is the column editor
 	 * 
 	 * @return
 	 */
-	protected Hashtable getAllColumnEditors() {
+	protected Map<String, TableCellEditor> getAllColumnEditors() {
 		int count = this.table.getColumnCount();
-		Hashtable editors = new Hashtable();
+		Map<String, TableCellEditor> editors = new HashMap<>();
 		for (int i = 0; i < count; i++) {
 			String cName = this.getColumnName(i);
 			TableCellEditor editorForColumn = this.getEditorForColumn(cName);
@@ -14193,21 +14192,15 @@ public class Table extends JRootPane
 	 * @param editor
 	 *            Key is the column name and value is the editor to set
 	 */
-	protected void configureRenderEditor(Hashtable renderer, Hashtable editor) {
+	protected void configureRenderEditor(Map<String, TableCellRenderer> renderer, Map<String, TableCellEditor> editor) {
 		int count = this.table.getColumnCount();
 		for (int i = 0; i < count; i++) {
 			String cName = this.getColumnName(i);
 			if (renderer != null) {
-				Object object = renderer.get(cName);
-				if (object instanceof TableCellRenderer) {
-					this.setRendererForColumn(cName, (TableCellRenderer) object);
-				}
+					this.setRendererForColumn(cName, renderer.get(cName));
 			}
 			if (editor != null) {
-				Object object = editor.get(cName);
-				if (object instanceof TableCellEditor) {
-					this.setColumnEditor(cName, (TableCellEditor) object);
-				}
+					this.setColumnEditor(cName, editor.get(cName));
 			}
 		}
 	}
@@ -14240,25 +14233,25 @@ public class Table extends JRootPane
 				Table.logger.debug("Table: Deleting column: {} previous column number = {} previous attributes: {}", column, this.table.getColumnCount(), this.attributes);
 				// This is needed to conserve all the renderes and editor after
 				// deleting the column
-				Hashtable allRenderers = new Hashtable();
-				Hashtable allEditors = new Hashtable();
+				Map<String, TableCellRenderer> allRenderers = new HashMap<>();
+				Map<String, TableCellEditor> allEditors = new HashMap<>();
 				if (fireEvent) {
 					// Retrieve renderer and editor of columns before event
 					for (Object cName : this.attributes) {
 						TableCellRenderer rendererForColumn = this.getRendererForColumn(cName.toString());
 						if (rendererForColumn != null) {
-							allRenderers.put(cName, rendererForColumn);
+							allRenderers.put((String) cName, rendererForColumn);
 						}
 
 						TableCellEditor editorForColumn = this.getEditorForColumn(cName.toString());
 						if (editorForColumn != null) {
-							allEditors.put(cName, editorForColumn);
+							allEditors.put((String) cName, editorForColumn);
 						}
 					}
 				}
 
-				// Hashtable allRender = this.getAllColumnRenderer();
-				// Hashtable allEditor = this.getAllColumnEditors();
+				// Map allRender = this.getAllColumnRenderer();
+				// Map allEditor = this.getAllColumnEditors();
 				// allRender.remove(column);
 				// allEditor.remove(column);
 
@@ -14296,8 +14289,8 @@ public class Table extends JRootPane
 
 				// This is needed to conserve all the renderes and editor after
 				// deleting the column
-				Hashtable allRender = this.getAllColumnRenderer();
-				Hashtable allEditor = this.getAllColumnEditors();
+				Map<String, TableCellRenderer> allRender = this.getAllColumnRenderer();
+				Map<String, TableCellEditor> allEditor = this.getAllColumnEditors();
 				allRender.remove(column);
 				allEditor.remove(column);
 
@@ -14426,20 +14419,19 @@ public class Table extends JRootPane
 	}
 
 	/**
-	 * Returns a vector containing the parent key names, this is, the names set in the XML to the attribute 'parentkeys'.
+	 * Returns a list containing the parent key names, this is, the names set in the XML to the attribute 'parentkeys'.
 	 *
 	 * @see #init
 	 * @return the parent key names
 	 */
-	public List<Object> getParentKeys() {
+	public List<String> getParentKeys() {
 		return this.getParentKeys(false);
 	}
 
-	public List<Object> getParentKeys(boolean applyEquivalences) {
-		List<Object> v = new ArrayList<>();
+	public List<String> getParentKeys(boolean applyEquivalences) {
+		List<String> v = new ArrayList<>();
 		if (this.parentkeys != null) {
-			for (Object element : this.parentkeys) {
-				Object pkName = element;
+			for (String pkName : this.parentkeys) {
 				if (applyEquivalences) {
 					pkName = this.getParentkeyEquivalentValue(pkName);
 				}
@@ -14455,7 +14447,7 @@ public class Table extends JRootPane
 	 * @param parentkey
 	 * @return
 	 */
-	public Object getParentkeyEquivalentValue(Object parentkey) {
+	public String getParentkeyEquivalentValue(String parentkey) {
 		if ((this.hParentkeyEquivalences != null) && this.hParentkeyEquivalences.containsKey(parentkey)) {
 			return this.hParentkeyEquivalences.get(parentkey);
 		}
@@ -14471,8 +14463,8 @@ public class Table extends JRootPane
 	 *            the column index in the model
 	 * @return the result of the update
 	 * @throws Exception
-	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)} Must be used
-	 *             {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 * @deprecated Must be used {@link #updateTable(Map, int, TableCellEditor, Map, Object)} Must be used
+	 *             {@link #updateTable(Map, int, TableCellEditor, Map, Object)}
 	 */
 	@Deprecated
 	protected EntityResult updateTable(int rowIndex, int viewColumnIndex) throws Exception {
@@ -14490,12 +14482,12 @@ public class Table extends JRootPane
 	 *            other data to be updated in that entity
 	 * @return the result of the update
 	 * @throws Exception
-	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 * @deprecated Must be used {@link #updateTable(Map, int, TableCellEditor, Map, Object)}
 	 */
 	@Deprecated
-	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData) throws Exception {
+	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Map<Object, Object> otherData) throws Exception {
 		if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
-			return new EntityResult();
+			return new EntityResultMapImpl();
 		}
 		return this.updateTable(rowIndex, viewColumnIndex, otherData, null);
 	}
@@ -14512,19 +14504,19 @@ public class Table extends JRootPane
 	 * @param previousData
 	 * @return the result of the update
 	 * @throws Exception
-	 * @deprecated Must be used {@link #updateTable(Hashtable, int, TableCellEditor, Hashtable, Object)}
+	 * @deprecated Must be used {@link #updateTable(Map, int, TableCellEditor, Map, Object)}
 	 */
 
 	@Deprecated
-	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Hashtable otherData, Object previousData) throws Exception {
+	protected EntityResult updateTable(int rowIndex, int viewColumnIndex, Map<Object, Object> otherData, Object previousData) throws Exception {
 		if (this.isInsertingEnabled() && this.getTableSorter().isInsertingRow(rowIndex)) {
-			return new EntityResult();
+			return new EntityResultMapImpl();
 		}
 
 		// TODO because the modelRowIndex is nonsense (is the same for the model
 		// and for the view) replace all rowIndex for rowIndex
 		if ((this.entity != null) && (this.entity.length() != 0)) {
-			Hashtable av = new Hashtable();
+			Map<Object, Object> av = new HashMap<>();
 			TableModel m = this.table.getModel();
 			Object col = m.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
 			Object oValue = m.getValueAt(rowIndex, this.table.convertColumnIndexToModel(viewColumnIndex));
@@ -14542,15 +14534,15 @@ public class Table extends JRootPane
 			}
 
 			// To include calculted values in the update operation
-			Hashtable calculatedRowData = this.getCalculatedRowData(rowIndex);
+			Map<Object, Object> calculatedRowData = this.getCalculatedRowData(rowIndex);
 			if (calculatedRowData != null) {
 				av.putAll(calculatedRowData);
 			}
 
-			Hashtable kv = new Hashtable();
+			Map<Object, Object> kv = new HashMap<>();
 			// Keys and parentkeys
-			Vector vKeys = this.getKeys();
-			for (Object atr : vKeys) {
+			List<String> vKeys = this.getKeys();
+			for (String atr : vKeys) {
 				if (atr.equals(col)) {
 					Object oKeyValue = previousData;
 					if (oKeyValue != null) {
@@ -14565,7 +14557,7 @@ public class Table extends JRootPane
 					}
 				}
 			}
-			Vector vParentkeys = this.getParentKeys();
+			List<String> vParentkeys = this.getParentKeys();
 			for (Object atr : vParentkeys) {
 				Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
 				if (oParentkeyValue != null) {
@@ -14575,7 +14567,7 @@ public class Table extends JRootPane
 			Entity ent = this.locator.getEntityReference(this.getEntityName());
 			return ent.update(av, kv, this.locator.getSessionId());
 		} else {
-			return new EntityResult();
+			return new EntityResultMapImpl();
 		}
 	}
 
@@ -14595,9 +14587,9 @@ public class Table extends JRootPane
 	 * @throws Exception
 	 */
 
-	protected EntityResult updateTable(Hashtable keysValues, int viewColumnIndex, TableCellEditor tableCellEditor, Hashtable otherData, Object previousData) throws Exception {
+	protected EntityResult updateTable(Map<Object, Object> keysValues, int viewColumnIndex, TableCellEditor tableCellEditor, Map<Object, Object> otherData, Object previousData) throws Exception {
 		if ((this.entity != null) && (this.entity.length() != 0)) {
-			Hashtable av = new Hashtable();
+			Map<Object, Object> av = new HashMap<>();
 			TableSorter model = (TableSorter) this.table.getModel();
 			Object col = model.getColumnName(this.table.convertColumnIndexToModel(viewColumnIndex));
 			Object newData = tableCellEditor.getCellEditorValue();
@@ -14615,20 +14607,20 @@ public class Table extends JRootPane
 			}
 
 			// To include calculted values in the update operation
-			Hashtable rowData = this.getRowDataForKeys(keysValues);
+			Map<Object, Object> rowData = this.getRowDataForKeys(keysValues);
 
-			Vector calculatedColumns = model.getCalculatedColumnsName();
+			List<Object> calculatedColumns = model.getCalculatedColumnsName();
 			for (Object column : calculatedColumns) {
 				if (rowData.containsKey(column)) {
 					av.put(column, rowData.get(column));
 				}
 			}
 
-			Hashtable kv = (Hashtable) keysValues.clone();
+			Map<Object, Object> kv = new HashMap<>(keysValues);
 
 			// Keys and parentkeys
-			Vector vKeys = this.getKeys();
-			for (Object atr : vKeys) {
+			List<String> vKeys = this.getKeys();
+			for (String atr : vKeys) {
 				if (atr.equals(col)) {
 					Object oKeyValue = previousData;
 					if (oKeyValue != null) {
@@ -14637,9 +14629,9 @@ public class Table extends JRootPane
 				}
 			}
 			// Parentkeys with equivalences
-			Vector vParentkeys = this.getParentKeys();
-			for (Object atr : vParentkeys) {
-				Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr.toString());
+			List<String> vParentkeys = this.getParentKeys();
+			for (String atr : vParentkeys) {
+				Object oParentkeyValue = this.parentForm.getDataFieldValueFromFormCache(atr);
 				if (oParentkeyValue != null) {
 					// since 5.2074EN-0.4
 					// when equivalences, we must get equivalence value for
@@ -14650,7 +14642,7 @@ public class Table extends JRootPane
 			Entity ent = this.locator.getEntityReference(this.getEntityName());
 			return ent.update(av, kv, this.locator.getSessionId());
 		} else {
-			return new EntityResult();
+			return new EntityResultMapImpl();
 		}
 	}
 
@@ -14675,7 +14667,7 @@ public class Table extends JRootPane
 
 	}
 
-	protected void configureComponentsLocator(Hashtable components, EntityReferenceLocator locator) {
+	protected void configureComponentsLocator(Map<?, ?> components, EntityReferenceLocator locator) {
 		if ((components != null) && (locator != null)) {
 			Iterator iterator = components.values().iterator();
 			while (iterator.hasNext()) {
@@ -14692,9 +14684,9 @@ public class Table extends JRootPane
 		}
 	}
 
-	protected void configureComponentsParentForm(Hashtable components, Form parentForm) {
+	protected void configureComponentsParentForm(Map<?,?> components, Form parentForm) {
 		if ((components != null) && (parentForm != null)) {
-			Iterator iterator = components.values().iterator();
+			Iterator<?> iterator = components.values().iterator();
 			while (iterator.hasNext()) {
 				Object element = iterator.next();
 				if (element instanceof AccessForm) {
@@ -14953,7 +14945,7 @@ public class Table extends JRootPane
 		return ((TableSorter) this.table.getModel()).isAscending();
 	}
 
-	protected Vector editionListeners = new Vector(0, 3);
+	protected List<Object> editionListeners = new ArrayList<>();
 
 	/**
 	 * Notifies the edition listeners that the edition has been stopped.
@@ -15054,11 +15046,11 @@ public class Table extends JRootPane
 	private void setEditableColumns() {
 		for (int i = 0; i < this.editableColumns.size(); i++) {
 			boolean bUpdateEntity = this.editableColumnsUpdateEntity.contains(this.editableColumns.get(i));
-			this.setEditableColumn((String) this.editableColumns.get(i), bUpdateEntity);
+			this.setEditableColumn(this.editableColumns.get(i), bUpdateEntity);
 		}
 	}
 
-	public List getEditableColumns() {
+	public List<String> getEditableColumns() {
 		return this.editableColumns;
 	}
 
@@ -15101,7 +15093,7 @@ public class Table extends JRootPane
 	 */
 	public void setCellRendererColorManager(CellRenderer.CellRendererColorManager colorManager) {
 		this.cellRendererColorManager = colorManager;
-		Vector cols = this.getAttributeList();
+		List<Object> cols = this.getAttributeList();
 		for (Object col : cols) {
 			TableColumn tc = this.getJTable().getColumn(col);
 			if (tc != null) {
@@ -15130,7 +15122,7 @@ public class Table extends JRootPane
 	 */
 	public void setCellRendererFontManager(CellRenderer.CellRendererFontManager fontManager) {
 		this.cellRendererFontManager = fontManager;
-		Vector cols = this.getAttributeList();
+		List<Object> cols = this.getAttributeList();
 		for (Object col : cols) {
 			TableColumn tc = this.getJTable().getColumn(col);
 			if (tc != null) {
@@ -15165,7 +15157,7 @@ public class Table extends JRootPane
 			prefs.setPreference(this.getUser(), sPreferenceKey, null);
 			String pref = prefs.getPreference(this.getUser(), sKey);
 			if (pref != null) {
-				Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+				List<String> tokens = ApplicationManager.getTokensAt(pref, ";");
 				if (tokens.contains(confName)) {
 					tokens.remove(confName);
 					String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
@@ -15203,15 +15195,15 @@ public class Table extends JRootPane
 		TableSorter ts = (TableSorter) this.table.getModel();
 		String[] colOrd = this.getOrderColumns();
 		boolean[] asce = this.getAscendents();
-		Hashtable hFilter = ts.getFilters();
+		Map<Object, Object> hFilter = ts.getFilters();
 		// since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
 		if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
-			hFilter = new Hashtable();
+			hFilter = new HashMap<>();
 		}
-		Hashtable hFilter2 = new Hashtable();
-		Enumeration enumKeys = hFilter.keys();
-		while (enumKeys.hasMoreElements()) {
-			Object oKey = enumKeys.nextElement();
+		Map<Object, Object> hFilter2 = new HashMap<>();
+		Iterator<?> enumKeys = hFilter.keySet().iterator();
+		while (enumKeys.hasNext()) {
+			Object oKey = enumKeys.next();
 			Object oValue = hFilter.get(oKey);
 			if (oValue instanceof TableSorter.Filter) {
 				TableSorter.Filter v = (TableSorter.Filter) oValue;
@@ -15233,8 +15225,8 @@ public class Table extends JRootPane
 		String col = null;
 		String sAscent = null;
 		if ((colOrd != null) && (colOrd.length > 0)) {
-			col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
-			Vector aux = new Vector();
+			col = ApplicationManager.listToStringSeparateBy(Arrays.asList(colOrd), ":");
+			List<Boolean> aux = new ArrayList<>();
 			for (boolean element : asce) {
 				if (element) {
 					aux.add(Boolean.TRUE);
@@ -15242,7 +15234,7 @@ public class Table extends JRootPane
 					aux.add(Boolean.FALSE);
 				}
 			}
-			sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
+			sAscent = ApplicationManager.listToStringSeparateBy(aux, ":");
 		}
 		sValue = col + ";" + sAscent;
 
@@ -15258,7 +15250,7 @@ public class Table extends JRootPane
 				ObjectOutputStream out = new ObjectOutputStream(bOut);
 				out.writeObject(hFilter2);
 				out.flush();
-				String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
+				String s = "BASE64" + new String(Base64Utils.encode(bOut.toByteArray()));
 				out.close();
 				sValue = sValue + ";" + s;
 				Application ap = ApplicationManager.getApplication();
@@ -15266,8 +15258,8 @@ public class Table extends JRootPane
 					ap.getPreferences().setPreference(this.getUser(), sPreferenceKey, sValue);
 					ap.getPreferences().savePreferences();
 				}
-			} catch (Exception e) {
-				Table.logger.error(null, e);
+			} catch (Exception exc) {
+				Table.logger.error(null, exc);
 			}
 		} else {
 			if (this.parentForm != null) {
@@ -15286,7 +15278,7 @@ public class Table extends JRootPane
 		if ((prefs != null) && (confName != null)) {
 			String pref = prefs.getPreference(this.getUser(), sKey);
 			if (pref != null) {
-				Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+				List<String> tokens = ApplicationManager.getTokensAt(pref, ";");
 				if (!tokens.contains(confName)) {
 					tokens.add(confName);
 					String sNew = ApplicationManager.vectorToStringSeparateBySemicolon(tokens);
@@ -15317,15 +15309,15 @@ public class Table extends JRootPane
 		TableSorter ts = (TableSorter) this.table.getModel();
 		String[] colOrd = this.getOrderColumns();
 		boolean[] asce = this.getAscendents();
-		Hashtable hFilter = ts.getFilters();
+		Map<Object, Object> hFilter = ts.getFilters();
 		// since 5.2076EN-0.2 - quickfilter is not saved in filter configuration
 		if ((this.quickFilterText != null) && !"".equals(this.quickFilterText.getText())) {
-			hFilter = new Hashtable();
+			hFilter = new HashMap<>();
 		}
-		Hashtable hFilter2 = new Hashtable();
-		Enumeration enumKeys = hFilter.keys();
-		while (enumKeys.hasMoreElements()) {
-			Object oKey = enumKeys.nextElement();
+		Map<Object, Object> hFilter2 = new HashMap<>();
+		Iterator<?> enumKeys = hFilter.keySet().iterator();
+		while (enumKeys.hasNext()) {
+			Object oKey = enumKeys.next();
 			Object oValue = hFilter.get(oKey);
 			if (oValue instanceof TableSorter.Filter) {
 				TableSorter.Filter v = (TableSorter.Filter) oValue;
@@ -15342,8 +15334,8 @@ public class Table extends JRootPane
 		String col = null;
 		String sAscent = null;
 		if ((colOrd != null) && (colOrd.length > 0)) {
-			col = ApplicationManager.vectorToStringSeparateBy(new Vector(Arrays.asList(colOrd)), ":");
-			Vector aux = new Vector();
+			col = ApplicationManager.listToStringSeparateBy(Arrays.asList(colOrd), ":");
+			List<Object> aux = new ArrayList<>();
 			for (boolean element : asce) {
 				if (element) {
 					aux.add(Boolean.TRUE);
@@ -15351,7 +15343,7 @@ public class Table extends JRootPane
 					aux.add(Boolean.FALSE);
 				}
 			}
-			sAscent = ApplicationManager.vectorToStringSeparateBy(aux, ":");
+			sAscent = ApplicationManager.listToStringSeparateBy(aux, ":");
 		}
 		sValue = col + ";" + sAscent;
 
@@ -15369,7 +15361,7 @@ public class Table extends JRootPane
 				out = new ObjectOutputStream(bOut);
 				out.writeObject(hFilter2);
 				out.flush();
-				String s = "BASE64" + new String(com.ontimize.util.Base64Utils.encode(bOut.toByteArray()));
+				String s = "BASE64" + new String(Base64Utils.encode(bOut.toByteArray()));
 				out.close();
 				sValue = sValue + ";" + s;
 				return sValue;
@@ -15652,7 +15644,7 @@ public class Table extends JRootPane
 		// Now all the others
 		String sKey = this.getFilterOrderConfigurationPreferenceKey();
 		String pref = prefs.getPreference(this.getUser(), sKey);
-		Vector tokens = ApplicationManager.getTokensAt(pref, ";");
+		List<String> tokens = ApplicationManager.getTokensAt(pref, ";");
 		if (this.shareRemoteReferenceFilters) {
 			this.showShareFilterTableList(tokens);
 		} else {
@@ -15712,7 +15704,7 @@ public class Table extends JRootPane
 
 	}
 
-	protected void showShareFilterTableList(Vector tokens) {
+	protected void showShareFilterTableList(List<String> tokens) {
 
 		this.obtainShareElementMessageItemListener = e -> {
 			try {
@@ -15759,7 +15751,7 @@ public class Table extends JRootPane
 						String pref = prefs.getPreference(Table.this.getUser(), sKey);
 
 						if (pref != null) {
-							Vector tokens1 = ApplicationManager.getTokensAt(pref, ";");
+							List<String> tokens1 = ApplicationManager.getTokensAt(pref, ";");
 							if (!tokens1.contains(confName)) {
 								tokens1.add(confName);
 								String sNew1 = ApplicationManager.vectorToStringSeparateBySemicolon(tokens1);
@@ -15827,7 +15819,7 @@ public class Table extends JRootPane
 						sessionID);
 				ListDataField listDataField = Table.this.createAndConfigureTargetUser();
 				List<String> oldTargetList = remoteReference.getTargetSharedItemsList(shareId, sessionID);
-				listDataField.setValue(new Vector<String>(oldTargetList));
+				listDataField.setValue(new ArrayList<String>(oldTargetList));
 				Window w = SwingUtils.getWindowAncestor((Component) e.getSource());
 				FormAddUserSharedReference f = new FormAddUserSharedReference(w, true, Table.this.locator, listDataField);
 				f.setLocation(p);
@@ -15836,7 +15828,7 @@ public class Table extends JRootPane
 				if (f.getUpdateStatus()) {
 					List<String> targetList = new ArrayList<String>();
 					if (listDataField.getValue() != null) {
-						for (Object oActual : (Vector) listDataField.getValue()) {
+						for (Object oActual : (List<?>) listDataField.getValue()) {
 							targetList.add(oActual.toString());
 						}
 					}
@@ -16073,7 +16065,7 @@ public class Table extends JRootPane
 	}
 
 	protected ListDataField createAndConfigureTargetUser() throws Exception {
-		Hashtable h = new Hashtable();
+		Map<Object, Object> h = new HashMap<>();
 		h.put(DataField.ATTR, IShareRemoteReference.SHARE_USER_TARGET_STRING);
 		h.put(DataField.TEXT_STR, ApplicationManager.getTranslation(IShareRemoteReference.SHARE_USER_TARGET_STRING));
 		h.put(DataField.LABELPOSITION, "top");
@@ -16140,7 +16132,7 @@ public class Table extends JRootPane
 		}
 		String sf = prefs.getPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName));
 		if (sf != null) {
-			Vector cols = ApplicationManager.getTokensAt(sf, ";");
+			List<String> cols = ApplicationManager.getTokensAt(sf, ";");
 			if (cols.size() >= 2) {
 				String col = (String) cols.get(0);
 				String asc = (String) cols.get(1);
@@ -16149,8 +16141,8 @@ public class Table extends JRootPane
 						// Search if there are multiple columns
 
 						if (col.indexOf(":") >= 0) {
-							Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-							Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+							List<String> otherCols = ApplicationManager.getTokensAt(col, ":");
+							List<String> ascends = ApplicationManager.getTokensAt(asc, ":");
 							if (otherCols.size() != ascends.size()) {
 								Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols, ascends);
 							} else {
@@ -16195,17 +16187,17 @@ public class Table extends JRootPane
 							f = f.substring("BASE64".length());
 						}
 
-						bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+						bytes = Base64Utils.decode(f.toCharArray());
 						ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
 						ObjectInputStream in = new ObjectInputStream(bIn);
 						Object o = in.readObject();
-						if (o instanceof Hashtable) {
+						if (o instanceof Map) {
 							// To avoid serialization problems
-							Hashtable hNews = new Hashtable();
-							Hashtable g = (Hashtable) o;
-							Enumeration enumKeys = g.keys();
-							while (enumKeys.hasMoreElements()) {
-								Object oKey = enumKeys.nextElement();
+							Map<Object, Object> hNews = new HashMap<>();
+							Map<Object, Object> g = new HashMap<>((Map<?,?>)o);
+							Iterator<?> enumKeys = g.keySet().iterator();
+							while (enumKeys.hasNext()) {
+								Object oKey = enumKeys.next();
 								Object oValue = g.get(oKey);
 								if (oValue instanceof TableSorter.Filter) {
 									TableSorter.Filter v = (TableSorter.Filter) oValue;
@@ -16221,8 +16213,8 @@ public class Table extends JRootPane
 							this.applyFilter(hNews);
 						}
 					}
-				} catch (Exception e) {
-					Table.logger.error(null, e);
+				} catch (Exception exc) {
+					Table.logger.error(null, exc);
 					prefs.setPreference(this.getUser(), this.getFilterOrderConfPreferenceKey(filterName), null);
 				}
 			}
@@ -16234,7 +16226,7 @@ public class Table extends JRootPane
 		String sf = shareElement.getContentShare();
 		String filterName = shareElement.getName();
 
-		Vector cols = ApplicationManager.getTokensAt(sf, ";");
+		List<String> cols = ApplicationManager.getTokensAt(sf, ";");
 		if (cols.size() >= 2) {
 			String col = (String) cols.get(0);
 			String asc = (String) cols.get(1);
@@ -16243,8 +16235,8 @@ public class Table extends JRootPane
 					// Search if there are multiple columns
 
 					if (col.indexOf(":") >= 0) {
-						Vector otherCols = ApplicationManager.getTokensAt(col, ":");
-						Vector ascends = ApplicationManager.getTokensAt(asc, ":");
+						List<String> otherCols = ApplicationManager.getTokensAt(col, ":");
+						List<String> ascends = ApplicationManager.getTokensAt(asc, ":");
 						if (otherCols.size() != ascends.size()) {
 							Table.logger.info("Preference Error {} -> {}  different size from {}", sf, otherCols, ascends);
 						} else {
@@ -16289,17 +16281,17 @@ public class Table extends JRootPane
 						f = f.substring("BASE64".length());
 					}
 
-					bytes = com.ontimize.util.Base64Utils.decode(f.toCharArray());
+					bytes = Base64Utils.decode(f.toCharArray());
 					ByteArrayInputStream bIn = new ByteArrayInputStream(bytes);
 					ObjectInputStream in = new ObjectInputStream(bIn);
 					Object o = in.readObject();
-					if (o instanceof Hashtable) {
+					if (o instanceof Map) {
 						// To avoid serialization problems
-						Hashtable hNews = new Hashtable();
-						Hashtable g = (Hashtable) o;
-						Enumeration enumKeys = g.keys();
-						while (enumKeys.hasMoreElements()) {
-							Object oKey = enumKeys.nextElement();
+						Map<Object, Object> hNews = new HashMap<>();
+						Map<Object, Object> g = (Map<Object, Object>) o;
+						Iterator<?> enumKeys = g.keySet().iterator();
+						while (enumKeys.hasNext()) {
+							Object oKey = enumKeys.next();
 							Object oValue = g.get(oKey);
 							if (oValue instanceof TableSorter.Filter) {
 								TableSorter.Filter v = (TableSorter.Filter) oValue;
@@ -16315,8 +16307,8 @@ public class Table extends JRootPane
 						this.applyFilter(hNews);
 					}
 				}
-			} catch (Exception e) {
-				Table.logger.error(null, e);
+			} catch (Exception exc) {
+				Table.logger.error(null, exc);
 				// prefs.setPreference(this.getUser(),
 				// this.getFilterOrderConfPreferenceKey(filterName), null);
 			}
@@ -16469,8 +16461,8 @@ public class Table extends JRootPane
 	 * Sets the default filter to the table. The default filter can be configured in the preferences.
 	 */
 	protected void setDefaultFilter() {
-		if (this.defaultFilter instanceof Hashtable) {
-			this.applyFilter((Hashtable) this.defaultFilter);
+		if (this.defaultFilter instanceof Map) {
+			this.applyFilter((Map<?,?>) this.defaultFilter);
 		}
 	}
 
@@ -16553,8 +16545,8 @@ public class Table extends JRootPane
 	 * 
 	 * @return
 	 */
-	protected java.util.List getConfigurationReport() {
-		ArrayList arrayList = new ArrayList();
+	protected List<Object> getConfigurationReport() {
+		List<Object> arrayList = new ArrayList<>();
 		try {
 			Application ap = this.parentForm.getFormManager().getApplication();
 			String preferenceKey = this.getCustomReportPreferenceKey();
@@ -16573,8 +16565,8 @@ public class Table extends JRootPane
 					}
 				}
 			}
-		} catch (Exception e) {
-			Table.logger.error(null, e);
+		} catch (Exception exc) {
+			Table.logger.error(null, exc);
 		}
 		return arrayList;
 	}
@@ -16743,7 +16735,7 @@ public class Table extends JRootPane
 	 * @return the String that defines this preference
 	 */
 	protected String createColumnPositionAndWidthPreference() {
-		Vector cols = this.getVisibleColumns();
+		List<String> cols = this.getVisibleColumns();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < this.table.getColumnCount(); i++) {
 			String n = this.table.getColumnName(i);
@@ -16770,7 +16762,7 @@ public class Table extends JRootPane
 	}
 
 	protected String getColumnsPositionAndWith() {
-		Vector cols = this.getVisibleColumns();
+		List<String> cols = this.getVisibleColumns();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < this.table.getColumnCount(); i++) {
 			String n = this.table.getColumnName(i);
@@ -16791,13 +16783,13 @@ public class Table extends JRootPane
 	 * @param operations
 	 *            contains the operations to store
 	 */
-	public void saveOperations(Map<Object, Object> operations) {
+	public void saveOperations(Map<String, Object> operations) {
 		TableModel model = this.table.getModel();
 		if ((model != null) && (model instanceof TableSorter)) {
-			Enumeration enu = operations.keys();
+			Iterator<String> enu = operations.keySet().iterator();
 			StringBuilder sb = new StringBuilder();
-			while (enu.hasMoreElements()) {
-				String nameColumn = (String) enu.nextElement();
+			while (enu.hasNext()) {
+				String nameColumn = enu.next();
 				sb.append(nameColumn);
 				String sValue = (String) operations.get(nameColumn);
 				sb.append("=" + sValue + ";");
@@ -16816,12 +16808,12 @@ public class Table extends JRootPane
 	 * @see TableSorter#setOperationColumns
 	 */
 	public void applyOperations() {
-		Hashtable hOperations = null;
+		Map<String, Object> hOperations = null;
 		Application ap = this.parentForm.getFormManager().getApplication();
 		ApplicationPreferences prefs = ap.getPreferences();
 		String sf = prefs.getPreference(this.getUser(), this.getOperationPreferenceKey());
 		if (sf != null) {
-			hOperations = new Hashtable();
+			hOperations = new HashMap<>();
 			StringTokenizer st = new StringTokenizer(sf, ";");
 			while (st.hasMoreTokens()) {
 				String t = st.nextToken();
@@ -16940,7 +16932,7 @@ public class Table extends JRootPane
 	 *            the preference value to set
 	 */
 	protected void applyColumnPositonAndPreferences(String preference) {
-		Vector visibleCols = new Vector();
+		List<String> visibleCols = new ArrayList<>();
 		if (preference == null) {
 			return;
 		}
@@ -17029,13 +17021,13 @@ public class Table extends JRootPane
 			return;
 		}
 		// TODO change the values to show using the renderers if exist
-		Hashtable hData = new Hashtable();
+		EntityResult hData = new EntityResultMapImpl();
 		if (Table.renderReportValues) {
-			hData = (Hashtable) this.getValueToReport();
+			hData = this.getValueToReport();
 		} else {
-			hData = (Hashtable) this.getShownValue();
+			hData = this.getShownValue();
 		}
-		// Hashtable hData = getValueToExport(false, false);
+		// Map hData = getValueToExport(false, false);
 		Application ap = null;
 		if (this.parentForm != null) {
 			ap = this.parentForm.getFormManager().getApplication();
@@ -17072,13 +17064,13 @@ public class Table extends JRootPane
 			return;
 		}
 
-		Hashtable hData = new Hashtable();
+		EntityResult hData = new EntityResultMapImpl();
 		if (Table.renderReportValues) {
-			hData = (Hashtable) this.getValueToReport();
+			hData = this.getValueToReport();
 		} else {
-			hData = (Hashtable) this.getShownValue();
+			hData = this.getShownValue();
 		}
-		Vector vVisible = this.getOriginallyVisibleColumns();
+		List<String> vVisible = this.getOriginallyVisibleColumns();
 		Application ap = this.parentForm.getFormManager().getApplication();
 		if (this.ru == null) {
 			this.ru = new com.ontimize.report.ReportUtils(EntityResultUtils.createTableModel(hData, vVisible), null, this.getResourceBundle(), null, this.entity, this.getUser(),
@@ -17098,16 +17090,16 @@ public class Table extends JRootPane
 	 * @return an empty String when no filters set
 	 */
 	protected String getFilterInfo() {
-		Hashtable hFilters = ((TableSorter) this.getJTable().getModel()).getFilters();
+		Map<Object, Object> hFilters = ((TableSorter) this.getJTable().getModel()).getFilters();
 		boolean lastFilterOr = ((TableSorter) this.getJTable().getModel()).lastFilterOr();
 		if (hFilters.isEmpty() || lastFilterOr) {
 			return "";
 		}
 		StringBuilder sb = new StringBuilder();
-		Enumeration enumKeys = hFilters.keys();
+		Iterator<?> enumKeys = hFilters.keySet().iterator();
 		int i = 0;
-		while (enumKeys.hasMoreElements()) {
-			Object oKey = enumKeys.nextElement();
+		while (enumKeys.hasNext()) {
+			Object oKey = enumKeys.next();
 			sb.append(ApplicationManager.getTranslation((String) oKey, this.resourcesFile));
 			sb.append(" '" + hFilters.get(oKey) + "'");
 			if (i < (hFilters.size() - 1)) {
@@ -17193,13 +17185,13 @@ public class Table extends JRootPane
 			if ((Table.this.dPivot == null) || Table.this.dynamicTable) {
 				Window w = SwingUtilities.getWindowAncestor(Table.this);
 				Table.this.dPivot = PivotTableUtils.createPivotDialog(w,
-						EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), Table.this.resourcesFile,
+						EntityResultUtils.createTableModel(Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), Table.this.resourcesFile,
 						Table.this.getDetailWindowParameters(), columPosAndWith);
 				ApplicationManager.center(Table.this.dPivot);
 				Table.this.setPivotTablePreferences(Table.this.dPivot);
 			}
 			((PivotTableUtils.PivotDialog) Table.this.dPivot)
-					.setModel(EntityResultUtils.createTableModel((Hashtable) Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), true);
+					.setModel(EntityResultUtils.createTableModel(Table.this.getShownValue(), Table.this.getOriginallyVisibleColumns()), true);
 			((PivotTableUtils.PivotDialog) Table.this.dPivot).setOriginalColPosAndWith(columPosAndWith);
 			((PivotTableUtils.PivotDialog) Table.this.dPivot).setRenderersForColumns(rederersMap);
 			Table.this.dPivot.setVisible(true);
@@ -17220,8 +17212,8 @@ public class Table extends JRootPane
 
 	}
 
-	protected Hashtable getDetailWindowParameters() {
-		Hashtable param = new Hashtable();
+	protected Map<Object, Object> getDetailWindowParameters() {
+		Map<Object, Object> param = new HashMap<>();
 		param.put("entity", "entity");
 		param.put("dynamic", "yes");
 		param.put("translateheader", "yes");
@@ -17241,37 +17233,37 @@ public class Table extends JRootPane
 		}
 
 		// }
-		if (this.parameters.contains("headerheight")) {
+		if (this.parameters.containsKey("headerheight")) {
 			param.put("headerheight", this.parameters.get("headerheight"));
 		}
-		if (this.parameters.contains("headerfont")) {
+		if (this.parameters.containsKey("headerfont")) {
 			param.put("headerfont", this.parameters.get("headerfont"));
 		}
-		if (this.parameters.contains("headerfg")) {
+		if (this.parameters.containsKey("headerfg")) {
 			param.put("headerfg", this.parameters.get("headerfg"));
 		}
-		if (this.parameters.contains("headerbg")) {
+		if (this.parameters.containsKey("headerbg")) {
 			param.put("headerbg", this.parameters.get("headerbg"));
 		}
-		if (this.parameters.contains("fontshadowcolor")) {
+		if (this.parameters.containsKey("fontshadowcolor")) {
 			param.put("fontshadowcolor", this.parameters.get("fontshadowcolor"));
 		}
-		if (this.parameters.contains("headerbgimage")) {
+		if (this.parameters.containsKey("headerbgimage")) {
 			param.put("headerbgimage", this.parameters.get("headerbgimage"));
 		}
-		if (this.parameters.contains("headerborder")) {
+		if (this.parameters.containsKey("headerborder")) {
 			param.put("headerborder", this.parameters.get("headerborder"));
 		}
-		if (this.parameters.contains("headerlastcolumnborder")) {
+		if (this.parameters.containsKey("headerlastcolumnborder")) {
 			param.put("headerlastcolumnborder", this.parameters.get("headerlastcolumnborder"));
 		}
-		if (this.parameters.contains("headerfirstcolumnborder")) {
+		if (this.parameters.containsKey("headerfirstcolumnborder")) {
 			param.put("headerfirstcolumnborder", this.parameters.get("headerfirstcolumnborder"));
 		}
-		if (this.parameters.contains("border")) {
+		if (this.parameters.containsKey("border")) {
 			param.put("border", this.parameters.get("border"));
 		}
-		if (this.parameters.contains("percentage")) {
+		if (this.parameters.containsKey("percentage")) {
 			param.put("percentage", this.parameters.get("percentage"));
 		}
 
@@ -17486,7 +17478,7 @@ public class Table extends JRootPane
 		if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
 			String pref = PreferenceUtils.loadPreference(this.getPivotTablePreferenceKey(confName));
 			if ((pref != null) && (pref.length() > 0)) {
-				Hashtable selection = new Hashtable();
+				Map<Object, Object> selection = new HashMap<>();
 				StringTokenizer tokens = new StringTokenizer(pref, "|");
 				while (tokens.hasMoreTokens()) {
 					String token = tokens.nextToken();
@@ -17498,7 +17490,7 @@ public class Table extends JRootPane
 							String value = token.substring(ind + 1);
 							if (PivotTableUtils.PIVOTTABLE_ROWFIELD.equals(key) && (value != null) && (value.length() > 0)) {
 								StringTokenizer pairsFixed = new StringTokenizer(value, ":");
-								ArrayList list = new ArrayList<Pair<String, Integer>>();
+								List<Object> list = new ArrayList<>();
 								while (pairsFixed.hasMoreTokens()) {
 									String tokenFixedColumns = pairsFixed.nextToken();
 									String[] pairComp = tokenFixedColumns.split("=");
@@ -17511,7 +17503,7 @@ public class Table extends JRootPane
 								selection.put(key, list);
 
 							} else if ((value != null) && (value.length() > 0)) {
-								ArrayList list = new ArrayList(ApplicationManager.getTokensAt(value, ":"));
+								List<String> list = ApplicationManager.getTokensAt(value, ":");
 								selection.put(key, list);
 							}
 						} else if (PivotTableUtils.PIVOTTABLE_OPERATION.equals(key) || PivotTableUtils.PIVOTTABLE_DATEGROUPOPTIONS
@@ -17561,7 +17553,7 @@ public class Table extends JRootPane
 	 */
 	protected void savePivotTableConfiguration(String confName) {
 		if ((this.dPivot != null) && (this.dPivot instanceof PivotDialog)) {
-			Hashtable h = ((PivotDialog) this.dPivot).getSelectedColumn();
+			Map<Object, Object> h = ((PivotDialog) this.dPivot).getSelectedColumn();
 			StringBuilder buffer = new StringBuilder();
 			if (h.containsKey(PivotTableUtils.PIVOTTABLE_ROWFIELD)) {
 				List<Pair> fixedColumnWidth = ((PivotDialog) this.dPivot).getFixedColumnWidth();
@@ -17581,7 +17573,7 @@ public class Table extends JRootPane
 			if (h.containsKey(PivotTableUtils.PIVOTTABLE_COLUMNFIELD)) {
 				Object o = h.get(PivotTableUtils.PIVOTTABLE_COLUMNFIELD);
 				if (o instanceof ArrayList) {
-					ArrayList list = (ArrayList) o;
+					List<?> list = (List<?>) o;
 					buffer.append("~" + PivotTableUtils.PIVOTTABLE_COLUMNFIELD + "~");
 					for (int i = 0; i < list.size(); i++) {
 						buffer.append(list.get(i));
@@ -17595,8 +17587,8 @@ public class Table extends JRootPane
 
 			if (h.containsKey(PivotTableUtils.PIVOTTABLE_DATAFIELD)) {
 				Object o = h.get(PivotTableUtils.PIVOTTABLE_DATAFIELD);
-				if (o instanceof ArrayList) {
-					ArrayList list = (ArrayList) o;
+				if (o instanceof List) {
+					List<?> list = (List<?>) o;
 					buffer.append("~" + PivotTableUtils.PIVOTTABLE_DATAFIELD + "~");
 					for (int i = 0; i < list.size(); i++) {
 						buffer.append(list.get(i));
@@ -17895,7 +17887,7 @@ public class Table extends JRootPane
 			this.timer = timer;
 		}
 
-		public Vector getTextsToTranslate() {
+		public List<String> getTextsToTranslate() {
 			return null;
 		}
 
@@ -17952,9 +17944,9 @@ public class Table extends JRootPane
 
 			BasicExpression filterExpression = null;
 			List<String> cols = this.table.getQuickFilterColumns();
-			Vector calculedColumns = this.table.getCalculatedColumns();
+			List<Object> calculedColumns = this.table.getCalculatedColumns();
 
-			Hashtable<String, Integer> columnSQLTypes = this.table.getColumnSQLTypes();
+			Map<String, Integer> columnSQLTypes = this.table.getColumnSQLTypes();
 
 			for (String currentColumn : cols) {
 				if ((calculedColumns != null) && calculedColumns.contains(currentColumn)) {
@@ -18008,8 +18000,8 @@ public class Table extends JRootPane
 			try {
 				Number object = NumberFormat.getInstance().parse(text);
 				return true;
-			} catch (ParseException e) {
-				Table.logger.trace("Check in quickfilter-> It's not number: " + text, e);
+			} catch (ParseException exc) {
+				Table.logger.trace("Check in quickfilter-> It's not number: " + text, exc);
 			}
 			return false;
 		}
@@ -18093,15 +18085,15 @@ public class Table extends JRootPane
 					}
 				}
 
-				Vector cols = this.table.getVisibleColumns();
-				Hashtable filters = new Hashtable();
+				List<String> cols = this.table.getVisibleColumns();
+				Map<Object, Object> filters = new HashMap<>();
 				SimpleFilter filter = new SimpleFilter(this.text);
 
 				for (Object col : cols) {
 					String currentColumn = (String) col;
 					for (int j = 0; j < sorter.getColumnCount(); j++) {
 						if (currentColumn.equals(sorter.getColumnName(j))) {
-							Class columnClass = sorter.getColumnClass(j);
+							Class<?> columnClass = sorter.getColumnClass(j);
 							if (dateFilter) {
 								if ((columnClass != null) && Date.class.isAssignableFrom(columnClass)) {
 									filters.put(currentColumn, filter);
@@ -18119,8 +18111,8 @@ public class Table extends JRootPane
 				}
 				sorter.applyFilter(filters, true);
 
-			} catch (Exception e) {
-				Table.logger.error(null, e);
+			} catch (Exception exc) {
+				Table.logger.error(null, exc);
 			} finally {
 				this.table.setCursor(c);
 				this.table.getQuickFilter().setCursor(cQuickfilter);
@@ -18142,14 +18134,14 @@ public class Table extends JRootPane
 	/**
 	 * Get the configuration parameters. If this is a dynamic table this method updates the parameters with the new column configuration. When the value changes, the columns
 	 * configuration changes too, and so, there is a difference between the configuration in the xml (that says that there are no columns) and the information that is being
-	 * displayed in the GUI (which has the value in the hashtable). Some Table tools, such and the PrintTable button, creates a new Table from the parameters configuration, and
+	 * displayed in the GUI (which has the value in the Map). Some Table tools, such and the PrintTable button, creates a new Table from the parameters configuration, and
 	 * then adds the values in the previous Table to the new one, provoking a configuration mismatch.
 	 * 
 	 * @return
 	 */
-	protected Hashtable getParameters() {
+	protected Map<Object, Object> getParameters() {
 		if (this.dynamicTable) {
-			Hashtable newParameters = (Hashtable) this.parameters.clone();
+			Map<Object, Object> newParameters = new HashMap<>(this.parameters);
 			String cols = ApplicationManager.vectorToStringSeparateBySemicolon(this.attributes);
 			newParameters.put(Table.COLS, cols);
 			newParameters.put(Table.VISIBLE_COLS, cols);
@@ -18175,7 +18167,7 @@ public class Table extends JRootPane
 	 * 
 	 * @return
 	 */
-	public Vector getRequieredCols() {
+	public List<String> getRequieredCols() {
 		return this.vrequiredCols;
 	}
 
@@ -18193,7 +18185,7 @@ public class Table extends JRootPane
 		if (insert) {
 			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
 		} else {
-			this.editableColumnsUpdateEntity = new Vector();
+			this.editableColumnsUpdateEntity = new ArrayList<>();
 		}
 	}
 
@@ -18210,7 +18202,7 @@ public class Table extends JRootPane
 		if (remove) {
 			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
 		} else {
-			this.editableColumnsUpdateEntity = new Vector();
+			this.editableColumnsUpdateEntity = new ArrayList<>();
 		}
 	}
 
@@ -18223,7 +18215,7 @@ public class Table extends JRootPane
 		if (update) {
 			this.editableColumnsUpdateEntity = this.vupdateEditableColumns;
 		} else {
-			this.editableColumnsUpdateEntity = new Vector();
+			this.editableColumnsUpdateEntity = new ArrayList<>();
 		}
 	}
 
@@ -18270,9 +18262,9 @@ public class Table extends JRootPane
 	}
 
 	public void checkInsertingRowValue() throws Exception {
-		Vector vreq = this.getRequieredCols();
+		 List<String> vreq = this.getRequieredCols();
 		for (int i = 0; i < vreq.size(); i++) {
-			Object col = vreq.elementAt(i);
+			String col = vreq.get(i);
 			Object value = this.getInsertingData().get(col);
 			if ((value == null) || value.equals("")) {
 				throw new Exception("table.insertingrequiredfieldserror");
@@ -18280,15 +18272,15 @@ public class Table extends JRootPane
 		}
 	}
 
-	protected Hashtable getInsertingData() {
+	protected Map<Object, Object> getInsertingData() {
 		if (this.isInsertingEnabled()) {
 			TableSorter model = this.getTableSorter();
-			Hashtable data = model.getInsertingData();
+			Map<Object, Object> data = model.getInsertingData();
 
 			if ((this.getCalculatedColumns() != null) && (this.getCalculatedColumns().size() > 0)) {
 				int rowIndex = model.getRowCount() - 1;
 				if (model.isInsertingRow(rowIndex)) {
-					Hashtable calculatedRowData = model.getCalculatedRowData(rowIndex);
+					Map<Object, Object> calculatedRowData = model.getCalculatedRowData(rowIndex);
 					if (calculatedRowData != null) {
 						data.putAll(calculatedRowData);
 					}
@@ -18306,7 +18298,7 @@ public class Table extends JRootPane
 				if (!this.inserting) {
 					this.checkInsertingRowValue();
 					try {
-						Hashtable insertingRowData = this.getInsertingData();
+						Map<Object, Object> insertingRowData = this.getInsertingData();
 						if (this.isDataBaseInsert()) {
 							Entity ent = ApplicationManager.getApplication().getReferenceLocator().getEntityReference(this.getEntityName());
 							EntityResult rs = ent.insert(insertingRowData, ApplicationManager.getApplication().getReferenceLocator().getSessionId());
@@ -18418,11 +18410,11 @@ public class Table extends JRootPane
 		}
 	}
 
-	protected Map<Object, Object> parseFunction(Map<Object, Object> equivalences) {
+	protected Map<Object, Object> parseFunction(Map<String, String> equivalences) {
 		Map<Object, Object> functionEquivalences = new HashMap<>();
-		Enumeration enumeration = equivalences.keys();
-		while (enumeration.hasMoreElements()) {
-			Object attr = enumeration.nextElement();
+		Iterator<String> enumeration = equivalences.keySet().iterator();
+		while (enumeration.hasNext()) {
+			String attr = enumeration.next();
 			String valueToParse = (String) equivalences.get(attr);
 			String columnIdentifier;
 			String function = ExtendedTableModel.SUM_OPERATION;
@@ -18443,7 +18435,7 @@ public class Table extends JRootPane
 				if (columnIndex < 0) {
 					function = ExtendedTableModel.SUM_OPERATION;
 				} else {
-					Class columnClass = this.getTableSorter().getColumnClass(columnIndex);
+					Class<?> columnClass = this.getTableSorter().getColumnClass(columnIndex);
 					if (Number.class.isAssignableFrom(columnClass)) {
 						function = ExtendedTableModel.SUM_OPERATION;
 					} else if (String.class.isAssignableFrom(columnClass)) {
@@ -18499,7 +18491,7 @@ public class Table extends JRootPane
 		return this.insertTitleKey;
 	}
 
-	public Hashtable<String, Integer> getColumnSQLTypes() {
+	public Map<String, Integer> getColumnSQLTypes() {
 		return this.hColumnSQLTypes;
 	}
 

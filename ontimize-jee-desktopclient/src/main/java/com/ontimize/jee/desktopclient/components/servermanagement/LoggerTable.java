@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.ontimize.gui.table.ExtendedTableModel;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService.OntimizeJEELogger;
 import com.ontimize.jee.common.util.logging.Level;
@@ -25,12 +27,12 @@ public class LoggerTable extends Table {
 
     @Override
     protected ExtendedTableModel createExtendedTableModel() {
-        return new LoggerExtendedTableModel(new HashMap<>(0), new ArrayList<>(this.attributes), this.calculedColumns, true);
+        return new LoggerExtendedTableModel(new EntityResultMapImpl(), new ArrayList<>(this.attributes), this.calculedColumns, true);
     }
 
     public class LoggerExtendedTableModel extends ExtendedTableModel {
 
-        public LoggerExtendedTableModel(Map<Object, Object> map, List<Object> columns,
+        public LoggerExtendedTableModel(EntityResult map, List<String> columns,
                 Map<Object, Object> map2, boolean editable) {
             super(map, columns, map2, editable, new ArrayList<>());
         }

@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -82,13 +81,13 @@ public class ReferenceCellEditor extends StringCellEditor
 
     protected ResourceBundle resources = null;
 
-    protected List<Object> columns = new Vector(2, 2);
+    protected List<Object> columns = new ArrayList<>(2);
 
     protected Map<Object, Object> valuesKeys = null;
 
     protected List<String> colsSet = null;
 
-    protected Map<Object, Object> colsSetTypes;
+    protected Map<String, String> colsSetTypes;
 
     protected boolean codeNumber = false;
 
@@ -278,11 +277,11 @@ public class ReferenceCellEditor extends StringCellEditor
         }
     }
 
-    public List<Object> getKeys() {
+    public List<String> getKeys() {
         return this.table.getKeys();
     }
 
-    public List<Object> getColumnsToSet() {
+    public List<String> getColumnsToSet() {
         return this.colsSet != null ? new ArrayList<>(this.colsSet) : this.table.getKeys();
     }
 
@@ -382,7 +381,7 @@ public class ReferenceCellEditor extends StringCellEditor
                 if (selectedRow >= 0) {
                     ReferenceCellEditor.this.valuesKeys = ReferenceCellEditor.this.table.getRowKeys(selectedRow);
                     Map<Object, Object> hData = ReferenceCellEditor.this.table.getRowData(selectedRow);
-                    List<Object> columnsToSet = ReferenceCellEditor.this.getColumnsToSet();
+                    List<String> columnsToSet = ReferenceCellEditor.this.getColumnsToSet();
                     for (int i = 0; i < columnsToSet.size(); i++) {
                         if (hData.containsKey(columnsToSet.get(i))) {
                             ReferenceCellEditor.this.valuesKeys.put(columnsToSet.get(i),
@@ -431,7 +430,7 @@ public class ReferenceCellEditor extends StringCellEditor
     }
 
     @Override
-    public List<Object> getSetColumns() {
+    public List<String> getSetColumns() {
         return new ArrayList<>(this.getColumnsToSet());
     }
 
@@ -487,7 +486,7 @@ public class ReferenceCellEditor extends StringCellEditor
                 if (oneResultIsNotShown && (res.calculateRecordNumber() == 1)) {
                 	Map<?, ?> hData = res.getRecordValues(0);
                     this.valuesKeys = new HashMap<>();
-                    List<Object> columnsToSet = this.table.getKeys();
+                    List<String> columnsToSet = this.table.getKeys();
                     for (int i = 0; i < columnsToSet.size(); i++) {
                         if (hData.containsKey(columnsToSet.get(i))) {
                             this.valuesKeys.put(columnsToSet.get(i), hData.get(columnsToSet.get(i)));

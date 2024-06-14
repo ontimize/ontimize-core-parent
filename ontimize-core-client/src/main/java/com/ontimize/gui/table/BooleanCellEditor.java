@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
@@ -31,7 +31,7 @@ public class BooleanCellEditor extends CellEditor {
      * 'selectededitor': Indicates if the editor has to be selected to start the edition.
      * @param parameters
      */
-    public BooleanCellEditor(Hashtable parameters) {
+    public BooleanCellEditor(Map<Object, Object> parameters) {
         super(parameters.get(CellEditor.COLUMN_PARAMETER), new CheckDataField(parameters));
         ((JCheckBox) this.field.getDataField()).setHorizontalAlignment(SwingConstants.CENTER);
 

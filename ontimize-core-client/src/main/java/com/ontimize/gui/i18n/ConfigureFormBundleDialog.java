@@ -264,13 +264,13 @@ public class ConfigureFormBundleDialog extends EJDialog implements IConfigureFor
 		cols.addAll(locales);
 		Map<Object, Object> hParams = DefaultXMLParametersManager.getParameters(Table.class.getName());
 
-		String stringCols = ApplicationManager.vectorToStringSeparateBy(cols, ";");
+		String stringCols = ApplicationManager.listToStringSeparateBy(cols, ";");
 		hParams.put(Table.COLS, stringCols);
 		hParams.put(Table.VISIBLE_COLS, stringCols);
 		hParams.put(Table.ENTITY, ConfigureFormBundleDialog.table_attr);
 		List<Object> editableColumns = new ArrayList<>(locales);
 		editableColumns.add(ConfigureFormBundleDialog.bundleClassColumn);
-		hParams.put(Table.EDITABLE_COLUMNS, ApplicationManager.vectorToStringSeparateBy(editableColumns, ";"));
+		hParams.put(Table.EDITABLE_COLUMNS, ApplicationManager.listToStringSeparateBy(editableColumns, ";"));
 		hParams.put(Table.INSERT_TABLE, "yes");
 		hParams.put(Table.DATABASE_INSERT, "no");
 		hParams.put(Table.DATABASE_REMOVE, "yes");

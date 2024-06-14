@@ -1,13 +1,12 @@
 package com.ontimize.jee.desktopclient.components.treetabbedformmanager;
 
 import java.awt.BorderLayout;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,15 +45,15 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
         this.add(form, BorderLayout.CENTER);
         Map<?, ?> keysValues = level.getKeysValues();
         if (keysValues != null) {
-            this.levelKeys = this.valuesToForm(new Hashtable<Object, Object>(keysValues));
+            this.levelKeys = this.valuesToForm(new HashMap<Object, Object>(keysValues));
         } else {
-            this.levelKeys = new Hashtable<>();
+            this.levelKeys = new HashMap<>();
         }
 
-        Map<String, List<?>> selectedData = level.getSelectedData();
-        this.levelValues = new Hashtable<>();
+        Map<String, List<Object>> selectedData = level.getSelectedData();
+        this.levelValues = new HashMap<>();
         if (selectedData != null) {
-            for (Entry<String, List<?>> entry : selectedData.entrySet()) {
+            for (Entry<String, List<Object>> entry : selectedData.entrySet()) {
                 List<?> value = entry.getValue();
                 if ((value != null) && (value.size() > 0) && (value.get(0) != null)) {
                     this.levelValues.put(entry.getKey(), value.get(0));
@@ -70,21 +69,21 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
             ReflectionTools.invoke(form.getInteractionManager(), "setDetailForm", true);
         }
 
-        List<?> parentKeys2 = level.getParentKeys();
+        List<String> parentKeys2 = level.getParentKeys();
         if (parentKeys2 != null) {
             for (Object c : parentKeys2) {
                 form.setModifiable(c.toString(), false);
             }
-            form.setParentKeys(new Vector<>(parentKeys2));
+            form.setParentKeys(new ArrayList<>(parentKeys2));
         } else {
-            form.setParentKeys(new Vector<>());
+            form.setParentKeys(new ArrayList<>());
         }
 
         String previousLevelId = level.getPreviousLevelId();
-        Hashtable<Object, Object> pk = new Hashtable<>();
+        Map<Object, Object> pk = new HashMap<>();
         if (previousLevelId != null) {
-            Map<String, List<?>> selectedData2 = level.getLevelManager().getLevel(previousLevelId).getSelectedData();
-            for (Entry<String, List<?>> entry : selectedData2.entrySet()) {
+            Map<String, List<Object>> selectedData2 = level.getLevelManager().getLevel(previousLevelId).getSelectedData();
+            for (Entry<String, List<Object>> entry : selectedData2.entrySet()) {
                 if ((entry.getValue() != null) && (entry.getValue().size() > 0)) {
                     if (entry.getValue().get(0) == null) {
                         pk.put(entry.getKey(), new NullValue());
@@ -104,11 +103,11 @@ public class TreeTabbedDetailForm extends BaseDetailForm {
         }
     }
 
-    private Map<Object, Vector<?>> adaptKeys(Map<?, ?> levelKeys2) {
-        Map<Object, Vector<?>> result = new HashMap<>();
+    private Map<Object, List<Object>> adaptKeys(Map<?, ?> levelKeys2) {
+        Map<Object, List<Object>> result = new HashMap<>();
         for (Entry<?, ?> entry : levelKeys2.entrySet()) {
             if (entry.getValue() != null) {
-                Vector<Object> value = new Vector<>();
+                List<Object> value = new ArrayList<>();
                 value.add(entry.getValue());
                 result.put(entry.getKey(), value);
             }

@@ -12,7 +12,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -56,9 +57,9 @@ public class PrintingWindow extends EJDialog implements Freeable {
 
     protected JPanel panelCheckBox = new JPanel(new GridLayout(0, 1));
 
-    protected Vector listCheckBox = new Vector();
+    protected List<Object> listCheckBox = new ArrayList<>();
 
-    protected Vector listCheckBoxPrinting = new Vector();
+    protected List<Object> listCheckBoxPrinting = new ArrayList<>();
 
     protected JProgressBar progressBar = new JProgressBar();
 
@@ -66,7 +67,7 @@ public class PrintingWindow extends EJDialog implements Freeable {
 
     protected PageFormat pageFormat = PrinterJob.getPrinterJob().defaultPage();
 
-    protected Vector columnNamesOrder = new Vector();
+    protected List<Object> columnNamesOrder = new ArrayList<>();
 
     protected ReportFrame inf = null;
 
@@ -164,7 +165,7 @@ public class PrintingWindow extends EJDialog implements Freeable {
 
             @Override
             public void actionPerformed(ActionEvent evento) {
-                Vector vSortColumns = new Vector();
+                List<Object> vSortColumns = new ArrayList<>();
                 int rejected = 0;
                 for (int i = 0; i < PrintingWindow.this.listCheckBoxPrinting.size(); i++) {
                     JCheckBox check = (JCheckBox) PrintingWindow.this.listCheckBoxPrinting.get(i);

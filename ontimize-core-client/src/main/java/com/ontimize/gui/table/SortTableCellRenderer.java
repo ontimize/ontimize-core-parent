@@ -16,7 +16,7 @@ import java.awt.Window;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -112,7 +112,7 @@ public class SortTableCellRenderer extends DefaultTableCellRenderer {
 
     public static Border emptyBorder = new EmptyBorder(0, 2, 0, 2);
 
-    public SortTableCellRenderer(JTable table, Hashtable params) {
+    public SortTableCellRenderer(JTable table, Map<Object, Object> params) {
         this(table);
         this.init(params);
     }
@@ -138,7 +138,7 @@ public class SortTableCellRenderer extends DefaultTableCellRenderer {
      * Adds configurable parameters for class that renders the table header according to the information
      * that must be shown. This parameters are specified in .xml definition of {@link Table}.
      * <p>
-     * @param parameters the <code>Hashtable</code> with parameters
+     * @param parameters the <code>Map</code> with parameters
      *
      *        <p>
      *
@@ -238,7 +238,7 @@ public class SortTableCellRenderer extends DefaultTableCellRenderer {
      *
      *        </TABLE>
      */
-    protected void init(Hashtable parameters) {
+    protected void init(Map<Object, Object> parameters) {
         this.minHeaderHeight = ParseUtils.getInteger((String) parameters.get("headerheight"), this.minHeaderHeight);
         this.predFont = ParseUtils.getFont((String) parameters.get("headerfont"), this.predFont);
         this.setFont(this.predFont);

@@ -24,7 +24,7 @@ public interface Level {
 
     String getDisplayText();
 
-    Map<String, List<?>> getSelectedData();
+    Map<String, List<Object>> getSelectedData();
 
     void setNextLevelId(String nextLevelId);
 
@@ -42,7 +42,7 @@ public interface Level {
 
     Map<?, ?> getKeysValues();
 
-    List<?> getParentKeys();
+    List<String> getParentKeys();
 
     String getEntityName();
 

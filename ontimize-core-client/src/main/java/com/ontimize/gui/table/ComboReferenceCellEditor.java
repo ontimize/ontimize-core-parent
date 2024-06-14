@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.sql.Types;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -37,9 +36,9 @@ public class ComboReferenceCellEditor extends CellEditor implements ReferenceCom
 
 	private EditorComp			editorAux	= null;
 
-	protected Hashtable			colsSetTypes;
+	protected Map<String, String>			colsSetTypes;
 
-	public ComboReferenceCellEditor(Hashtable parameters) {
+	public ComboReferenceCellEditor(Map<Object, Object> parameters) {
 		super(parameters.get("column"), new ExtCampoComboRef(parameters));
 
 		((ReferenceComboDataField) this.field).remove(((ReferenceComboDataField) this.field).getDataField());
@@ -120,7 +119,7 @@ public class ComboReferenceCellEditor extends CellEditor implements ReferenceCom
 	}
 
 	@Override
-	public List<Object> getSetColumns() {
+	public List<String> getSetColumns() {
 		if ((this.field != null) && (this.field instanceof ReferenceComboDataField)) {
 			return ((ReferenceComboDataField) this.field).getOnSetValueSetAttributes();
 		}
@@ -130,7 +129,7 @@ public class ComboReferenceCellEditor extends CellEditor implements ReferenceCom
 	@Override
 	public Map<Object, Object> getSetData(boolean useNullValues) {
 		if ((this.field != null) && (this.field instanceof ReferenceComboDataField)) {
-			List<Object> columnsToSet = ((ReferenceComboDataField) this.field).getOnSetValueSetAttributes();
+			List<String> columnsToSet = ((ReferenceComboDataField) this.field).getOnSetValueSetAttributes();
 			if ((columnsToSet != null) && (columnsToSet.size() > 0)) {
 
 				Object currentCode = this.field.getValue();
@@ -140,11 +139,11 @@ public class ComboReferenceCellEditor extends CellEditor implements ReferenceCom
 					hCurrentComboCodeValues = ((ReferenceComboDataField) this.field).getValuesToCode(currentCode);
 				}
 
-				Map<Object, Object> onSetValueSetEquivalences = ((ReferenceComboDataField) this.field).getOnSetValueSetEquivalences();
+				Map<String, String> onSetValueSetEquivalences = ((ReferenceComboDataField) this.field).getOnSetValueSetEquivalences();
 
-				Hashtable result = new Hashtable();
-				for (Object element : columnsToSet) {
-					String colName = (String) element;
+				Map<Object, Object> result = new HashMap<>();
+				for (String element : columnsToSet) {
+					String colName = element;
 					String originalName = colName;
 					if ((onSetValueSetEquivalences != null) && onSetValueSetEquivalences.containsKey(colName)) {
 						originalName = (String) onSetValueSetEquivalences.get(colName);
@@ -200,7 +199,7 @@ public class ComboReferenceCellEditor extends CellEditor implements ReferenceCom
 
 		protected ComboReferenceCellEditor comboReferenceCellEditor = null;
 
-		ExtCampoComboRef(Hashtable p) {
+		ExtCampoComboRef(Map<Object, Object> p) {
 			super(p);
 
 			((CustomComboBox) this.dataField).setKeySelectionManager(new ComboDataField.ExtKeySelectionManager() {

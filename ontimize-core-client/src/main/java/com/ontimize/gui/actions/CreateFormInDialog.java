@@ -176,9 +176,9 @@ public class CreateFormInDialog extends AbstractButtonAction {
 					kv.put(sField, oValue);
 				}
 			}
-			List<Object> parentkeys = this.form.getParentKeys();
+			List<String> parentkeys = this.form.getParentKeys();
 			for (int i = 0; i < parentkeys.size(); i++) {
-				String sField = parentkeys.get(i).toString();
+				String sField = parentkeys.get(i);
 				String eqField = sField;
 				if ((this.equivalentsFields != null) && this.equivalentsFields.containsKey(sField)) {
 					eqField = (String) this.equivalentsFields.get(sField);

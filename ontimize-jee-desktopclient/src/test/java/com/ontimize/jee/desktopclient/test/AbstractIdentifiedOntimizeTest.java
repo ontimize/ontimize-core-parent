@@ -1,6 +1,6 @@
 package com.ontimize.jee.desktopclient.test;
 
-import com.ontimize.jee.common.test.AbstractOntimizeTest;
+import com.ontimize.test.AbstractOntimizeTest;
 
 public abstract class AbstractIdentifiedOntimizeTest extends AbstractOntimizeTest {
 

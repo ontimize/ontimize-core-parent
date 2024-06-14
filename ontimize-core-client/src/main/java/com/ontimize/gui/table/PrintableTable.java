@@ -11,7 +11,8 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterJob;
 import java.text.SimpleDateFormat;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -56,7 +57,7 @@ public class PrintableTable implements Printable {
 
     private PrinterJob pj = PrinterJob.getPrinterJob();
 
-    private Vector printedColumns = null;
+    private List<Object> printedColumns = null;
 
     private String pageTitles = null;
 
@@ -426,12 +427,12 @@ public class PrintableTable implements Printable {
         return this.pageIndexes.length;
     }
 
-    public void setPrintingColumns(Vector cols) {
+    public void setPrintingColumns(List<Object> cols) {
         this.printedColumns = cols;
         this.preparePagesToPrinting(this.pf);
     }
 
-    public void setPrintingColumns(Vector cols, boolean prepare) {
+    public void setPrintingColumns(List<Object> cols, boolean prepare) {
         this.printedColumns = cols;
         if (prepare) {
             this.preparePagesToPrinting(this.pf);
@@ -455,9 +456,9 @@ public class PrintableTable implements Printable {
         }
     }
 
-    public Vector getColumnsToPrintingByOrder() {
+    public List<Object> getColumnsToPrintingByOrder() {
         TableColumnModel m = this.table.getJTable().getColumnModel();
-        Vector columns = new Vector();
+        List<Object> columns = new ArrayList();
         for (int i = 0; i < m.getColumnCount(); i++) {
             TableColumn tc = m.getColumn(i);
             if (this.printedColumns.contains(tc.getIdentifier())) {

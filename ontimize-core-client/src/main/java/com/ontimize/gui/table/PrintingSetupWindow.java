@@ -20,9 +20,10 @@ import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterAbortException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -93,7 +94,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
     private final JPanel optionPanel = new JPanel(new GridLayout(0, 1));
 
-    private Vector checkBoxListToPrint = new Vector();
+    private List<Object> checkBoxListToPrint = new ArrayList<>();
 
     private final JTextField titleText = new JTextField();
 
@@ -103,11 +104,11 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
     private final JLabel stateLabel = new JLabel();
 
-    private Vector printingVector = new Vector();
+    private List<Object> printingVector = new ArrayList<>();
 
     private final JComboBox comboSort = new JComboBox();
 
-    private Vector columnOrderId = new Vector();
+    private List<Object> columnOrderId = new ArrayList<>();
 
     private final JButton buttonPreview = new JButton();
 
@@ -139,7 +140,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
     private final JButton buttonCancelColToPrint = new JButton("application.cancel");
 
-    private Vector auxPrintingVector = null;
+    private List<Object> auxPrintingVector = null;
 
     private JLabel lInfoOrdenCols = null;
 
@@ -304,7 +305,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
         }
 
         DefaultListModel model = new DefaultListModel();
-        Vector colsOrder = this.printableTable.getColumnsToPrintingByOrder();
+        List<Object> colsOrder = this.printableTable.getColumnsToPrintingByOrder();
         for (int i = 0; i < colsOrder.size(); i++) {
             model.insertElementAt(colsOrder.get(i), i);
         }
@@ -332,7 +333,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
         this.ta.setResourceBundle(t.resourcesFile);
         this.ta.setValue(t.getShownValue());
         this.ta.sortBy(t.getOrderColumn(), t.getAscending());
-        Vector visibleCols = t.getVisibleColumns();
+        List<String> visibleCols = t.getVisibleColumns();
 
         for (int i = 0; i < visibleCols.size(); i++) {
             String columnName = visibleCols.get(i).toString();
@@ -791,7 +792,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                PrintingSetupWindow.this.printingVector = (Vector) PrintingSetupWindow.this.auxPrintingVector.clone();
+                PrintingSetupWindow.this.printingVector = new ArrayList<>(PrintingSetupWindow.this.auxPrintingVector);
                 PrintingSetupWindow.this.printableTable.setPrintingColumns(PrintingSetupWindow.this.printingVector);
 
                 PrintingSetupWindow.this.fitTableToPage();
@@ -803,7 +804,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                PrintingSetupWindow.this.auxPrintingVector = (Vector) PrintingSetupWindow.this.printingVector.clone();
+                PrintingSetupWindow.this.auxPrintingVector = new ArrayList<>(PrintingSetupWindow.this.printingVector);
                 PrintingSetupWindow.this.printingColumnVector.setVisible(false);
             }
         });
@@ -812,7 +813,7 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                PrintingSetupWindow.this.auxPrintingVector = (Vector) PrintingSetupWindow.this.printingVector.clone();
+                PrintingSetupWindow.this.auxPrintingVector = new ArrayList<>(PrintingSetupWindow.this.printingVector);
                 for (int i = 0; i < PrintingSetupWindow.this.checkBoxListToPrint.size(); i++) {
                     if (PrintingSetupWindow.this.checkBoxListToPrint.get(i) instanceof JCheckBox) {
                         JCheckBox cb = (JCheckBox) PrintingSetupWindow.this.checkBoxListToPrint.get(i);
@@ -941,8 +942,8 @@ public class PrintingSetupWindow extends EJDialog implements Internationalizatio
     }
 
     @Override
-    public Vector getTextsToTranslate() {
-        Vector v = new Vector();
+    public List<String> getTextsToTranslate() {
+    	List<String> v = new ArrayList<>();
         return v;
     }
 

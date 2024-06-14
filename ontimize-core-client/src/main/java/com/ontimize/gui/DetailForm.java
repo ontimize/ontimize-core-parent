@@ -57,7 +57,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 
 	protected Map<Object, Object>	tableKeys								= null;
 
-	protected List<Object>			fieldsKey								= null;
+	protected List<String>			fieldsKey								= null;
 
 	protected int					vectorIndex								= 0;
 
@@ -125,38 +125,38 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 
 	protected boolean					packed				= false;
 
-	protected Map<Object, Object>		codValues			= null;
+	protected Map<String, String>		codValues			= null;
 
-	protected Map<Object, Object>		reverseCodValues	= null;
+	protected Map<String, String>		reverseCodValues	= null;
 
-	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeys) {
+	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys) {
 		this(f, title, modal, form, tableKeys, keyFields, sourceTable, parentkeys, null);
 	}
 
-	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
-			Map<Object, Object> codValues) {
+	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
+			Map<String, String> codValues) {
 		super(f, title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, sourceTable, parentkeys);
 	}
 
-	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeys) {
+	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys) {
 		this(d, title, modal, form, tableKeys, keyFields, sourceTable, parentkeys, null);
 	}
 
-	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
-			Map<Object, Object> codValues) {
+	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
+			Map<String, String> codValues) {
 		super(d, title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, sourceTable, parentkeys);
 	}
 
-	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentKeys) {
+	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentKeys) {
 		this(title, modal, form, tableKeys, keyFields, sourceTable, parentKeys, null);
 	}
 
-	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
-			Map<Object, Object> codValues) {
+	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeys,
+			Map<String, String> codValues) {
 		super(form.getParentFrame(), title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, sourceTable, parentkeys);
@@ -166,7 +166,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName,
+	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName,
 			Table sourceTable, Map<Object, Object> otherParentkeys) {
 		this(f, title, modal, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentkeys, null);
 	}
@@ -175,8 +175,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName,
-			Table sourceTable, Map<Object, Object> otherParentkeys, Map<Object, Object> codValues) {
+	public DetailForm(Frame f, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName,
+			Table sourceTable, Map<Object, Object> otherParentkeys, Map<String, String> codValues) {
 		super(f, title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentkeys);
@@ -186,7 +186,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName,
+	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName,
 			Table sourceTable, Map<Object, Object> otherParentkeys) {
 		this(d, title, modal, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentkeys, null);
 	}
@@ -195,8 +195,8 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName,
-			Table sourceTable, Map<Object, Object> otherParentkeys, Map<Object, Object> codValues) {
+	public DetailForm(Dialog d, String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName,
+			Table sourceTable, Map<Object, Object> otherParentkeys, Map<String, String> codValues) {
 		super(d, title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentkeys);
@@ -207,7 +207,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
+	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
 			Map<Object, Object> otherParentKeys) {
 		this(title, modal, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentKeys, null);
 	}
@@ -216,20 +216,20 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
-			Map<Object, Object> otherParentkeys, Map<Object, Object> codValues) {
+	public DetailForm(String title, boolean modal, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
+			Map<Object, Object> otherParentkeys, Map<String, String> codValues) {
 		super(form.getParentFrame(), title, modal);
 		this.initCodValues(codValues);
 		this.init(title, form, tableKeys, keyFields, parentkeyValue, parentkeyName, sourceTable, otherParentkeys);
 	}
 
-	protected void initCodValues(Map<Object, Object> codValues) {
+	protected void initCodValues(Map<String, String> codValues) {
 		if (codValues == null) {
 			return;
 		}
 		this.codValues = codValues;
 		this.reverseCodValues = new HashMap<>();
-		for (Entry<Object, Object> entry : this.codValues.entrySet()) {
+		for (Entry<String, String> entry : this.codValues.entrySet()) {
 			this.reverseCodValues.put(entry.getValue(), entry.getValue());
 
 		}
@@ -300,10 +300,10 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 		return clone;
 	}
 
-	protected List<Object> listToForm(List<Object> list) {
-		List<Object> current = new ArrayList<>();
+	protected List<String> listToForm(List<String> list) {
+		List<String> current = new ArrayList<>();
 		for (int i = 0; i < list.size(); i++) {
-			current.add(this.getFormFieldName(list.get(i).toString()));
+			current.add(this.getFormFieldName(list.get(i)));
 		}
 		return current;
 	}
@@ -312,7 +312,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 	 * @deprecated
 	 */
 	@Deprecated
-	protected void init(String title, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
+	protected void init(String title, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Object parentkeyValue, String parentkeyName, Table sourceTable,
 			Map<Object, Object> otherParentkeys) {
 		Map<Object, Object> parentkeysvalues = new HashMap<>();
 		if ((parentkeyName != null) && (parentkeyValue != null)) {
@@ -342,7 +342,7 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 		}
 	}
 
-	protected void init(String title, Form form, Map<Object, Object> tableKeys, List<Object> keyFields, Table sourceTable, Map<Object, Object> parentkeyValues) {
+	protected void init(String title, Form form, Map<Object, Object> tableKeys, List<String> keyFields, Table sourceTable, Map<Object, Object> parentkeyValues) {
 		this.autoPackOnOpen = false;
 		this.title = title;
 		this.tableKeys = this.valuesToForm(tableKeys);
@@ -535,9 +535,9 @@ public class DetailForm extends EJDialog implements Internationalization, DataNa
 						}
 					}
 				}
-				List<Object> vTableKeys = this.table.getKeys();
+				List<String> vTableKeys = this.table.getKeys();
 				for (int i = 0; i < vTableKeys.size(); i++) {
-					Object oKeyField = vTableKeys.get(i);
+					String oKeyField = vTableKeys.get(i);
 					List<?> vKeyValues = (List<?>) this.tableKeys.get(oKeyField);
 					if (vKeyValues.size() <= index) {
 						if (ApplicationManager.DEBUG) {

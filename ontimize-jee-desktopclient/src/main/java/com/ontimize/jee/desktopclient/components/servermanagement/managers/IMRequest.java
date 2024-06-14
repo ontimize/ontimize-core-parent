@@ -3,8 +3,8 @@ package com.ontimize.jee.desktopclient.components.servermanagement.managers;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.List;
+import java.util.Map;
 
 import com.ontimize.annotation.FormComponent;
 import com.ontimize.gui.BasicInteractionManager;
@@ -14,6 +14,7 @@ import com.ontimize.gui.button.Button;
 import com.ontimize.gui.field.DateDataField;
 import com.ontimize.gui.manager.IFormManager;
 import com.ontimize.gui.table.Table;
+import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.services.servermanagement.IServerManagementService;
 import com.ontimize.jee.desktopclient.spring.BeansFactory;
 
@@ -61,9 +62,9 @@ public class IMRequest extends BasicInteractionManager {
                 public void actionPerformed(ActionEvent e) {
                     int selectedRow = IMRequest.this.tResults.getSelectedRow();
                     if (selectedRow != -1) {
-                        Hashtable selectedRowData = IMRequest.this.tResults.getSelectedRowData();
-                        String serviceName = ((Vector<String>) selectedRowData.get("SERVICE_NAME")).get(0);
-                        String methodName = ((Vector<String>) selectedRowData.get("METHOD_NAME")).get(0);
+                        EntityResult selectedRowData = IMRequest.this.tResults.getSelectedRowData();
+                        String serviceName = (String) ((List<?>) selectedRowData.get("SERVICE_NAME")).get(0);
+                        String methodName = (String) ((List<?>) selectedRowData.get("METHOD_NAME")).get(0);
                         IMRequest.this.tDetails
                             .setValue(IMRequest.this.serverManagement.getServiceStatistics(serviceName, methodName,
                                     (Date) IMRequest.this.beforeDate.getDateValue(),

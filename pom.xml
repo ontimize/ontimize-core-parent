@@ -11,6 +11,7 @@
         <module>ontimize-core-common</module>
         <module>ontimize-core-client</module>
 		<module>ontimize-jee-desktopclient</module>
+		<module>ontimize-jee-hessian</module>
     </modules>
 
     <organization>
@@ -94,7 +95,7 @@
         <junit.version>4.11</junit.version>
         <jcommon.version>1.0.15</jcommon.version>
         <redmine-java-api.version>3.0.0</redmine-java-api.version>
-        <servlet-api.version>2.5</servlet-api.version>
+        <servlet-api.version>3.1.0</servlet-api.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <ontimize-jee.version>5.10.0</ontimize-jee.version>
 		<jasperreports.version>6.20.1</jasperreports.version>
@@ -211,6 +212,12 @@
 				<artifactId>ontimize-jee-common</artifactId>
 				<version>${ontimize-jee.version}</version>
 			</dependency>
+			
+			<dependency>
+                <groupId>com.ontimize.labs</groupId>
+                <artifactId>ontimize-jee-hessian</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -466,6 +473,13 @@
 			    <groupId>org.apache.httpcomponents</groupId>
 			    <artifactId>httpclient</artifactId>
 			    <version>${apache-httpclient.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>${servlet-api.version}</version>
+				<scope>provided</scope>
 			</dependency>
 		
         </dependencies>

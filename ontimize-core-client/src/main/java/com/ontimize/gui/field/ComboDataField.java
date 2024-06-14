@@ -11,11 +11,11 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ComboBoxEditor;
 import javax.swing.ComboBoxModel;
@@ -740,8 +740,8 @@ public abstract class ComboDataField extends DataField implements Freeable {
 	 * <p>
 	 * @return the value vector
 	 */
-	public Vector getValues() {
-		Vector v = new Vector();
+	public List<Object> getValues() {
+		List<Object> v = new ArrayList<>();
 		for (int i = 0; i < ((JComboBox) this.dataField).getItemCount(); i++) {
 			v.add(((JComboBox) this.dataField).getItemAt(i));
 		}
@@ -762,9 +762,9 @@ public abstract class ComboDataField extends DataField implements Freeable {
 		}
 		this.setInnerListenerEnabled(false);
 		Object oPreviousValue = this.getValue();
-		if (value instanceof Vector) {
+		if (value instanceof List) {
 			((JComboBox) this.dataField).removeAllItems();
-			for (Object element : ((Vector) value)) {
+			for (Object element : ((List<?>) value)) {
 				((JComboBox) this.dataField).addItem(element);
 			}
 			((JComboBox) this.dataField).setSelectedIndex(0);

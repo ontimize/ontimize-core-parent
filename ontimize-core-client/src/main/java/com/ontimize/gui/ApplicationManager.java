@@ -52,14 +52,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
@@ -235,7 +233,7 @@ public abstract class ApplicationManager {
 
 	private static Cursor						helpOnFieldCursor								= null;
 
-	private static Vector						operationThreadQueue							= null;
+	private static List<Object>					operationThreadQueue							= null;
 
 	private static OPThreadsMonitor				monitorThreads									= null;
 
@@ -278,40 +276,40 @@ public abstract class ApplicationManager {
 
 		List<Object>	threads			= null;
 
-		JList	list			= new JList(new DefaultListModel());
+		JList			list			= new JList(new DefaultListModel());
 
-		Thread	updateThread	= new Thread() {
+		Thread			updateThread	= new Thread() {
 
-			@Override
-			public void run() {
-				while (true) {
-					((DefaultListModel) OPThreadsMonitor.this.list.getModel()).removeAllElements();
-					if ((OPThreadsMonitor.this.threads != null) && (!OPThreadsMonitor.this.threads.isEmpty())) {
-						for (int i = 0; i < OPThreadsMonitor.this.threads.size(); i++) {
-							Object o = OPThreadsMonitor.this.threads.get(i);
-							if (o instanceof OperationThread) {
-								// Read info
-								String description = ((OperationThread) o).getDescription();
-								if (description == null) {
-									description = Integer.toString(i);
-								}
-								String status = ((OperationThread) o).getStatus();
-								StringBuilder sb = new StringBuilder(description);
-								sb.append(": ");
-								sb.append(status);
-								((DefaultListModel) OPThreadsMonitor.this.list.getModel())
-								.add(((DefaultListModel) OPThreadsMonitor.this.list.getModel()).getSize(), sb.toString());
-							}
-						}
-					}
-					try {
-						Thread.sleep(1000);
-					} catch (Exception e) {
-						ApplicationManager.logger.trace(null, e);
-					}
-				}
-			}
-		};
+											@Override
+											public void run() {
+												while (true) {
+													((DefaultListModel) OPThreadsMonitor.this.list.getModel()).removeAllElements();
+													if ((OPThreadsMonitor.this.threads != null) && (!OPThreadsMonitor.this.threads.isEmpty())) {
+														for (int i = 0; i < OPThreadsMonitor.this.threads.size(); i++) {
+															Object o = OPThreadsMonitor.this.threads.get(i);
+															if (o instanceof OperationThread) {
+																// Read info
+																String description = ((OperationThread) o).getDescription();
+																if (description == null) {
+																	description = Integer.toString(i);
+																}
+																String status = ((OperationThread) o).getStatus();
+																StringBuilder sb = new StringBuilder(description);
+																sb.append(": ");
+																sb.append(status);
+																((DefaultListModel) OPThreadsMonitor.this.list.getModel())
+																		.add(((DefaultListModel) OPThreadsMonitor.this.list.getModel()).getSize(), sb.toString());
+															}
+														}
+													}
+													try {
+														Thread.sleep(1000);
+													} catch (Exception e) {
+														ApplicationManager.logger.trace(null, e);
+													}
+												}
+											}
+										};
 
 		/**
 		 * Creates a OperationThread Monitor
@@ -394,15 +392,15 @@ public abstract class ApplicationManager {
 
 		protected JLabel			stateLabel			= new JLabel() {
 
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension d = super.getPreferredSize();
-				if (d.width > 500) {
-					d.width = 500;
-				}
-				return d;
-			}
-		};
+															@Override
+															public Dimension getPreferredSize() {
+																Dimension d = super.getPreferredSize();
+																if (d.width > 500) {
+																	d.width = 500;
+																}
+																return d;
+															}
+														};
 
 		protected ActionListener	cancelListener		= null;
 
@@ -449,23 +447,23 @@ public abstract class ApplicationManager {
 
 		protected Thread			tFinished		= new Thread() {
 
-			@Override
-			public void run() {
-				this.setPriority(Thread.MAX_PRIORITY);
-				while ((CancelOperationDialog.this.operationThread != null) && (!(CancelOperationDialog.this.operationThread
-						.hasStarted()) || /*
-						 * op . hasFinished ( ) == false
-						 */CancelOperationDialog.this.operationThread.isAlive())) {
-					try {
-						Thread.sleep(100);
-					} catch (Exception e) {
-						ApplicationManager.logger.trace(null, e);
-					}
-				}
-				// Now hide the dialog because operation is finished
-				SwingUtilities.invokeLater(() -> CancelOperationDialog.this.dispose());
-			}
-		};
+														@Override
+														public void run() {
+															this.setPriority(Thread.MAX_PRIORITY);
+															while ((CancelOperationDialog.this.operationThread != null) && (!(CancelOperationDialog.this.operationThread
+																	.hasStarted()) || /*
+																						 * op . hasFinished ( ) == false
+																						 */CancelOperationDialog.this.operationThread.isAlive())) {
+																try {
+																	Thread.sleep(100);
+																} catch (Exception e) {
+																	ApplicationManager.logger.trace(null, e);
+																}
+															}
+															// Now hide the dialog because operation is finished
+															SwingUtilities.invokeLater(() -> CancelOperationDialog.this.dispose());
+														}
+													};
 
 		/**
 		 * The progress bas that is shown while the operation is being performed.
@@ -478,80 +476,80 @@ public abstract class ApplicationManager {
 
 		protected Thread		progressThread	= new Thread() {
 
-			boolean	increasing		= true;
+													boolean	increasing		= true;
 
-			boolean	changedState	= false;
+													boolean	changedState	= false;
 
-			@Override
-			public void run() {
-				if (CancelOperationDialog.this.operationThread != null) {
-					this.setPriority(Thread.MAX_PRIORITY);
-					CancelOperationDialog.this.progressBar.setMinimum(-CancelOperationDialog.this.progressBar.getPreferredSize().width);
-					CancelOperationDialog.this.progressBar.setMaximum(CancelOperationDialog.this.progressBar.getPreferredSize().width);
-					CancelOperationDialog.this.progressBar.setValue(-CancelOperationDialog.this.progressBar.getPreferredSize().width);
-				}
-				boolean bEven = false;
-				String sPreviousStatus = null;
-				while ((CancelOperationDialog.this.operationThread != null) && (!(CancelOperationDialog.this.operationThread
-						.hasStarted()) || (!CancelOperationDialog.this.operationThread.hasFinished()))) {
-					bEven = !bEven;
-					// Status
-					this.changedState = false;
-					String stringStatus = CancelOperationDialog.this.operationThread.getStatus();
-					if ((sPreviousStatus != null) && sPreviousStatus.equals(stringStatus)) {
-						// Not update
-					} else {
-						try {
-							if ((ApplicationManager.getApplication() != null) && (ApplicationManager.getApplication()
-									.getResourceBundle() != null)) {
-								stringStatus = ApplicationManager.getApplication().getResourceBundle()
-										.getString(CancelOperationDialog.this.operationThread.getStatus());
-							}
-						} catch (Exception e) {
-							ApplicationManager.logger.debug(null, e);
-						}
-						CancelOperationDialog.this.stateLabel.setText(stringStatus);
-						sPreviousStatus = CancelOperationDialog.this.operationThread.getStatus();
-						this.changedState = true;
-					}
-					final boolean bAuxEven = bEven;
-					try {
-						SwingUtilities.invokeAndWait(() -> {
-							if (bAuxEven) {
-								CancelOperationDialog.this.externalPack();
-							}
-							CancelOperationDialog.this.progressBar
-							.setMinimum(-CancelOperationDialog.this.progressBar.getWidth());
-							CancelOperationDialog.this.progressBar
-							.setMaximum(CancelOperationDialog.this.progressBar.getWidth());
-							if (this.changedState) {
-								CancelOperationDialog.this.stateLabel.repaint();
-							}
-							// Paint progress panel
-							int value = CancelOperationDialog.this.progressBar.getValue();
-							if ((value < CancelOperationDialog.this.progressBar
-									.getWidth()) && (this.increasing)) {
-								CancelOperationDialog.this.progressBar.setValue(value + 10);
-							} else {
-								this.increasing = false;
-								CancelOperationDialog.this.progressBar.setValue(value - 10);
-								if (value <= -CancelOperationDialog.this.progressBar.getWidth()) {
-									this.increasing = true;
-								}
-							}
-							CancelOperationDialog.this.progressBar.repaint();
-						});
-					} catch (Exception e) {
-						ApplicationManager.logger.error(null, e);
-					}
-					try {
-						Thread.sleep(CancelOperationDialog.this.updateTime);
-					} catch (Exception e) {
-						ApplicationManager.logger.error(null, e);
-					}
-				}
-			}
-		};
+													@Override
+													public void run() {
+														if (CancelOperationDialog.this.operationThread != null) {
+															this.setPriority(Thread.MAX_PRIORITY);
+															CancelOperationDialog.this.progressBar.setMinimum(-CancelOperationDialog.this.progressBar.getPreferredSize().width);
+															CancelOperationDialog.this.progressBar.setMaximum(CancelOperationDialog.this.progressBar.getPreferredSize().width);
+															CancelOperationDialog.this.progressBar.setValue(-CancelOperationDialog.this.progressBar.getPreferredSize().width);
+														}
+														boolean bEven = false;
+														String sPreviousStatus = null;
+														while ((CancelOperationDialog.this.operationThread != null) && (!(CancelOperationDialog.this.operationThread
+																.hasStarted()) || (!CancelOperationDialog.this.operationThread.hasFinished()))) {
+															bEven = !bEven;
+															// Status
+															this.changedState = false;
+															String stringStatus = CancelOperationDialog.this.operationThread.getStatus();
+															if ((sPreviousStatus != null) && sPreviousStatus.equals(stringStatus)) {
+																// Not update
+															} else {
+																try {
+																	if ((ApplicationManager.getApplication() != null) && (ApplicationManager.getApplication()
+																			.getResourceBundle() != null)) {
+																		stringStatus = ApplicationManager.getApplication().getResourceBundle()
+																				.getString(CancelOperationDialog.this.operationThread.getStatus());
+																	}
+																} catch (Exception e) {
+																	ApplicationManager.logger.debug(null, e);
+																}
+																CancelOperationDialog.this.stateLabel.setText(stringStatus);
+																sPreviousStatus = CancelOperationDialog.this.operationThread.getStatus();
+																this.changedState = true;
+															}
+															final boolean bAuxEven = bEven;
+															try {
+																SwingUtilities.invokeAndWait(() -> {
+																											if (bAuxEven) {
+																												CancelOperationDialog.this.externalPack();
+																											}
+																											CancelOperationDialog.this.progressBar
+																													.setMinimum(-CancelOperationDialog.this.progressBar.getWidth());
+																											CancelOperationDialog.this.progressBar
+																													.setMaximum(CancelOperationDialog.this.progressBar.getWidth());
+																											if (this.changedState) {
+																												CancelOperationDialog.this.stateLabel.repaint();
+																											}
+																											// Paint progress panel
+																											int value = CancelOperationDialog.this.progressBar.getValue();
+																											if ((value < CancelOperationDialog.this.progressBar
+																													.getWidth()) && (this.increasing)) {
+																												CancelOperationDialog.this.progressBar.setValue(value + 10);
+																											} else {
+																												this.increasing = false;
+																												CancelOperationDialog.this.progressBar.setValue(value - 10);
+																												if (value <= -CancelOperationDialog.this.progressBar.getWidth()) {
+																													this.increasing = true;
+																												}
+																											}
+																											CancelOperationDialog.this.progressBar.repaint();
+																										});
+															} catch (Exception e) {
+																ApplicationManager.logger.error(null, e);
+															}
+															try {
+																Thread.sleep(CancelOperationDialog.this.updateTime);
+															} catch (Exception e) {
+																ApplicationManager.logger.error(null, e);
+															}
+														}
+													}
+												};
 
 		@Override
 		public void setVisible(boolean visible) {
@@ -755,15 +753,15 @@ public abstract class ApplicationManager {
 
 		protected JLabel					state						= new JLabel() {
 
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension d = super.getPreferredSize();
-				if (d.width > 500) {
-					d.width = 500;
-				}
-				return d;
-			}
-		};
+																			@Override
+																			public Dimension getPreferredSize() {
+																				Dimension d = super.getPreferredSize();
+																				if (d.width > 500) {
+																					d.width = 500;
+																				}
+																				return d;
+																			}
+																		};
 
 		protected JLabel					estimatedTime				= new JLabel();
 
@@ -829,102 +827,102 @@ public abstract class ApplicationManager {
 
 		protected Thread		tFinished		= new Thread() {
 
-			@Override
-			public void run() {
-				this.setPriority(Thread.MAX_PRIORITY);
-				while ((CancelExtendedOperationDialog.this.op != null) && (!(CancelExtendedOperationDialog.this.op
-						.hasStarted()) || CancelExtendedOperationDialog.this.op.isAlive())) {
-					try {
-						Thread.sleep(100);
-					} catch (Exception e) {
-						ApplicationManager.logger.error(null, e);
-					}
-				}
-				// Hide the dialog because operation is finished
-				CancelExtendedOperationDialog.this.dispose();
-			}
-		};
+													@Override
+													public void run() {
+														this.setPriority(Thread.MAX_PRIORITY);
+														while ((CancelExtendedOperationDialog.this.op != null) && (!(CancelExtendedOperationDialog.this.op
+																.hasStarted()) || CancelExtendedOperationDialog.this.op.isAlive())) {
+															try {
+																Thread.sleep(100);
+															} catch (Exception e) {
+																ApplicationManager.logger.error(null, e);
+															}
+														}
+														// Hide the dialog because operation is finished
+														CancelExtendedOperationDialog.this.dispose();
+													}
+												};
 
 		protected JProgressBar	progressBar		= new JProgressBar();
 
 		protected Thread		progressThread	= new Thread() {
 
-			boolean creciente = true;
+													boolean creciente = true;
 
-			@Override
-			public void run() {
-				if (CancelExtendedOperationDialog.this.op != null) {
-					this.setPriority(Thread.MAX_PRIORITY);
-					CancelExtendedOperationDialog.this.progressBar.setMaximum(CancelExtendedOperationDialog.this.op.getProgressDivisions());
-				}
-				boolean bEven = false;
-				String previousStatus = null;
-				while ((CancelExtendedOperationDialog.this.op != null) && (!(CancelExtendedOperationDialog.this.op
-						.hasStarted()) || (!CancelExtendedOperationDialog.this.op.hasFinished()))) {
-					bEven = !bEven;
-					// status
-					if (CancelExtendedOperationDialog.this.progressBar.getMaximum() != CancelExtendedOperationDialog.this.op
-							.getProgressDivisions()) {
-						CancelExtendedOperationDialog.this.progressBar
-						.setMaximum(CancelExtendedOperationDialog.this.op.getProgressDivisions());
-					}
-					String strStatus = CancelExtendedOperationDialog.this.op.getStatus();
-					if ((previousStatus != null) && previousStatus.equals(strStatus)) {
-						// Not update
-					} else {
-						try {
-							if ((ApplicationManager.getApplication() != null) && (ApplicationManager.getApplication()
-									.getResourceBundle() != null)) {
-								strStatus = ApplicationManager.getApplication().getResourceBundle()
-										.getString(CancelExtendedOperationDialog.this.op.getStatus());
-							}
-						} catch (Exception e) {
-							ApplicationManager.logger.error(null, e);
-						}
-						CancelExtendedOperationDialog.this.state.setText(strStatus);
-						previousStatus = CancelExtendedOperationDialog.this.op.getStatus();
-					}
+													@Override
+													public void run() {
+														if (CancelExtendedOperationDialog.this.op != null) {
+															this.setPriority(Thread.MAX_PRIORITY);
+															CancelExtendedOperationDialog.this.progressBar.setMaximum(CancelExtendedOperationDialog.this.op.getProgressDivisions());
+														}
+														boolean bEven = false;
+														String previousStatus = null;
+														while ((CancelExtendedOperationDialog.this.op != null) && (!(CancelExtendedOperationDialog.this.op
+																.hasStarted()) || (!CancelExtendedOperationDialog.this.op.hasFinished()))) {
+															bEven = !bEven;
+															// status
+															if (CancelExtendedOperationDialog.this.progressBar.getMaximum() != CancelExtendedOperationDialog.this.op
+																	.getProgressDivisions()) {
+																CancelExtendedOperationDialog.this.progressBar
+																		.setMaximum(CancelExtendedOperationDialog.this.op.getProgressDivisions());
+															}
+															String strStatus = CancelExtendedOperationDialog.this.op.getStatus();
+															if ((previousStatus != null) && previousStatus.equals(strStatus)) {
+																// Not update
+															} else {
+																try {
+																	if ((ApplicationManager.getApplication() != null) && (ApplicationManager.getApplication()
+																			.getResourceBundle() != null)) {
+																		strStatus = ApplicationManager.getApplication().getResourceBundle()
+																				.getString(CancelExtendedOperationDialog.this.op.getStatus());
+																	}
+																} catch (Exception e) {
+																	ApplicationManager.logger.error(null, e);
+																}
+																CancelExtendedOperationDialog.this.state.setText(strStatus);
+																previousStatus = CancelExtendedOperationDialog.this.op.getStatus();
+															}
 
-					if (CancelExtendedOperationDialog.this.op.getEstimagedTimeLeftText() != null) {
-						CancelExtendedOperationDialog.this.estimatedTime
-						.setText(CancelExtendedOperationDialog.this.op.getEstimagedTimeLeftText());
-					} else if (CancelExtendedOperationDialog.this.op.getEstimatedTimeLeft() != ExtendedOperationThread.UNKNOWN) {
-						CancelExtendedOperationDialog.this.estimatedTime.setText(ApplicationManager.getTranslation(
-								CancelExtendedOperationDialog.ESTIMATED_TIME_REMAINING) + " " + (int) (CancelExtendedOperationDialog.this.op
-										.getEstimatedTimeLeft() / 1000.0) + CancelExtendedOperationDialog.SECONDS);
-					} else {
-						CancelExtendedOperationDialog.this.estimatedTime.setText(ApplicationManager
-								.getTranslation(CancelExtendedOperationDialog.ESTIMATED_TIME_REMAINING) + ApplicationManager
-								.getTranslation(CancelExtendedOperationDialog.UNKNOWN));
-					}
+															if (CancelExtendedOperationDialog.this.op.getEstimagedTimeLeftText() != null) {
+																CancelExtendedOperationDialog.this.estimatedTime
+																		.setText(CancelExtendedOperationDialog.this.op.getEstimagedTimeLeftText());
+															} else if (CancelExtendedOperationDialog.this.op.getEstimatedTimeLeft() != ExtendedOperationThread.UNKNOWN) {
+																CancelExtendedOperationDialog.this.estimatedTime.setText(ApplicationManager.getTranslation(
+																		CancelExtendedOperationDialog.ESTIMATED_TIME_REMAINING) + " " + (int) (CancelExtendedOperationDialog.this.op
+																				.getEstimatedTimeLeft() / 1000.0) + CancelExtendedOperationDialog.SECONDS);
+															} else {
+																CancelExtendedOperationDialog.this.estimatedTime.setText(ApplicationManager
+																		.getTranslation(CancelExtendedOperationDialog.ESTIMATED_TIME_REMAINING) + ApplicationManager
+																				.getTranslation(CancelExtendedOperationDialog.UNKNOWN));
+															}
 
-					final boolean auxEven = bEven;
-					try {
-						SwingUtilities.invokeAndWait(() -> {
-							if (auxEven) {
-								CancelExtendedOperationDialog.this.externalPack();
-							}
-							CancelExtendedOperationDialog.this.state.paintImmediately(
-									CancelExtendedOperationDialog.this.state.getBounds());
-							CancelExtendedOperationDialog.this.estimatedTime.paintImmediately(
-									CancelExtendedOperationDialog.this.estimatedTime.getBounds());
-							// Paint the progress panel
-							CancelExtendedOperationDialog.this.progressBar.setValue(
-									CancelExtendedOperationDialog.this.op.getCurrentPosition());
-							CancelExtendedOperationDialog.this.progressBar.paintImmediately(
-									CancelExtendedOperationDialog.this.progressBar.getBounds());
-						});
-					} catch (Exception e) {
-						ApplicationManager.logger.error(null, e);
-					}
-					try {
-						Thread.sleep(CancelExtendedOperationDialog.this.timeUpdate);
-					} catch (Exception e) {
-						ApplicationManager.logger.error(null, e);
-					}
-				}
-			}
-		};
+															final boolean auxEven = bEven;
+															try {
+																SwingUtilities.invokeAndWait(() -> {
+																											if (auxEven) {
+																												CancelExtendedOperationDialog.this.externalPack();
+																											}
+																											CancelExtendedOperationDialog.this.state.paintImmediately(
+																													CancelExtendedOperationDialog.this.state.getBounds());
+																											CancelExtendedOperationDialog.this.estimatedTime.paintImmediately(
+																													CancelExtendedOperationDialog.this.estimatedTime.getBounds());
+																											// Paint the progress panel
+																											CancelExtendedOperationDialog.this.progressBar.setValue(
+																													CancelExtendedOperationDialog.this.op.getCurrentPosition());
+																											CancelExtendedOperationDialog.this.progressBar.paintImmediately(
+																													CancelExtendedOperationDialog.this.progressBar.getBounds());
+																										});
+															} catch (Exception e) {
+																ApplicationManager.logger.error(null, e);
+															}
+															try {
+																Thread.sleep(CancelExtendedOperationDialog.this.timeUpdate);
+															} catch (Exception e) {
+																ApplicationManager.logger.error(null, e);
+															}
+														}
+													}
+												};
 
 		/**
 		 * Packs the dialog.
@@ -1418,8 +1416,8 @@ public abstract class ApplicationManager {
 		Thread.yield();
 		CancelExtendedOperationDialog d = null;
 		while (!(opThread.isCancelled()) && (!(opThread.hasStarted()) || /*
-		 * opThread . hasFinished ( ) == false
-		 */opThread.isAlive())) {
+																			 * opThread . hasFinished ( ) == false
+																			 */opThread.isAlive())) {
 			if (((System.currentTimeMillis() - t) > milliseconds) && (d == null)) {
 				d = new CancelExtendedOperationDialog(dialog, opThread);
 				d.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1533,8 +1531,8 @@ public abstract class ApplicationManager {
 		Thread.yield();
 		CancelExtendedOperationDialog d = null;
 		while (!(opThread.isCancelled()) && (!(opThread.hasStarted()) || /*
-		 * opThread . hasFinished ( ) == false
-		 */opThread.isAlive())) {
+																			 * opThread . hasFinished ( ) == false
+																			 */opThread.isAlive())) {
 			if (((System.currentTimeMillis() - t) > milliseconds) && (d == null)) {
 				d = new CancelExtendedOperationDialog(f, opThread, timeUpdate);
 				d.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1643,30 +1641,29 @@ public abstract class ApplicationManager {
 				statusField.setText("Import process canceled");
 			}
 		});
-		saveItem.addActionListener(
-				event -> {
-					// Get the word list
-					if (jList.getModel().getSize() == 0) {
-						statusField.setText("There are no texts to save");
-					} else {
-						// Now save
-						JFileChooser fc = new JFileChooser();
-						int option = fc.showSaveDialog(d);
-						if (option == JFileChooser.APPROVE_OPTION) {
-							File f = fc.getSelectedFile();
-							try {
-								propTotal.store(new FileOutputStream(f), "Generated " + new Date().toString());
-								// Save successfully
-								statusField.setText("Save successfully");
-							} catch (Exception ex) {
-								ApplicationManager.logger.trace(null, ex);
-								statusField.setText(ex.getMessage());
-							}
-						} else {
-							statusField.setText("Cancel save operation");
-						}
+		saveItem.addActionListener(event -> {
+			// Get the word list
+			if (jList.getModel().getSize() == 0) {
+				statusField.setText("There are no texts to save");
+			} else {
+				// Now save
+				JFileChooser fc = new JFileChooser();
+				int option = fc.showSaveDialog(d);
+				if (option == JFileChooser.APPROVE_OPTION) {
+					File f = fc.getSelectedFile();
+					try {
+						propTotal.store(new FileOutputStream(f), "Generated " + new Date().toString());
+						// Save successfully
+						statusField.setText("Save successfully");
+					} catch (Exception ex) {
+						ApplicationManager.logger.trace(null, ex);
+						statusField.setText(ex.getMessage());
 					}
-				});
+				} else {
+					statusField.setText("Cancel save operation");
+				}
+			}
+		});
 		Collections.sort(withoutDuplicateTexts);
 		// Show in a TextArea:
 
@@ -1931,7 +1928,7 @@ public abstract class ApplicationManager {
 	 */
 	public static void enqueueOperationThread(OperationThread thread) {
 		if (ApplicationManager.operationThreadQueue == null) {
-			ApplicationManager.operationThreadQueue = new Vector();
+			ApplicationManager.operationThreadQueue = new ArrayList<>();
 			ApplicationManager.monitorThreads = new OPThreadsMonitor(ApplicationManager.operationThreadQueue);
 		}
 		if (ApplicationManager.monitorThreads != null) {
@@ -1950,7 +1947,7 @@ public abstract class ApplicationManager {
 	 */
 	public static OPThreadsMonitor getOPThreadsMonitor() {
 		if (ApplicationManager.operationThreadQueue == null) {
-			ApplicationManager.operationThreadQueue = new Vector();
+			ApplicationManager.operationThreadQueue = new ArrayList<>();
 			ApplicationManager.monitorThreads = new OPThreadsMonitor(ApplicationManager.operationThreadQueue);
 		}
 		if (ApplicationManager.monitorThreads != null) {
@@ -3076,7 +3073,7 @@ public abstract class ApplicationManager {
 	public static void setMemoryMonitorWindowVisible(boolean visible) {
 
 		if (ApplicationManager.frameMonitorMem == null) {
-			ApplicationManager.memMonitor = new MemoryMonitorComponent(new Hashtable());
+			ApplicationManager.memMonitor = new MemoryMonitorComponent(new HashMap<>());
 			ApplicationManager.frameMonitorMem = new JFrame("Memory");
 			JButton buttonGC = new JButton("Execute Garbage Collector");
 			buttonGC.addActionListener(e -> {
@@ -3582,9 +3579,9 @@ public abstract class ApplicationManager {
 				// If it has an error then it is red
 				if ((row < ExtOpThreadsMonitorComponent.this.threads.size()) && (((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
 						.hasFinished() || ((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
-						.isCancelled()) && (((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
-								.getResult() instanceof EntityResult) && (((EntityResult) ((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
-										.getResult()).getCode() == EntityResult.OPERATION_WRONG)) {
+								.isCancelled()) && (((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
+										.getResult() instanceof EntityResult) && (((EntityResult) ((ExtendedOperationThread) ExtOpThreadsMonitorComponent.this.threads.get(row))
+												.getResult()).getCode() == EntityResult.OPERATION_WRONG)) {
 					this.bar.setBackground(Color.red);
 				}
 				return this.bar;
@@ -3833,8 +3830,8 @@ public abstract class ApplicationManager {
 
 		if (ApplicationManager.remoteAdminWindow == null) {
 			try {
-				Class windowClass = Class.forName("com.ontimize.util.remote.RemoteUtilities$RemoteAdministrationWindow");
-				Constructor constructor = windowClass.getConstructor(new Class[] { RemotelyManageable.class });
+				Class<?> windowClass = Class.forName("com.ontimize.util.remote.RemoteUtilities$RemoteAdministrationWindow");
+				Constructor<?> constructor = windowClass.getConstructor(new Class[] { RemotelyManageable.class });
 				ApplicationManager.remoteAdminWindow = (IRemoteAdministrationWindow) constructor.newInstance(new Object[] { locator });
 				// ApplicationManager.remoteAdminWindow = new RemoteAdministrationWindow(locator);
 				if (ApplicationManager.remoteAdminWindow instanceof JFrame) {
@@ -3976,8 +3973,8 @@ public abstract class ApplicationManager {
 	 *            the separator to use
 	 * @return the String with the List elements separated by the separator
 	 */
-	public static String vectorToStringSeparateBy(List<?> v, String s) {
-		return com.ontimize.util.ParseTools.vectorToStringSeparateBy(v, s);
+	public static String listToStringSeparateBy(List<?> v, String s) {
+		return com.ontimize.util.ParseTools.listToStringSeparateBy(v, s);
 	}
 
 	/**
@@ -4079,8 +4076,8 @@ public abstract class ApplicationManager {
 
 	/**
 	 * Returns a Hashtable with key-value corresponding with result to apply two 'tokenizer' actions. For example, <br> <br> s=
-	 * "field1:equivalentfield1;field2:equivalentfield2;...;fieldn:equivalententfieldn" <br> separator1=";" <br> separator2=":" <br> <br> returns <code>Hashtable</code>: <br> <br>
-	 * { field1 equivalentfield1} <br> { field2 equivalentfield2} <br> { ... ... } <br> { fieldn equivalentfieldn} <br> <br>
+	 * "field1:equivalentfield1;field2:equivalentfield2;...;fieldn:equivalententfieldn" <br> separator1=";" <br> separator2=":" <br> <br> returns <code>Map</code>: <br> <br> {
+	 * field1 equivalentfield1} <br> { field2 equivalentfield2} <br> { ... ... } <br> { fieldn equivalentfieldn} <br> <br>
 	 *
 	 * Note: It also accepts : string = "formfieldpk1;formfieldpk2:equivalententityfieldpk2;formfieldpk3...;formfieldpkn:equivalententityfieldpkn" <br> returning: <br> <br>
 	 *
@@ -4092,10 +4089,10 @@ public abstract class ApplicationManager {
 	 *            Separator for first <code>Tokenizer</code>
 	 * @param separator2
 	 *            Separator for second <code>Tokenizer</code> for each token obtained previously
-	 * @return <code>Hashtable</code> with key-value
+	 * @return <code>Map</code> with key-value
 	 */
-	public static Hashtable getTokensAt(String sValue, String separator1, String separator2) {
-		Hashtable hashTokens = new Hashtable();
+	public static Map<String, String> getTokensAt(String sValue, String separator1, String separator2) {
+		Map<String, String> hashTokens = new HashMap<>();
 		if ((sValue.indexOf(separator1) == -1) && (sValue.indexOf(separator2) == -1)) {
 			hashTokens.put(sValue, sValue);
 			return hashTokens;

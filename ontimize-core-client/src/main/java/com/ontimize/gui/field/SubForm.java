@@ -49,7 +49,7 @@ public class SubForm extends IdentifiedAbstractFormComponent
 
     protected FormBuilder formBuilder = null;
 
-    protected List<Object> parentKeys = new ArrayList<>();
+    protected List<String> parentKeys = new ArrayList<>();
 
     protected IFormManager formManager = null;
 

@@ -347,13 +347,13 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * This object is used to store parentkeys and equivalences (for these fields in entity) when structure of parameter <code>parentkeys</code> is:
 	 * "fieldpk1:fieldentitypk1;fieldpk2:fieldentitypk2;...fieldpkn:fieldentitypkn"
 	 */
-	protected Map<Object, Object>		hParentkeyEquivalences					= new HashMap<>();
+	protected Map<String, String>		hParentkeyEquivalences					= new HashMap<>();
 
 	/**
 	 * This object is used to store onsetvalueset attributes and equivalences (for these fields in entity) when structure of parameter <code>onsetvalueset</code> is:
 	 * "fieldonset1:fieldentitypk1;fieldonset2:fieldentitypk2;...fieldonsetn:fieldentitypkn"
 	 */
-	protected Map<Object, Object>		hOnSetValueSetEquivalences				= new HashMap<>();
+	protected Map<String, String>		hOnSetValueSetEquivalences				= new HashMap<>();
 
 	/**
 	 * This object provides a EJTextField with 4 columns.
@@ -446,12 +446,12 @@ public class ReferenceExtDataField extends TextFieldDataField
 	/**
 	 * The others parent keys in a 1x3 Vector.
 	 */
-	protected List<Object>				othersParentKey							= new ArrayList(1);
+	protected List<String>				othersParentKey							= new ArrayList<>(1);
 
 	/**
 	 * The parent keys vector.
 	 */
-	protected List<Object>				parentkeyList							= null;
+	protected List<String>				parentkeyList							= null;
 
 	/**
 	 * The description columns vector. By default, null.
@@ -1702,7 +1702,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 							vCols.add(this.descriptionColumns.get(i));
 						}
 					}
-					parameters.put("cols", ApplicationManager.vectorToStringSeparateBy(vCols, ";"));
+					parameters.put("cols", ApplicationManager.listToStringSeparateBy(vCols, ";"));
 				}
 				Table tMultipleResults = new Table(parameters);
 				this.createMultipleResultsWindow(tMultipleResults);
@@ -1895,7 +1895,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 						}
 					}
 				}
-				parameters.put("cols", ApplicationManager.vectorToStringSeparateBy(vCols, ";"));
+				parameters.put("cols", ApplicationManager.listToStringSeparateBy(vCols, ";"));
 			}
 		}
 	}
@@ -2429,8 +2429,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 		if (hParentkeyValues != null) {
 			Map<Object, Object> hReplacedParentkeyValues = new HashMap<Object, Object>();
 			hReplacedParentkeyValues.putAll(hParentkeyValues);
-			Set values = hParentkeyValues.keySet();
-			Iterator itr = values.iterator();
+			Set<?> values = hParentkeyValues.keySet();
+			Iterator<?> itr = values.iterator();
 			while (itr.hasNext()) {
 				Object key = itr.next();
 				Object value = hReplacedParentkeyValues.remove(key);
@@ -2510,7 +2510,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * Queries by code <p>
 	 *
 	 * @param code
-	 *            the value to add to hashtable, with the form (code,codigo)
+	 *            the value to add to map, with the form (code,codigo)
 	 * @return the result of query
 	 */
 	protected EntityResult queryByCode(Object code) {
@@ -2645,7 +2645,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	}
 
 	/**
-	 * Establishes the field value. An object that will be an hashtable, whose keys are the code field name and description columns. Values may be vectors, in this case the first
+	 * Establishes the field value. An object that will be an Map, whose keys are the code field name and description columns. Values may be vectors, in this case the first
 	 * element is selected.
 	 */
 	public void setValue(Object value, boolean inner) {
@@ -2668,7 +2668,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				if (value instanceof EntityResult) {
 					this.setRecordValue((EntityResult) value, inner, oPreviousValue);
 				} else {
-					// When it is not a <code>Hashtable</code> is the code.
+					// When it is not a <code>Map</code> is the code.
 					// Therefore, query is executed.
 					Object oValue = this.getTypedInnerValue(value);
 					this.dataCache = this.queryByCode(oValue);
@@ -2918,7 +2918,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 				}
 
 				// Put in the cache
-				Enumeration enumCacheKeys = this.dataCache.keys();
+				Enumeration<?> enumCacheKeys = this.dataCache.keys();
 				while (enumCacheKeys.hasMoreElements()) {
 					Object oCacheKey = enumCacheKeys.nextElement();
 					List<Object> vCacheValues = (List<Object>) this.dataCache.get(oCacheKey);
@@ -3069,9 +3069,9 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 * Obtains the code description. <p>
 	 *
 	 * @param code
-	 *            the object to search in hashtable parameter
+	 *            the object to search in map parameter
 	 * @param value
-	 *            the hashtable with all codes
+	 *            the map with all codes
 	 * @return the code description
 	 */
 	protected String getCodeDescription(Object code, EntityResult value) {
@@ -3494,7 +3494,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *
 	 * @param code
 	 *            the object to find
-	 * @return the hashtable with key-values
+	 * @return the map with key-values
 	 */
 	public Map<Object, Object> getCodeValues(Object code) {
 		Map<Object, Object> h = new HashMap<>();
@@ -3683,14 +3683,14 @@ public class ReferenceExtDataField extends TextFieldDataField
 	 *
 	 * @return the vector with parentkeys
 	 */
-	public List<Object> getParentKeys() {
+	public List<String> getParentKeys() {
 		if (this.parentkeyList == null) {
 			this.parentkeyList = new ArrayList<>();
 			if (this.parentKeys != null) {
 				this.parentkeyList.add(this.parentKeys);
 			}
 			for (int i = 0; i < this.othersParentKey.size(); i++) {
-				Object oKey = this.othersParentKey.get(i);
+				String oKey = this.othersParentKey.get(i);
 				if (!this.parentkeyList.contains(oKey)) {
 					this.parentkeyList.add(oKey);
 				}
@@ -3700,16 +3700,16 @@ public class ReferenceExtDataField extends TextFieldDataField
 	}
 
 	/**
-	 * Returns a Hashtable with key-value corresponding with result to apply two 'tokenizer' actions over parentkeys parameter. For example, <br> <br>
+	 * Returns a Map with key-value corresponding with result to apply two 'tokenizer' actions over parentkeys parameter. For example, <br> <br>
 	 * <code>string="formfieldpk1:equivalententityfieldpk1;formfieldpk2:equivalententityfieldpk2;...;formfieldpkn:equivalententityfieldpkn"</code> <br> <br> returns
-	 * <code>Hashtable</code>: <br> <br> { formfieldpk1 equivalententityfieldpk1} <br> { formfieldpk2 equivalententityfieldpk2} <br> { ... ... } <br> { formfieldpkn
+	 * <code>Map</code>: <br> <br> { formfieldpk1 equivalententityfieldpk1} <br> { formfieldpk2 equivalententityfieldpk2} <br> { ... ... } <br> { formfieldpkn
 	 * equivalententityfieldpkn} <br>
 	 *
 	 * @param parentkeys
 	 *            the string with values
-	 * @return <code>Hashtable</code> with key-value
+	 * @return <code>Map</code> with key-value
 	 */
-	public Map<Object, Object> getParentkeyEquivalences() {
+	public Map<String, String> getParentkeyEquivalences() {
 		return this.hParentkeyEquivalences;
 	}
 
@@ -4091,7 +4091,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 	}
 
 	@Override
-	public List<Object> getParentKeyList() {
+	public List<String> getParentKeyList() {
 		return this.getParentKeys();
 	}
 
@@ -4232,8 +4232,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 	protected class DownAction extends AbstractAction {
 
 		@Override
-		public void actionPerformed(ActionEvent e) {
-			JTextField field = (JTextField) e.getSource();
+		public void actionPerformed(ActionEvent evt) {
+			JTextField field = (JTextField) evt.getSource();
 			if (field.isEditable() && (ReferenceExtDataField.this.queryPopup != null)) {
 				if (ReferenceExtDataField.this.queryPopup.isVisible()) {
 					ReferenceExtDataField.this.queryPopup.selectNextPossibleValue();
@@ -4246,8 +4246,8 @@ public class ReferenceExtDataField extends TextFieldDataField
 	protected class UpAction extends AbstractAction {
 
 		@Override
-		public void actionPerformed(ActionEvent e) {
-			JTextField field = (JTextField) e.getSource();
+		public void actionPerformed(ActionEvent evt) {
+			JTextField field = (JTextField) evt.getSource();
 			if (field.isEditable() && (ReferenceExtDataField.this.queryPopup != null)) {
 				if (ReferenceExtDataField.this.queryPopup.isVisible()) {
 					ReferenceExtDataField.this.queryPopup.selectPreviousPossibleValue();
@@ -4612,7 +4612,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 
 	public static class QueryModel extends AbstractListModel {
 
-		protected List data = new ArrayList();
+		protected List<Object> data = new ArrayList<>();
 
 		@Override
 		public int getSize() {
@@ -4624,7 +4624,7 @@ public class ReferenceExtDataField extends TextFieldDataField
 			return this.data.get(index);
 		}
 
-		public void setData(List data) {
+		public void setData(List<Object> data) {
 			this.data = data;
 			this.fireContentsChanged(this, 0, this.data.size());
 		}

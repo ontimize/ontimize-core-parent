@@ -121,7 +121,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @return The index file with name tableIndex.txt
      * @throws Exception
      */
-    public static File createTableDataFile(File directory, Map<Object, Object> valuesTable) throws Exception {
+    public static File createTableDataFile(File directory, EntityResult valuesTable) throws Exception {
         return AbstractTemplateGenerator.createTableDataFile(directory, valuesTable, "tableIndex.txt");
     }
 
@@ -142,8 +142,8 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
                 Object entityKey = enu.nextElement();
                 Object entityValue = valuesTable.get(entityKey);
                 if ((entityKey instanceof String) && (((String) entityKey).length() > 0)
-                        && (entityValue instanceof Map)) {
-                    String dataTable = AbstractTemplateGenerator.exportTableData((Map<?,?>) entityValue);
+                        && (entityValue instanceof EntityResult)) {
+                    String dataTable = AbstractTemplateGenerator.exportTableData((EntityResult) entityValue);
                     File actual = new File(directory.getPath(), (String) entityKey);
                     FileUtils.saveFile(actual, dataTable);
                     info.append(actual.getPath()).append("$");
@@ -375,7 +375,7 @@ public abstract class AbstractTemplateGenerator implements TemplateGenerator {
      * @param data Table data
      * @return
      */
-    public static String exportTableData(Map<Object, Object> data) {
+    public static String exportTableData(EntityResult data) {
         // format :
         // colName1 $ colData1.1 # colData1.2 # ...# colData1.N $
         // colName2 $ colData2.1 # colData2.2 # ...# colData2.N $

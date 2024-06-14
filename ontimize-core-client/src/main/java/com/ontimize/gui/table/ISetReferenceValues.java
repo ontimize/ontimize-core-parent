@@ -26,6 +26,6 @@ public interface ISetReferenceValues {
 	 * Gets the list of columns to update in the table
 	 * @return
 	 */
-	public List<Object> getSetColumns();
+	public List<String> getSetColumns();
 
 }

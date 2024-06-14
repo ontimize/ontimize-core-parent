@@ -28,7 +28,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -37,7 +36,6 @@ import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.AbstractButton;
 import javax.swing.ComboBoxModel;
@@ -157,7 +155,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * This object is used to store onsetvalueset attributes and equivalences (for these fields in entity) when structure of parameter <code>onsetvalueset</code> is:
 	 * "fieldonset1:fieldentitypk1;fieldonset2:fieldentitypk2;...fieldonsetn:fieldentitypkn"
 	 */
-	protected Hashtable				hOnSetValueSetEquivalences				= new Hashtable();
+	protected Map<String, String>				hOnSetValueSetEquivalences				= new HashMap<>();
 
 	/**
 	 * The key to update data.
@@ -185,7 +183,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * This object is used to store parentkeys and equivalences (for these fields in entity) when structure of parameter <code>parentkeys</code> is:
 	 * "fieldpk1:fieldentitypk1;fieldpk2:fieldentitypk2;...fieldpkn:fieldentitypkn"
 	 */
-	protected Map<Object, Object>	hParentkeyEquivalences;
+	protected Map<String, String>	hParentkeyEquivalences;
 
 	/**
 	 * The condition to show error messages. By default, true.
@@ -219,7 +217,7 @@ public class ReferenceComboDataField extends ComboDataField
 	/**
 	 * The vector with attributes to update when data field value changed. By default, null.
 	 */
-	protected List<Object>			onsetvaluesetAttributes					= null;
+	protected List<String>			onsetvaluesetAttributes					= null;
 
 	/**
 	 * Indicates if fields contained into 'onsetvalueset' have to be deleted on null value of the field.
@@ -347,7 +345,7 @@ public class ReferenceComboDataField extends ComboDataField
 			this.getContentPane().add(this.info, BorderLayout.NORTH);
 			this.getContentPane().add(jpButtonsPanel, BorderLayout.SOUTH);
 			this.getContentPane().add(new JScrollPane(this.list));
-			this.accept.addActionListener(e -> {
+			this.accept.addActionListener(event -> {
 				if (DeployedList.this.list.getSelectedIndex() >= 0) {
 					int[] indices = DeployedList.this.list.getSelectedIndices();
 					List<Object> vValues = new ArrayList<>();
@@ -373,22 +371,22 @@ public class ReferenceComboDataField extends ComboDataField
 		 * Updates combo data list.
 		 */
 		public void updateData() {
-			this.list.setListData((Vector) this.comboRef.dataCache.get(this.comboRef.code));
+			this.list.setListData(((List<?>) this.comboRef.dataCache.get(this.comboRef.code)).toArray());
 		}
 
 		@Override
-		public void processKeyEvent(KeyEvent e) {
-			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-				e.consume();
+		public void processKeyEvent(KeyEvent evt) {
+			if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
+				evt.consume();
 				this.setVisible(false);
 			} else {
-				super.processKeyEvent(e);
+				super.processKeyEvent(evt);
 			}
 
 		}
 
 		@Override
-		public Vector getTextsToTranslate() {
+		public List<String> getTextsToTranslate() {
 			return null;
 		}
 
@@ -422,7 +420,7 @@ public class ReferenceComboDataField extends ComboDataField
 		private boolean	enabled		= true;
 
 		@Override
-		public void insertUpdate(DocumentEvent e) {
+		public void insertUpdate(DocumentEvent evt) {
 			if (!this.enabled) {
 				return;
 			}
@@ -430,7 +428,7 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 
 		@Override
-		public void removeUpdate(DocumentEvent e) {
+		public void removeUpdate(DocumentEvent evt) {
 			if (!this.enabled) {
 				return;
 			}
@@ -438,7 +436,7 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 
 		@Override
-		public void changedUpdate(DocumentEvent e) {
+		public void changedUpdate(DocumentEvent evt) {
 			if (!this.enabled) {
 				return;
 			}
@@ -456,19 +454,19 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 
 		@Override
-		public void keyReleased(KeyEvent e) {
-			if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+		public void keyReleased(KeyEvent evt) {
+			if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
 				this.codeChange = false;
-				e.consume();
+				evt.consume();
 				this.processFocus();
 			}
 		}
 
 		@Override
-		public void keyPressed(KeyEvent e) {}
+		public void keyPressed(KeyEvent evt) {}
 
 		@Override
-		public void keyTyped(KeyEvent e) {}
+		public void keyTyped(KeyEvent evt) {}
 
 		/**
 		 * Processes focus in function of code field value is deleted or is empty.
@@ -502,7 +500,7 @@ public class ReferenceComboDataField extends ComboDataField
 					if (res.isEmpty()) {
 						ReferenceComboDataField.this.deleteData();
 					} else if (res.calculateRecordNumber() == 1) {
-						Map<Object, Object> hData = res.getRecordValues(0);
+						Map<?, ?> hData = res.getRecordValues(0);
 						Object oResultCodeValue = hData.get(ReferenceComboDataField.this.code);
 						if (oResultCodeValue == null) {
 							ReferenceComboDataField.logger.warn("Query result has not data for the specified code value {}", hData);
@@ -587,9 +585,9 @@ public class ReferenceComboDataField extends ComboDataField
 	protected JTextField				codeField				= new JTextField(4);
 
 	/**
-	 * The parent Keys vector. By default, null.
+	 * The parent Keys list. By default, null.
 	 */
-	protected Vector					parentKeys				= null;
+	protected List<String>					parentKeys				= null;
 
 	/**
 	 * The entity name. By default, null.
@@ -602,12 +600,12 @@ public class ReferenceComboDataField extends ComboDataField
 	protected String					attrAux					= null;
 
 	/**
-	 * The columns vector. By default, null.
+	 * The columns list. By default, null.
 	 */
 	protected List<Object>				cols					= null;
 
 	/**
-	 * The visible columns vector. By default, null.
+	 * The visible columns list. By default, null.
 	 */
 	protected List<Object>				visibleColumns			= null;
 
@@ -799,7 +797,7 @@ public class ReferenceComboDataField extends ComboDataField
 		 * @param value
 		 *            the object with value
 		 * @param data
-		 *            the hashtable with data
+		 *            the EntityResult with data
 		 * @return the code description
 		 */
 		public String getCodeDescription(Object value, EntityResult data) {
@@ -921,7 +919,7 @@ public class ReferenceComboDataField extends ComboDataField
 						return this.auxRenderer;
 					}
 				}
-				Vector vCodes = (Vector) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
+				List<?> vCodes = (List<?>) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
 				if ((!ReferenceComboDataField.this.dataCache.isEmpty()) && (vCodes == null)) {
 					this.auxRenderer.setForeground(Color.red);
 					this.auxRenderer.setText(" Error : cache does not contains code " + ReferenceComboDataField.this.code);
@@ -998,7 +996,7 @@ public class ReferenceComboDataField extends ComboDataField
 			String sTtext;
 			// If there is no cache then value contains the data. It must be
 			// a
-			// Hashtable object
+			// Map object
 			if (value instanceof Map) {
 				if (!((Map<?, ?>) value).isEmpty()) {
 					// Value contains data: code and requested columns.
@@ -1054,7 +1052,7 @@ public class ReferenceComboDataField extends ComboDataField
 			} else {
 				c = super.getListCellRendererComponent(list, value, index, selection, focus);
 			}
-			Vector vCodes = (Vector) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
+			List<?> vCodes = (List<?>) ReferenceComboDataField.this.dataCache.get(ReferenceComboDataField.this.code);
 			if ((vCodes == null) || vCodes.isEmpty()) {
 				if (c instanceof JLabel) {
 					((JLabel) c).setText(" ");
@@ -1099,7 +1097,7 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 
 		@Override
-		public Vector getTextsToTranslate() {
+		public List<String> getTextsToTranslate() {
 			return null;
 		}
 
@@ -1179,7 +1177,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * The constructor for component. Calls to {@link #init(Map)}. <p>
 	 *
 	 * @param parameters
-	 *            the hashtable with parameters
+	 *            the Map with parameters
 	 */
 	public ReferenceComboDataField(Map<Object, Object> parameters) {
 		super();
@@ -1289,9 +1287,9 @@ public class ReferenceComboDataField extends ComboDataField
 		buffer.append("<br>");
 		buffer.append("<B>" + DataField.ATTR + "</B>" + ":  " + this.attribute);
 		buffer.append("<br>");
-		buffer.append("<B>" + "cols" + "</B>" + ":" + ApplicationManager.vectorToStringSeparateBy(this.cols, ";"));
+		buffer.append("<B>" + "cols" + "</B>" + ":" + ApplicationManager.listToStringSeparateBy(this.cols, ";"));
 		buffer.append("<br>");
-		buffer.append("<B>" + "parentkeys" + "</B>" + ":  " + ApplicationManager.vectorToStringSeparateBy(this.parentKeys, ";"));
+		buffer.append("<B>" + "parentkeys" + "</B>" + ":  " + ApplicationManager.listToStringSeparateBy(this.parentKeys, ";"));
 		buffer.append("<br>");
 		buffer.append("<B>" + "cachetime" + "</B>" + ":  " + this.cacheTime);
 		buffer.append("<br>");
@@ -1317,7 +1315,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 */
 	protected void updateOnSetValueSetAttributes(Map<Object, Object> data) {
 		if ((this.parentForm != null) && (data != null)) {
-			for (Object at : this.onsetvaluesetAttributes) {
+			for (String at : this.onsetvaluesetAttributes) {
 				Object oValue = data.get(this.hOnSetValueSetEquivalences.get(at));
 				this.parentForm.setDataFieldValue(at, oValue);
 				ReferenceComboDataField.logger.debug(" Setting field value: {} -> {}", at, oValue);
@@ -1325,11 +1323,11 @@ public class ReferenceComboDataField extends ComboDataField
 		}
 	}
 
-	public List<Object> getOnSetValueSetAttributes() {
+	public List<String> getOnSetValueSetAttributes() {
 		return this.onsetvaluesetAttributes;
 	}
 
-	public Map<Object, Object> getOnSetValueSetEquivalences() {
+	public Map<String, String> getOnSetValueSetEquivalences() {
 		return this.hOnSetValueSetEquivalences;
 	}
 
@@ -1419,8 +1417,8 @@ public class ReferenceComboDataField extends ComboDataField
 					if ((values == null) && (key instanceof ReferenceFieldAttribute)) {
 						values = this.dataCache.get(((ReferenceFieldAttribute) key).getAttr());
 					}
-					if ((values != null) && (values instanceof Vector)) {
-						((Vector) values).set(index, entry.getValue());
+					if ((values != null) && (values instanceof List)) {
+						((List<Object>) values).set(index, entry.getValue());
 					}
 				}
 			}
@@ -1450,7 +1448,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * <td><i></td> <td></td> <td>no</td> <td>The form that is opened in detail. On init, update mode will be its state.</td> </tr> <tr> <td>parentkeylistener</td>
 	 * <td><i>yes/no</td> <td>no</td> <td>no</td> <td>Register a listener for each parentkey field to delete data of this field when one of the parentkey values changes (when new
 	 * value of the parentkey field is null, field value is not reset, excepts if 'disableonparentkeynull' is true). If you use this parameter then you need to use the
-	 * setvalueorder for the Form @see {@link Form#init(Hashtable)}</td> </tr> <tr> <td>disableonparentkeynull</td> <td><i>yes/no</td> <td>no</td> <td>no</td> <td>Disable field
+	 * setvalueorder for the Form @see {@link Form#init(Map)}</td> </tr> <tr> <td>disableonparentkeynull</td> <td><i>yes/no</td> <td>no</td> <td>no</td> <td>Disable field
 	 * when parentkey is null.</td> </tr> <tr> <td>onsetvalueset</td> <td><i>fieldonset1:fieldentitypk1;fieldonset2:fieldentitypk2;... fieldonsetn :fieldentitypkn (since version
 	 * 5.2057EN-1.4)</td> <td></td> <td>no</td> <td>Field attributes whose value will be set when data on field change.</td> </tr> <tr> <td>codsearch</td> <td><i></td> <td></td>
 	 * <td>no</td> <td>It specifies the field name for searching when user introduces a search value.</td> </tr> <tr> <td>parentkeylistenerevent</td> <td><i>user/programmatic</td>
@@ -1704,7 +1702,7 @@ public class ReferenceComboDataField extends ComboDataField
 			this.hOnSetValueSetEquivalences = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";", ":");
 			this.onsetvaluesetAttributes = new ArrayList<>();
 
-			// We can't use the keys of the hashtable to get the attribute names
+			// We can't use the keys of the Map to get the attribute names
 			// because we have to use the same order that is in the xml
 			List<String> valueNamesOrder = ApplicationManager.getTokensAt(onsetvalueset.toString(), ";");
 			for (String element : valueNamesOrder) {
@@ -1719,8 +1717,8 @@ public class ReferenceComboDataField extends ComboDataField
 				this.addValueChangeListener(event -> {
 					if (ReferenceComboDataField.this.isEmpty()) {
 						if ((ReferenceComboDataField.this.parentForm != null) && (!ReferenceComboDataField.this.ignorenullonsetvalueset)) {
-							for (Object element : ReferenceComboDataField.this.onsetvaluesetAttributes) {
-								ReferenceComboDataField.this.parentForm.deleteDataField((String) element);
+							for (String element : ReferenceComboDataField.this.onsetvaluesetAttributes) {
+								ReferenceComboDataField.this.parentForm.deleteDataField(element);
 								ReferenceComboDataField.logger.debug("Deleting field value: {}", element);
 							}
 						}
@@ -1902,7 +1900,7 @@ public class ReferenceComboDataField extends ComboDataField
 	protected void setParentKeysParameter(Map<Object, Object> parameters) {
 		Object parentkeys = parameters.get("parentkey");
 		if (parentkeys != null) {
-			this.parentKeys = new Vector();
+			this.parentKeys = new ArrayList<>();
 			StringTokenizer st = new StringTokenizer(parentkeys.toString(), ";");
 			while (st.hasMoreTokens()) {
 				this.parentKeys.add(ApplicationManager.getTokensAt(st.nextToken(), ":").get(0));
@@ -1910,7 +1908,7 @@ public class ReferenceComboDataField extends ComboDataField
 		} else {
 			parentkeys = parameters.get("parentkeys");
 			if (parentkeys != null) {
-				this.parentKeys = new Vector();
+				this.parentKeys = new ArrayList<>();
 				StringTokenizer st = new StringTokenizer(parentkeys.toString(), ";");
 				while (st.hasMoreTokens()) {
 					this.parentKeys.add(ApplicationManager.getTokensAt(st.nextToken(), ":").get(0));
@@ -1970,7 +1968,7 @@ public class ReferenceComboDataField extends ComboDataField
 	}
 
 	/**
-	 * Method used to reduce the complexity of {@link #init(Hashtable)} Gets the last cache time. <p>
+	 * Method used to reduce the complexity of {@link #init(Map)} Gets the last cache time. <p>
 	 *
 	 * @return the time from last access to cache data
 	 */
@@ -2000,11 +1998,11 @@ public class ReferenceComboDataField extends ComboDataField
 	}
 
 	/**
-	 * Establishes the field value. An object that will be an Hashtable, whose keys are the code field name and description columns. Values may be vectors, in this case the first
+	 * Establishes the field value. An object that will be an Map, whose keys are the code field name and description columns. Values may be vectors, in this case the first
 	 * element is selected.
 	 */
 	public void setValue(Object value, boolean inner) {
-		// Value must be the field code. If value is a Hashtable Object then
+		// Value must be the field code. If value is a Map Object then
 		// value
 		// contains the record data, but it is checked at the cache
 		if ((value == null) || (value instanceof NullValue)) {
@@ -2036,8 +2034,8 @@ public class ReferenceComboDataField extends ComboDataField
 				}
 			} else {
 				// If there is not cache, value contains the data. It must be a
-				// Hashtable object.
-				// If value is not a Hashtable then this must be the code and
+				// Map object.
+				// If value is not a Map then this must be the code and
 				// then
 				// performs a query.
 				if (value instanceof Map) {
@@ -2078,7 +2076,7 @@ public class ReferenceComboDataField extends ComboDataField
 							return;
 						} else {
 							this.dataCache = (EntityResultMapImpl) res;
-							Vector vCodes = (Vector) this.dataCache.get(this.code);
+							List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 							// Update the combo
 							((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector(vCodes);
 							// Select the index
@@ -2142,7 +2140,7 @@ public class ReferenceComboDataField extends ComboDataField
 					this.dataCache = (EntityResultMapImpl) res;
 				}
 				// Put it in the cache.
-				Vector vCodes = (Vector) this.dataCache.get(this.code);
+				List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 				int codIndex = vCodes.indexOf(value);
 				if (codIndex >= 0) {
 					this.setCodIndexValue(value, inner, oPreviousValue, vCodes, codIndex);
@@ -2150,7 +2148,7 @@ public class ReferenceComboDataField extends ComboDataField
 				} else {
 					ReferenceComboDataField.logger.debug("{} :setValue() : value: {} : Code is not stored in cache", this.getAttribute(), oValue);
 
-					if (!((Vector) res.get(this.code)).contains(value)) {
+					if (!((List<?>) res.get(this.code)).contains(value)) {
 						ReferenceComboDataField.logger.debug("{} :setValue() : value: {} : In codes of query result is not stored the code ", this.getAttribute(), value);
 						this.deleteData();
 						return false;
@@ -2158,7 +2156,7 @@ public class ReferenceComboDataField extends ComboDataField
 					// TODO REVIEW Delete field because doesn't exist.
 					// Put it in the cache because it is not in
 					this.putCacheOnSetValue(res);
-					vCodes = (Vector) this.dataCache.get(this.code);
+					vCodes = (List<?>) this.dataCache.get(this.code);
 					((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector(vCodes);
 					// Select the index
 					codIndex = ((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).getIndexOf(value);
@@ -2173,7 +2171,7 @@ public class ReferenceComboDataField extends ComboDataField
 		return true;
 	}
 
-	protected void setCodIndexValue(Object value, boolean inner, Object oPreviousValue, Vector vCodes, int codIndex) {
+	protected void setCodIndexValue(Object value, boolean inner, Object oPreviousValue, List<?> vCodes, int codIndex) {
 		this.setTextCodeFieldOnSetValue(value, codIndex);
 		// Update the combo field
 		((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector(vCodes);
@@ -2239,7 +2237,7 @@ public class ReferenceComboDataField extends ComboDataField
 		if (this.codeQueryField == null) {
 			this.codeField.setText(codV.toString());
 		} else {
-			Object v2 = ((Vector) this.dataCache.get(this.codeQueryField)).get(0);
+			Object v2 = ((List<?>) this.dataCache.get(this.codeQueryField)).get(0);
 			if (v2 != null) {
 				this.codeField.setText(v2.toString());
 			} else {
@@ -2290,9 +2288,9 @@ public class ReferenceComboDataField extends ComboDataField
 		if (this.codeQueryField == null) {
 			this.codeField.setText(value.toString());
 		} else {
-			Vector v = (Vector) this.dataCache.get(this.code);
+			List<?> v = (List<?>) this.dataCache.get(this.code);
 			int cacheIndex = v.indexOf(value);
-			v = (Vector) this.dataCache.get(this.codeQueryField);
+			v = (List<?>) this.dataCache.get(this.codeQueryField);
 			Object v2 = v.get(cacheIndex);
 			if (v2 != null) {
 				this.codeField.setText(v2.toString());
@@ -2351,7 +2349,7 @@ public class ReferenceComboDataField extends ComboDataField
 		if (this.codeQueryField == null) {
 			this.codeField.setText(value.toString());
 		} else {
-			Vector v = (Vector) this.dataCache.get(this.codeQueryField);
+			List<?> v = (List<?>) this.dataCache.get(this.codeQueryField);
 			Object v2 = v.get(codIndex);
 			if (v2 != null) {
 				this.codeField.setText(v2.toString());
@@ -2456,7 +2454,7 @@ public class ReferenceComboDataField extends ComboDataField
 	protected void setSelectionComboDataField(EntityResult res) {
 		if ((res != null) && (res.isEmpty() == false)) {
 			Object value = ((JComboBox) this.dataField).getSelectedItem();
-			((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector((Vector) res.get(this.code));
+			((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).setDataVector((List<?>) res.get(this.code));
 			((JComboBox) this.dataField).setSelectedItem(value);
 		} else {
 			((CustomComboBoxModel) ((JComboBox) this.dataField).getModel()).removeAllElements();
@@ -2488,8 +2486,8 @@ public class ReferenceComboDataField extends ComboDataField
 				this.fireValueEvents = false;
 				try {
 					this.setValue(codeValue, true);
-				} catch (Exception e) {
-					ReferenceComboDataField.logger.trace(null, e);
+				} catch (Exception exc) {
+					ReferenceComboDataField.logger.trace(null, exc);
 				}
 				this.fireValueEvents = true;
 				this.setInnerValue(this.getValue());
@@ -2510,8 +2508,8 @@ public class ReferenceComboDataField extends ComboDataField
 				this.fireValueEvents = false;
 				try {
 					this.setValue(codeValue, true);
-				} catch (Exception e) {
-					ReferenceComboDataField.logger.trace(null, e);
+				} catch (Exception exc) {
+					ReferenceComboDataField.logger.trace(null, exc);
 				}
 				this.fireValueEvents = true;
 				this.setInnerValue(this.getValue());
@@ -2519,8 +2517,8 @@ public class ReferenceComboDataField extends ComboDataField
 					this.fireValueChanged(this.getValue(), oPreviousValue, valueEventType);
 				}
 			}
-		} catch (Exception e) {
-			ReferenceComboDataField.logger.debug("Error quering code", e);
+		} catch (Exception exc) {
+			ReferenceComboDataField.logger.debug("Error quering code", exc);
 		}
 	}
 
@@ -2712,7 +2710,7 @@ public class ReferenceComboDataField extends ComboDataField
 	 * @param column
 	 *            the col name
 	 * @param value
-	 *            the value to add to keyvalues hashtable, with the form (col,value)
+	 *            the value to add to keyvalues Map, with the form (col,value)
 	 * @return the result of query
 	 */
 	@Override
@@ -2884,8 +2882,8 @@ public class ReferenceComboDataField extends ComboDataField
 					}
 				}
 			}
-		} catch (Exception e) {
-			ReferenceComboDataField.logger.debug(null, e);
+		} catch (Exception exc) {
+			ReferenceComboDataField.logger.debug(null, exc);
 		}
 		try {
 			if (resources != null) {
@@ -2893,8 +2891,8 @@ public class ReferenceComboDataField extends ComboDataField
 			} else {
 				this.updateData.setText(ReferenceComboDataField.UPDATE_DATA);
 			}
-		} catch (Exception e) {
-			ReferenceComboDataField.logger.debug(null, e);
+		} catch (Exception exc) {
+			ReferenceComboDataField.logger.debug(null, exc);
 		}
 
 		try {
@@ -2903,8 +2901,8 @@ public class ReferenceComboDataField extends ComboDataField
 			} else {
 				this.advancedQuery.setText(AdvancedDataComponent.ADVANCED_QUERY);
 			}
-		} catch (Exception e) {
-			ReferenceComboDataField.logger.debug(null, e);
+		} catch (Exception exc) {
+			ReferenceComboDataField.logger.debug(null, exc);
 		}
 
 		if (this.deployedList != null) {
@@ -3107,7 +3105,7 @@ public class ReferenceComboDataField extends ComboDataField
 		if (index < 0) {
 			return h;
 		}
-		Enumeration keys = this.dataCache.keys();
+		Enumeration<?> keys = this.dataCache.keys();
 		while(keys.hasMoreElements()) {
 			Object oKey = keys.nextElement();
 			List<?> vValues = (List<?>) dataCache.get(oKey);
@@ -3264,7 +3262,7 @@ public class ReferenceComboDataField extends ComboDataField
 		if ((this.dataCache == null) || this.dataCache.isEmpty()) {
 			return false;
 		}
-		List vCodes = (List) this.dataCache.get(this.code);
+		List<?> vCodes = (List<?>) this.dataCache.get(this.code);
 		int codIndex = vCodes.indexOf(value);
 		return codIndex >= 0;
 	}
@@ -3324,9 +3322,9 @@ public class ReferenceComboDataField extends ComboDataField
 	}
 
 	@Override
-	public Hashtable getParentKeyValues() {
+	public Map<Object, Object> getParentKeyValues() {
 		if ((this.parentKeys != null) && (this.parentKeys.size() > 0)) {
-			Hashtable hKeysValues = new Hashtable();
+			Map<Object, Object> hKeysValues = new HashMap<>();
 			for (Object oParentKey : this.parentKeys) {
 				Object oParentValue = this.getParentKeyValue(oParentKey.toString());
 				ReferenceComboDataField.logger.debug(" Filtering by: {} parentkey with value: {}", oParentKey, oParentValue);
@@ -3340,34 +3338,34 @@ public class ReferenceComboDataField extends ComboDataField
 	}
 
 	@Override
-	public Vector getParentKeyList() {
+	public List<String> getParentKeyList() {
 		return this.parentKeys;
 	}
 
 	/**
-	 * Returns a Hashtable with key-value corresponding with result to apply two 'tokenizer' actions over parentkeys parameter. For example, <br> <br>
+	 * Returns a Map with key-value corresponding with result to apply two 'tokenizer' actions over parentkeys parameter. For example, <br> <br>
 	 * <code>string="formfieldpk1:equivalententityfieldpk1;formfieldpk2:equivalententityfieldpk2;...;formfieldpkn:equivalententityfieldpkn"</code> <br> <br> returns
-	 * <code>Hashtable</code>: <br> <br> { formfieldpk1 equivalententityfieldpk1} <br> { formfieldpk2 equivalententityfieldpk2} <br> { ... ... } <br> { formfieldpkn
+	 * <code>Map</code>: <br> <br> { formfieldpk1 equivalententityfieldpk1} <br> { formfieldpk2 equivalententityfieldpk2} <br> { ... ... } <br> { formfieldpkn
 	 * equivalententityfieldpkn} <br>
 	 *
 	 * @param parentkeys
 	 *            the string with values
-	 * @return <code>Hashtable</code> with key-value
+	 * @return <code>Map</code> with key-value
 	 */
-	public Map<Object, Object> getParentkeyEquivalences() {
+	public Map<String, String> getParentkeyEquivalences() {
 		return this.hParentkeyEquivalences;
 	}
 
-	public Map<Object, Object> replaceParentkeyByEquivalence(Map<Object, Object> hParentkeyEquivalences) {
+	public Map<Object, Object> replaceParentkeyByEquivalence(Map<String, String> hParentkeyEquivalences) {
 		if ((hParentkeyEquivalences == null) || hParentkeyEquivalences.isEmpty()) {
-			return new Hashtable();
+			return new HashMap<>();
 		}
-		Hashtable hParentkeyValues = this.getParentKeyValues();
+		Map<Object, Object> hParentkeyValues = this.getParentKeyValues();
 		if (hParentkeyValues != null) {
 			Map<Object, Object> hReplacedParentkeyValues = new HashMap<>();
 			hReplacedParentkeyValues.putAll(hParentkeyValues);
-			Set values = hParentkeyValues.keySet();
-			Iterator itr = values.iterator();
+			Set<?> values = hParentkeyValues.keySet();
+			Iterator<?> itr = values.iterator();
 			while (itr.hasNext()) {
 				Object key = itr.next();
 				Object value = hReplacedParentkeyValues.remove(key);
@@ -3524,26 +3522,26 @@ public class ReferenceComboDataField extends ComboDataField
 						field.addValueChangeListener(new ValueChangeListener() {
 
 							@Override
-							public void valueChanged(ValueEvent e) {
+							public void valueChanged(ValueEvent evt) {
 								// check event type
 								if (ReferenceComboDataField.PARENTKEY_LISTENER_EVENT_ALL.equals(ReferenceComboDataField.this.parentkeyListenerEvent)) {
-									this.doAction(e);
-								} else if ((e.getType() == ValueEvent.PROGRAMMATIC_CHANGE) && ReferenceComboDataField.PARENTKEY_LISTENER_EVENT_PROGRAMMATIC
+									this.doAction(evt);
+								} else if ((evt.getType() == ValueEvent.PROGRAMMATIC_CHANGE) && ReferenceComboDataField.PARENTKEY_LISTENER_EVENT_PROGRAMMATIC
 										.equals(ReferenceComboDataField.this.parentkeyListenerEvent)) {
-									this.doAction(e);
-								} else if ((e.getType() == ValueEvent.USER_CHANGE) && ReferenceComboDataField.PARENTKEY_LISTENER_EVENT_USER
+									this.doAction(evt);
+								} else if ((evt.getType() == ValueEvent.USER_CHANGE) && ReferenceComboDataField.PARENTKEY_LISTENER_EVENT_USER
 										.equals(ReferenceComboDataField.this.parentkeyListenerEvent)) {
-									this.doAction(e);
+									this.doAction(evt);
 								}
 							}
 
-							protected void doAction(ValueEvent e) {
-								if ((e.getOldValue() == null) || ((e.getOldValue() != null) && !(e.getOldValue().equals(e.getNewValue())))) {
-									if (e.getNewValue() != null) {
+							protected void doAction(ValueEvent evt) {
+								if ((evt.getOldValue() == null) || ((evt.getOldValue() != null) && !(evt.getOldValue().equals(evt.getNewValue())))) {
+									if (evt.getNewValue() != null) {
 										ReferenceComboDataField.this.deleteData();
 										ReferenceComboDataField.this.setEnabled(true);
 									} else {
-										if ((e.getOldValue() != null) && ReferenceComboDataField.this.disableonparentkeynull) {
+										if ((evt.getOldValue() != null) && ReferenceComboDataField.this.disableonparentkeynull) {
 											// 5.2074EN - setEnabled(false)
 											// disabled
 											// advancedquerymode forever

@@ -290,7 +290,7 @@ public class VisibleColsSetupDialog extends EJDialog implements Internationaliza
         List<Object> vHideColumns = new ArrayList<>();
 
         // New visible columns
-        List<Object> vFinalVisible = new ArrayList<>();
+        List<String> vFinalVisible = new ArrayList<>();
 
         for (int i = 0; i < this.colsList.getModel().getSize(); i++) {
             if (this.colsList.getModel().getElementAt(i) instanceof SelectableItemRenderer.SelectableItem) {

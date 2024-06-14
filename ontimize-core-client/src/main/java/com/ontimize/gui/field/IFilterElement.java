@@ -7,7 +7,7 @@ public interface IFilterElement {
 
     public boolean hasParentKeys();
 
-    public List<Object> getParentKeyList();
+    public List<String> getParentKeyList();
 
     public Map<Object, Object> getParentKeyValues();
 

@@ -7,6 +7,8 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 
+import com.ontimize.jee.common.dto.EntityResult;
+
 public interface TemplateGenerator {
 
     /**
@@ -88,7 +90,7 @@ public interface TemplateGenerator {
      * @return List with all data fields included in the template
      * @throws Exception
      */
-    public List<Object> queryTemplateFields(String template) throws Exception;
+    public List<String> queryTemplateFields(String template) throws Exception;
 
     /**
      * Creates a list with all data fields included in the template
@@ -96,6 +98,6 @@ public interface TemplateGenerator {
      * @return List with all data fields included in the template
      * @throws Exception
      */
-    public List<Object> queryTemplateFields(File template) throws Exception;
+    public List<String> queryTemplateFields(File template) throws Exception;
 
 }

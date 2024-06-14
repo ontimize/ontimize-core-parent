@@ -7,14 +7,12 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.swing.WindowConstants;
 
@@ -519,7 +517,7 @@ public class FormMultilanguageTable extends EJDialog implements Internationaliza
 				List<String> orderList = this.sortMultilanguageOrder(populateMultilanguageTranslationTable);
 				populateMultilanguageTranslationTable.setColumnOrder(orderList);
 				this.multilanguageTranslateTable.setValue(populateMultilanguageTranslationTable);
-				List<Object> visibleColumns = new ArrayList<>(this.multilanguageTranslateTable.getVisibleColumns());
+				List<String> visibleColumns = this.multilanguageTranslateTable.getVisibleColumns();
 				visibleColumns.remove(MultilanguageEntity.CHECK_FOR_UPDATE_STRING);
 				this.multilanguageTranslateTable.setVisibleColumns(visibleColumns);
 

@@ -1,7 +1,6 @@
 package com.ontimize.gui.table;
 
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.FocusAdapter;
@@ -13,10 +12,8 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -51,7 +48,7 @@ public class EJTable extends JTable implements Freeable {
 
 	private static final Logger		logger					= LoggerFactory.getLogger(EJTable.class);
 
-	private List<Object>			visibleColumns			= null;
+	private List<String>			visibleColumns			= null;
 
 	private TipScroll				textTip;
 
@@ -92,14 +89,14 @@ public class EJTable extends JTable implements Freeable {
 	 * @param visibleColumns
 	 *            the columns that will be visible by default
 	 */
-	public EJTable(Table oTable, TableModel tableModel, Vector visibleColumns) {
+	public EJTable(Table oTable, TableModel tableModel, List<String> visibleColumns) {
 		super(tableModel);
 		this.ontimizeTable = oTable;
 		this.visibleColumns = visibleColumns;
 		this.addFocusListener(new FocusAdapter() {
 
 			@Override
-			public void focusLost(FocusEvent e) {
+			public void focusLost(FocusEvent event) {
 				if (EJTable.this.getTextTip() != null) {
 					EJTable.this.getTextTip().setVisible(false);
 					EJTable.this.textToFind.delete(0, EJTable.this.textToFind.length());
@@ -238,13 +235,13 @@ public class EJTable extends JTable implements Freeable {
 	 * <td>com.ontimize.gui.table.BooleanCellEditor</td> </tr> <tr> <td>default</td> <td>com.ontimize.gui.table.StringCellEditor</td> </tr> </Table>
 	 */
 	@Override
-	public TableCellEditor getDefaultEditor(Class type) {
+	public TableCellEditor getDefaultEditor(Class<?> type) {
 		// Setting the default editor
 		if (this.defaultEditorsByColumnClass.containsKey(type)) {
 			return (TableCellEditor) this.defaultEditorsByColumnClass.get(type);
 		} else {
 			com.ontimize.gui.table.CellEditor editor = null;
-			Hashtable params = new Hashtable();
+			Map<Object, Object> params = new HashMap<>();
 			params.put(com.ontimize.gui.table.CellEditor.COLUMN_PARAMETER, "DEFAULT");
 			if ((type == java.lang.Double.class) || (type == java.lang.Float.class)) {
 				editor = new com.ontimize.gui.table.RealCellEditor(params);
@@ -288,10 +285,10 @@ public class EJTable extends JTable implements Freeable {
 		return false;
 	}
 
-	protected Map<Object, Object> retrieveOtherData(TableCellEditor ed, boolean isInsertingRow, int editedRow, Map<?, ?> keysValues) {
+	protected Map<Object, Object> retrieveOtherData(TableCellEditor ed, boolean isInsertingRow, int editedRow, Map<Object, Object> keysValues) {
 		Map<Object, Object> otherData = null;
 		if (ed instanceof ISetReferenceValues) {
-			List<?> columnsToSet = ((ISetReferenceValues) ed).getSetColumns();
+			List<String> columnsToSet = ((ISetReferenceValues) ed).getSetColumns();
 			if ((columnsToSet != null) && (columnsToSet.size() > 0)) {
 				otherData = ((ISetReferenceValues) ed).getSetData(true);
 				if (otherData == null) {
@@ -305,7 +302,7 @@ public class EJTable extends JTable implements Freeable {
 					editedRow = this.ontimizeTable.getRowForKeys(keysValues);
 				} else {
 					for (int k = 0; k < columnsToSet.size(); k++) {
-						String columnName = (String) columnsToSet.get(k);
+						String columnName = columnsToSet.get(k);
 						int colIndex = this.getColumnIndex(columnName);
 						this.setValueAt(otherData.get(columnName), editedRow, colIndex);
 					}
@@ -358,7 +355,7 @@ public class EJTable extends JTable implements Freeable {
 		// We have to get the keysValues before call super because in the super
 		// method the keys for each row changes (the sorter, filter and grouped
 		// model changed)
-		Map<?,?> keysValues = this.ontimizeTable.getRowKeys(editedRow);
+		Map<Object, Object> keysValues = this.ontimizeTable.getRowKeys(editedRow);
 
 		boolean isInsertingRow = this.isInsertingRow(editedRow);
 
@@ -400,8 +397,8 @@ public class EJTable extends JTable implements Freeable {
 
 	}
 
-	protected void updateEntityInEditingStopped(int editedRow, int editedColumn, Object idCol, Object oPreviousValue, Object oValue, TableCellEditor ed, Map<?,?> keysValues,
-			Map<?,?> otherData) {
+	protected void updateEntityInEditingStopped(int editedRow, int editedColumn, Object idCol, Object oPreviousValue, Object oValue, TableCellEditor ed, Map<Object, Object> keysValues,
+			Map<Object, Object> otherData) {
 		try {
 			if ((oValue == null) && (oPreviousValue == null)) {
 				EJTable.logger
@@ -485,10 +482,8 @@ public class EJTable extends JTable implements Freeable {
 
 	@Override
 	public boolean editCellAt(int row, int column, EventObject eventObject) {
-		Cursor c = this.getCursor();
 		try {
 			this.requestFocus();
-			// this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			boolean res = super.editCellAt(row, column, eventObject);
 			if (res && (this.editorComp != null)) {
 				// Scroll
@@ -496,13 +491,8 @@ public class EJTable extends JTable implements Freeable {
 				this.editorComp.requestFocus();
 
 				if (this.editorComp instanceof JTextComponent) {
-					// if (!(eventObject instanceof KeyEvent)) {
 					((JTextComponent) this.editorComp).selectAll();
-					// 5}
 				}
-				// else {
-				// this.editorComp.requestFocus();
-				// }
 			}
 			return res;
 		} catch (Exception ex) {
@@ -1082,7 +1072,7 @@ public class EJTable extends JTable implements Freeable {
 		super.setColumnModel(columnModel);
 	}
 
-	public List<Object> getVisibleColumns() {
+	public List<String> getVisibleColumns() {
 		return this.visibleColumns;
 	}
 

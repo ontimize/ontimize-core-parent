@@ -42,6 +42,8 @@ import com.ontimize.gui.i18n.Internationalization;
 import com.ontimize.gui.table.TableSorter.GroupTableModel.GroupItem;
 import com.ontimize.gui.table.TableSorter.GroupTableModel.GroupList;
 import com.ontimize.jee.common.db.NullValue;
+import com.ontimize.jee.common.dto.EntityResult;
+import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.util.ArrayUtils;
 import com.ontimize.util.ParseUtils;
 
@@ -641,7 +643,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			return ((FilterTableModel) this.model).getCalculatedColumnsName();
 		}
 
-		public List<Object> getRequiredColumnsToCalculatedColumns() {
+		public List<String> getRequiredColumnsToCalculatedColumns() {
 			return ((FilterTableModel) this.model).getRequiredColumnsToCalculatedColumns();
 		}
 
@@ -679,7 +681,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			this.setModel(m);
 		}
 
-		public void setDatos(Map<Object, Object> data) {
+		public void setDatos(EntityResult data) {
 			((FilterTableModel) this.model).setData(data);
 		}
 
@@ -707,7 +709,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		public void updateRowData(Map<Object, Object> kv, List<Object> v) {
+		public void updateRowData(Map<?, ?> kv, List<?> v) {
 			if (!this.group) {
 				((FilterTableModel) this.model).updateRowData(kv, v);
 			} else {
@@ -715,7 +717,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		public void updateRowData(Map<Object, Object> data, Map<Object, Object> keys) {
+		public void updateRowData(Map<?, ?> data, Map<?, ?> keys) {
 			if (!this.group) {
 				((FilterTableModel) this.model).updateRowData(data, keys);
 			} else {
@@ -723,7 +725,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		public void updateRowData(Map<Object, Object> rowData, List<Object> columns, Map<Object, Object> keys) {
+		public void updateRowData(Map<?, ?> rowData, List<?> columns, Map<?, ?> keys) {
 			if (!this.group) {
 				((FilterTableModel) this.model).updateRowData(rowData, columns, keys);
 			} else {
@@ -851,8 +853,8 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			return ((FilterTableModel) this.model).getRealRecordNumber();
 		}
 
-		public Map<Object, Object> getData() {
-			return new HashMap<>(((FilterTableModel) this.model).getData());
+		public EntityResult getData() {
+			return ((FilterTableModel) this.model).getData().clone();
 		}
 
 		public Map<Object, Object> getRowData(int f) {
@@ -924,9 +926,9 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		public Map<Object, Object> getFilteredData() {
+		public EntityResult getFilteredData() {
 			if (this.group) {
-				Map<Object, Object> hFilteredData = new HashMap<>();
+				EntityResult hFilteredData = new EntityResultMapImpl();
 				for (int i = 0; i < this.getColumnCount(); i++) {
 					Object id = this.getColumnIdentifier(i);
 					List<Object> vData = new ArrayList<>();
@@ -974,7 +976,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 
 		}
 
-		class GroupList extends ArrayList {
+		class GroupList<T> extends ArrayList<T> {
 
 			String description = null;
 
@@ -1047,7 +1049,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			// render = null;
 			// }
 
-			GroupList temp = new GroupList();
+			GroupList<GroupItem> temp = new GroupList<>();
 			int rows = super.getRowCount();
 			for (int j = 0; j < rows; j++) {
 				Object rowValueJ = null;
@@ -1488,7 +1490,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		public Object getFilters() {
+		public Map<Object, Object> getFilters() {
 			return ((FilterTableModel) this.model).getFilters();
 		}
 
@@ -1558,7 +1560,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			return ((ExtendedTableModel) this.model).getCalculatedColumnsName();
 		}
 
-		public List<Object> getRequiredColumnsToCalculatedColumns() {
+		public List<String> getRequiredColumnsToCalculatedColumns() {
 			return ((ExtendedTableModel) this.model).getRequiredColumnsToCalculatedColumns();
 		}
 
@@ -1594,8 +1596,8 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			return ((ExtendedTableModel) this.model).getSumCellRenderer(currency, TableSorter.this.bundle);
 		}
 
-		public Map<Object, Object> getData() {
-			return new HashMap<>(((ExtendedTableModel) this.model).getData());
+		public EntityResult getData() {
+			return ((ExtendedTableModel) this.model).getData().clone();
 		}
 
 		@Override
@@ -1654,16 +1656,16 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			super.tableChanged(new TableModelEvent((TableModel) e.getSource(), firstIndex, lastIndex, e.getColumn(), e.getType()));
 		}
 
-		public Map<Object, Object> getFilteredData() {
+		public EntityResult getFilteredData() {
 			if (this.filters.size() == 0) {
 				return this.getData();
 			}
-			Map<Object, Object> hFilteredData = new HashMap<>();
-			Map<Object, Object> hDataWithoutFilter = this.getData();
+			EntityResult hFilteredData = new EntityResultMapImpl();
+			EntityResult hDataWithoutFilter = this.getData();
 			if (hDataWithoutFilter != null) {
-				for (Entry<Object, Object> entry : hDataWithoutFilter.entrySet()) {
-					Object oKey = entry.getKey();
-					List<?> vWithoutFilter = (List<?>) entry.getValue();
+				
+				for (Object oKey : hDataWithoutFilter.keySet()) {
+					List<?> vWithoutFilter = (List<?>) hDataWithoutFilter.get(oKey);
 					List<Object> vFiltered = new ArrayList<>();
 					for (int element : this.map) {
 						vFiltered.add(vFiltered.size(), vWithoutFilter.get(element));
@@ -1762,7 +1764,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			((ExtendedTableModel) this.model).updateRowData(rowData, columns, keysValues);
 		}
 
-		public void setData(Map<Object, Object> data) {
+		public void setData(EntityResult data) {
 			((ExtendedTableModel) this.model).setData(data);
 		}
 
@@ -1869,7 +1871,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 				// sourceTable.convertColumnIndexToView(columnIndex);
 
 				// Now apply the filter to the data
-				Map<Object, Object> hData = ((ExtendedTableModel) this.model).getData();
+				EntityResult hData = ((ExtendedTableModel) this.model).getData();
 				if (this.filters.containsKey(col)) {
 					Object oOldFilter = this.filters.get(col);
 					if (oOldFilter instanceof MultipleFilter) {
@@ -1893,11 +1895,11 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			}
 		}
 
-		protected int[] evaluateFilter(Map<?, ?> data, Map<?, ?> filters) {
+		protected int[] evaluateFilter(EntityResult data, Map<?, ?> filters) {
 			return this.evaluateFilter(data, filters, false);
 		}
 
-		protected int[] evaluateFilter(Map<?, ?> data, Map<?, ?> filters, boolean or) {
+		protected int[] evaluateFilter(EntityResult data, Map<?, ?> filters, boolean or) {
 			// For each row evaluate the filters
 			if (filters.isEmpty() || data.isEmpty()) {
 				int[] mapAux = new int[this.model.getRowCount()];
@@ -2015,7 +2017,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 			return new ArrayList<>(this.filters.keySet());
 		}
 
-		public Object getFilters() {
+		public Map<Object, Object> getFilters() {
 			return this.filters;
 		}
 
@@ -2784,12 +2786,12 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 
 	protected boolean						filterEnabled		= true;
 
-	protected List<Object>					sumColumns			= null;
+	protected List<String>					sumColumns			= null;
 
 	/**
 	 * Contains a Hashtable with (column_id, operation_id), e.g. (23, 0) implies that column with model identifier equals to 23 has the group operation 0 (SUM)
 	 */
-	protected Map<Object, Object>			operationColumns	= null;
+	protected Map<String, Object>			operationColumns	= null;
 
 	/**
 	 * Stores operation identifiers and instances of {@link GroupOperation}. E.g. for SUM operation operation_id = 0 and object will be an instance of {@link SumGroupOperation}
@@ -2852,7 +2854,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @param sumColumns
 	 *            columns to which operations can be applied
 	 */
-	public TableSorter(ExtendedTableModel model, List<Object> sumColumns) {
+	public TableSorter(ExtendedTableModel model, List<String> sumColumns) {
 		this(model, sumColumns, null);
 	}
 
@@ -2860,12 +2862,12 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 		return new GroupTableModel(new FilterTableModel(model));
 	}
 
-	public TableSorter(ExtendedTableModel model, List<Object> sumColumns, Map<Object, Object> params) {
+	public TableSorter(ExtendedTableModel model, List<String> sumColumns, Map<Object, Object> params) {
 		this.setModel(this.createModel(model));
 		this.sumColumns = sumColumns;
 		if (this.sumColumns != null) {
 			this.operationColumns = new HashMap<>();
-			for (Object element : this.sumColumns) {
+			for (String element : this.sumColumns) {
 				this.operationColumns.put(element, Table.SUM_es_ES);
 			}
 		}
@@ -3867,7 +3869,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 		return ((GroupTableModel) this.model).getCalculatedColumnsName();
 	}
 
-	public List<Object> getRequiredColumnsToCalculatedColumns() {
+	public List<String> getRequiredColumnsToCalculatedColumns() {
 		return ((GroupTableModel) this.model).getRequiredColumnsToCalculatedColumns();
 	}
 
@@ -3965,17 +3967,17 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @param keys
 	 *            the columns that are keys and so identifies each row
 	 */
-	public void updateRowData(Map<Object, Object> rowData, List<Object> keys) {
+	public void updateRowData(Map<?, ?> rowData, List<?> keys) {
 		GroupTableModel m = (GroupTableModel) this.model;
 		m.updateRowData(rowData, keys);
 	}
 
-	public void updateRowData(Map<Object, Object> rowData, Map<Object, Object> keys) {
+	public void updateRowData(Map<?, ?> rowData, Map<?, ?> keys) {
 		GroupTableModel m = (GroupTableModel) this.model;
 		m.updateRowData(rowData, keys);
 	}
 
-	public void updateRowData(Map<Object, Object> rowData, List<Object> columns, Map<Object, Object> keys) {
+	public void updateRowData(Map<?, ?> rowData, List<?> columns, Map<Object, Object> keys) {
 		GroupTableModel m = (GroupTableModel) this.model;
 		m.updateRowData(rowData, columns, keys);
 	}
@@ -4116,7 +4118,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 *
 	 * @param data
 	 */
-	public void setData(Map<Object, Object> data) {
+	public void setData(EntityResult data) {
 		GroupTableModel m = (GroupTableModel) this.model;
 		m.setDatos(data);
 	}
@@ -4158,7 +4160,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @return a Map where the keys are the operation columns, and the values the result of performing the configured operation in the selected rows
 	 */
 	protected Map<Object, Object> getSelectedColumnOperation(int[] rowIndex) {
-		Map<Object, Object> h = this.getOperationColumn();
+		Map<String, Object> h = this.getOperationColumn();
 		Map<Object, Object> totals = new HashMap<>();
 		for (int i = 0; i < this.getColumnCount(); i++) {
 			String columnName = this.getColumnName(i);
@@ -4554,9 +4556,9 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @return the information in the view, what the client is seeing , where the keys are the column names and the values a list with the information of each column, as it is
 	 *         stored in the model.
 	 */
-	public Map<Object, Object> getShownValue() {
+	public EntityResult getShownValue() {
 		// TODO recheck the javadoc
-		Map<Object, Object> fData = new HashMap<>();
+		EntityResult fData = new EntityResultMapImpl();
 		for (int i = 0; i < this.getColumnCount(); i++) {
 			Object id = this.getColumnIdentifier(i);
 			List<Object> vData = new ArrayList<>();
@@ -4564,7 +4566,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 				if (!this.isSumRow(j) && !this.isInsertingRow(j)) {
 					Object cellValue = this.getValueAt(j, i);
 					if (cellValue instanceof GroupList) {
-						cellValue = ((GroupList) cellValue).toString();
+						cellValue = ((GroupList<?>) cellValue).toString();
 					} else if (cellValue instanceof ValueByGroup) {
 						cellValue = ((ValueByGroup) cellValue).getValue();
 					}
@@ -4576,11 +4578,11 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 		return fData;
 	}
 
-	public Map<Object, Object> getShownValue(String cols[]) {
+	public EntityResult getShownValue(String cols[]) {
 		if (cols == null) {
 			return this.getShownValue();
 		}
-		Map<Object, Object> fData = new HashMap<>();
+		EntityResult fData = new EntityResultMapImpl();
 		for (int i = 0; i < this.getColumnCount(); i++) {
 			Object id = this.getColumnIdentifier(i);
 			boolean found = false;
@@ -4616,7 +4618,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 *
 	 * @return the information in the model
 	 */
-	public Map<Object, Object> getData() {
+	public EntityResult getData() {
 		return ((GroupTableModel) this.model).getData();
 	}
 
@@ -4625,7 +4627,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 *
 	 * @return the filtered information
 	 */
-	public Map<Object, Object> getFilteredData() {
+	public EntityResult getFilteredData() {
 		return ((GroupTableModel) this.model).getFilteredData();
 	}
 
@@ -4870,9 +4872,9 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @param operationColumns
 	 *            the new operation columns configuration, where the keys determines the column names and the values are the operations to be applied to those columns.
 	 */
-	public void setOperationColumns(Map<Object, Object> operationColumns) {
+	public void setOperationColumns(Map<String, Object> operationColumns) {
 		this.operationColumns = operationColumns;
-		this.sumColumns = new ArrayList<Object>(this.operationColumns.keySet());
+		this.sumColumns = new ArrayList<>(this.operationColumns.keySet());
 		this.fireTableDataChanged();
 	}
 
@@ -4930,7 +4932,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 * @return
 	 */
 	public Map<Object, Object> getFilters() {
-		return (Map<Object, Object>) ((GroupTableModel) this.model).getFilters();
+		return ((GroupTableModel) this.model).getFilters();
 	}
 
 	/**
@@ -5064,7 +5066,7 @@ public class TableSorter extends TableMap implements Sortable, Freeable, Interna
 	 *
 	 * @return the current operation columns, where the keys are the column names, and the values the operations performed in each column.
 	 */
-	public Map<Object, Object> getOperationColumn() {
+	public Map<String, Object> getOperationColumn() {
 		return this.operationColumns;
 	}
 

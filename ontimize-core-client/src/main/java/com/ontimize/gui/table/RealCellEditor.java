@@ -1,7 +1,7 @@
 package com.ontimize.gui.table;
 
 import java.awt.Component;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.swing.JTable;
 
@@ -10,11 +10,11 @@ import com.ontimize.gui.field.TextDataField;
 
 public class RealCellEditor extends CellEditor {
 
-    public RealCellEditor(Hashtable parameters) {
+    public RealCellEditor(Map<Object, Object> parameters) {
         super(parameters.get(CellEditor.COLUMN_PARAMETER), RealCellEditor.initializeDataField(parameters));
     }
 
-    protected static RealDataField initializeDataField(Hashtable parameters) {
+    protected static RealDataField initializeDataField(Map<Object, Object> parameters) {
         RealDataField tdf = new RealDataField(parameters);
         if (tdf.getDataField() instanceof TextDataField.EJTextField) {
             ((TextDataField.EJTextField) tdf.getDataField()).setCaretPositionOnFocusLost(false);

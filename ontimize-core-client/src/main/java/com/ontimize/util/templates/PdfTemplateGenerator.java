@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 import com.lowagie.text.pdf.AcroFields;
 import com.lowagie.text.pdf.PdfReader;
+import com.ontimize.jee.common.tools.StringTools;
 import com.ontimize.util.FileUtils;
 import com.ontimize.util.pdf.PdfFiller;
 
@@ -58,7 +59,7 @@ public class PdfTemplateGenerator extends AbstractTemplateGenerator implements T
 	}
 
 	@Override
-	public List<Object> queryTemplateFields(String template) throws Exception {
+	public List<String> queryTemplateFields(String template) throws Exception {
 		File templateFile = new File(template);
 		if (templateFile.exists()) {
 			return this.queryTemplateFields(templateFile);
@@ -69,7 +70,7 @@ public class PdfTemplateGenerator extends AbstractTemplateGenerator implements T
 	}
 
 	@Override
-	public List<Object> queryTemplateFields(File template) throws Exception {
+	public List<String> queryTemplateFields(File template) throws Exception {
 		FileInputStream pdfInputStream = new FileInputStream(template);
 
 		try (ByteArrayOutputStream baOut = new ByteArrayOutputStream()) {
@@ -82,9 +83,9 @@ public class PdfTemplateGenerator extends AbstractTemplateGenerator implements T
 				AcroFields form = reader.getAcroFields();
 				HashMap<?, ?> fields = form.getFields();
 				Iterator<?> names = fields.keySet().iterator();
-				List<Object> result = new ArrayList<>();
+				List<String> result = new ArrayList<>();
 				while (names.hasNext()) {
-					result.add(names.next());
+					result.add(StringTools.toString(names.next()));
 				}
 				return result;
 			}

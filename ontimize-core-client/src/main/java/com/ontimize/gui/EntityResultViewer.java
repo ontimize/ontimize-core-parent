@@ -19,13 +19,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -63,6 +61,7 @@ import com.ontimize.gui.table.TableSorter;
 import com.ontimize.jee.common.dto.EntityResult;
 import com.ontimize.jee.common.dto.EntityResultMapImpl;
 import com.ontimize.jee.common.security.FormPermission;
+import com.ontimize.jee.common.tools.StringTools;
 import com.ontimize.jee.common.util.remote.BytesBlock;
 import com.ontimize.report.ReportUtils;
 import com.ontimize.security.ClientSecurityManager;
@@ -497,12 +496,12 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 	 * @return the table model
 	 */
 	protected TableModel getTableModel(EntityResult res) {
-		List<Object> vColumns = new ArrayList<>();
+		List<String> vColumns = new ArrayList<>();
 
 		Enumeration<?> enumKeys = res.keys();
 		while (enumKeys.hasMoreElements()) {
 			Object oKey = enumKeys.nextElement();
-			vColumns.add(oKey);
+			vColumns.add(StringTools.toString(oKey));
 		}
 		if (vColumns.isEmpty()) {
 			vColumns.add("No data");
@@ -582,9 +581,8 @@ public class EntityResultViewer extends JPanel implements DataComponent, AccessF
 	}
 
 	@Override
-	public Vector getTextsToTranslate() {
-		Vector v = new Vector();
-		return v;
+	public List<String> getTextsToTranslate() {
+		return new ArrayList<>();
 	}
 
 	@Override

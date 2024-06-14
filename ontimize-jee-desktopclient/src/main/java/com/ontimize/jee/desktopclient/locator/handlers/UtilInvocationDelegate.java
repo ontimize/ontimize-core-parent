@@ -4,12 +4,11 @@
 package com.ontimize.jee.desktopclient.locator.handlers;
 
 import java.lang.reflect.Proxy;
-import java.util.Hashtable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.Vector;
 
 import com.ontimize.gui.i18n.ExtendedPropertiesBundle;
 import com.ontimize.jee.common.db.Entity;
@@ -49,7 +48,7 @@ public class UtilInvocationDelegate extends AbstractInvocationDelegate implement
      * @see com.ontimize.locator.UtilReferenceLocator#getMessages(int, int)
      */
     @Override
-    public Vector getMessages(int sessionIdTo, int sessionId) throws Exception {
+    public List getMessages(int sessionIdTo, int sessionId) throws Exception {
         return null;
     }
 
@@ -233,7 +232,8 @@ public class UtilInvocationDelegate extends AbstractInvocationDelegate implement
     @Override
     public InitialContext retrieveInitialContext(int sessionId, Map params) throws Exception {
         // TODO By now, return empty initial context...
-        return new InitialContext();
+//        return new InitialContext();
+        return null;
     }
 
     /**
@@ -322,9 +322,9 @@ public class UtilInvocationDelegate extends AbstractInvocationDelegate implement
     }
 
     @Override
-    public Vector getRemoteAdministrationMessages(int arg0, int arg1) throws Exception {
+    public List getRemoteAdministrationMessages(int arg0, int arg1) throws Exception {
         // TODO Auto-generated method stub
-        return new Vector();
+        return new ArrayList<>();
     }
 
     @Override

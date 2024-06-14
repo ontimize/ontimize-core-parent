@@ -574,8 +574,8 @@ public class ParseTools {
 					}
 					return new Integer(object.toString());
 			}
-		} catch (Exception e) {
-			ParseTools.logger.debug(null, e);
+		} catch (Exception exc) {
+			ParseTools.logger.debug(null, exc);
 			return object;
 		}
 	}
@@ -654,7 +654,7 @@ public class ParseTools {
 	 * @param s the separator to use
 	 * @return the String with the Vector elements separated by the separator
 	 */
-	public static String vectorToStringSeparateBy(List v, String s) {
+	public static String listToStringSeparateBy(List<?> v, String s) {
 		if (v != null) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < v.size(); i++) {
