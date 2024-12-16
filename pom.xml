@@ -108,7 +108,7 @@
         <comm.version>2.0</comm.version>
         <jnlp.version>1.2.2</jnlp.version>
         <jmf.version>2.1.1e</jmf.version>
-        <poi.version>3.9</poi.version>
+        <poi.version>4.1.1</poi.version>
         <systray4j.version>2.4.1</systray4j.version>
         <quartz.version>1.5.2</quartz.version>
         <junit.version>4.11</junit.version>
