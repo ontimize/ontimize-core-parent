@@ -3,6 +3,7 @@ package com.ontimize.report.engine.dynamicjasper;
 import net.sf.jasperreports.engine.JRField;
 import net.sf.jasperreports.engine.JRPropertiesHolder;
 import net.sf.jasperreports.engine.JRPropertiesMap;
+import net.sf.jasperreports.engine.JRPropertyExpression;
 
 public class CustomField implements JRField {
 
@@ -92,6 +93,11 @@ public class CustomField implements JRField {
     @Override
     public String getValueClassName() {
         return this.valueClassName;
+    }
+
+    @Override
+    public JRPropertyExpression[] getPropertyExpressions() {
+        return new JRPropertyExpression[0];
     }
 
     @Override
