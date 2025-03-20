@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.view.JRViewer;
+import net.sf.jasperreports.swing.JRViewer;
 
 public class JasperViewer extends JFrame {
 

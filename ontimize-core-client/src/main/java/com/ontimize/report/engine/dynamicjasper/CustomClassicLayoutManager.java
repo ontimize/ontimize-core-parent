@@ -94,7 +94,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
         DJGroupVariable lmvar = this.findLeftMostColumn(footerVariables);
         AbstractColumn lmColumn = lmvar.getColumnToApplyOperation();
         // int width = lmColumn.getPosX().intValue() - col.getPosX().intValue();
-        int width = this.getReport().getOptions().getPrintableWidth() - 35 - col.getPosX().intValue();
+        int width = this.getReport().getOptions().getPrintableWidth() - 35 - col.getPosX();
         if (this.isShowedRowNumber) {
             width = width - DynamicJasperEngine.widthRowNumbers;
         }
@@ -160,7 +160,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             detail = (JRDesignBand) detailSection.getBandsList().iterator().next();
         }
 
-        detail.setHeight(this.getReport().getOptions().getDetailHeight().intValue());
+        detail.setHeight(this.getReport().getOptions().getDetailHeight());
 
         for (Iterator iter = this.getVisibleColumns().iterator(); iter.hasNext();) {
 
@@ -203,9 +203,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
                 imageExp.setValueClass(java.awt.Image.class);
                 image.setExpression(imageExp);
-                image.setHeight(this.getReport().getOptions().getDetailHeight().intValue());
-                image.setWidth(column.getWidth().intValue());
-                image.setX(column.getPosX().intValue());
+                image.setHeight(this.getReport().getOptions().getDetailHeight());
+                image.setWidth(column.getWidth());
+                image.setX(column.getPosX());
                 image.setScaleImage(ScaleImageEnum.getByValue(barcodeColumn.getScaleMode().getValue()));
 
                 image.setOnErrorType(OnErrorTypeEnum.ERROR); // FIXME should we
@@ -235,9 +235,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
                 imageExp.setValueClassName(imageColumn.getColumnProperty().getValueClassName());
                 image.setExpression(imageExp);
-                image.setHeight(this.getReport().getOptions().getDetailHeight().intValue());
-                image.setWidth(column.getWidth().intValue());
-                image.setX(column.getPosX().intValue());
+                image.setHeight(this.getReport().getOptions().getDetailHeight());
+                image.setWidth(column.getWidth());
+                image.setX(column.getPosX());
                 image.setScaleImage(ScaleImageEnum.getByValue(imageColumn.getScaleMode().getValue()));
 
                 this.applyStyleToElement(column.getStyle(), image);
@@ -256,7 +256,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             else {
                 if (this.getReport().getOptions().isShowDetailBand()) {
                     JRDesignTextField textField = this.generateTextFieldFromColumn(column,
-                            this.getReport().getOptions().getDetailHeight().intValue(), null);
+                            this.getReport().getOptions().getDetailHeight(), null);
                     // hColumnTextFields.put(column.getName(),textField);
                     if (column.getLink() != null) {
                         String name = "column_" + this.getReport().getColumns().indexOf(column);
@@ -426,7 +426,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
         // Only the value in header
         PropertyColumn column = group.getColumnToGroupBy();
 
-        Integer height = group.getHeaderVariablesHeight() != null ? group.getHeaderVariablesHeight()
+        int height = group.getHeaderVariablesHeight() != 0 ? group.getHeaderVariablesHeight()
                 : this.getReport().getOptions().getDetailHeight();
 
         // VALUE_IN_HEADER,
@@ -435,7 +435,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
         // VALUE_IN_HEADER_AND_FOR_EACH_WITH_HEADERS
         if (layout.isShowValueInHeader() && layout.isHideColumn() && !layout.isShowColumnName()) {
             // textfield for the current value
-            JRDesignTextField currentValue = this.generateTextFieldFromColumn(column, height.intValue(), group);
+            JRDesignTextField currentValue = this.generateTextFieldFromColumn(column, height, group);
             currentValue.setPositionType(PositionTypeEnum.FIX_RELATIVE_TO_TOP);
 
             // The width will be all the page, except for the width of the
@@ -444,9 +444,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
             if (!group.getHeaderVariables().isEmpty()) {
                 DJGroupVariable leftmostcol = this.findLeftMostColumn(group.getHeaderVariables());
-                headerVariablesWidth = leftmostcol.getColumnToApplyOperation().getPosX().intValue();
+                headerVariablesWidth = leftmostcol.getColumnToApplyOperation().getPosX();
                 if (this.groupLabelsPresent(group.getHeaderVariables())) {
-                    currentValue.setY(height.intValue());
+                    currentValue.setY(height);
                     currentValue.setHeight(this.getHeaderVariablesHeight(group));
                 }
             }
@@ -467,8 +467,8 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                                                                    // headers
 
             if (group.getLayout().isPrintHeaders()) {
-                headerOffset += group.getHeaderHeight().intValue()
-                        + this.getReport().getOptions().getDetailHeight().intValue();
+                headerOffset += group.getHeaderHeight()
+                        + this.getReport().getOptions().getDetailHeight();
             }
 
             headerBand.addElement(currentValue);
@@ -495,9 +495,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             // textfield for the current value
             JRDesignTextField currentValue;
             if (((DynamicJasperEngine) this.reportEngine).isColumnGroupInSimpleGroup(group.getName().substring(18))) {
-                currentValue = this.generateTextFieldFromColumn(column, height.intValue(), group, false);
+                currentValue = this.generateTextFieldFromColumn(column, height, group, false);
             } else {
-                currentValue = this.generateTextFieldFromColumn(column, height.intValue(), group, true);
+                currentValue = this.generateTextFieldFromColumn(column, height, group, true);
             }
 
             // The width will be (width of the page) - (column name width)
@@ -545,7 +545,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
                     // textfield for the current value
                     JRDesignTextField currentMultiValue = this.generateTextFieldFromColumn(
-                            (AbstractColumn) vMultiGroupColumns.get(i), height.intValue(), group,
+                            (AbstractColumn) vMultiGroupColumns.get(i), height, group,
                             i == (vMultiGroupColumns.size() - 1) ? false : true);
                     currentMultiValue.setX(currentValue.getX());
                     columnMultiNameTf.setWidth(currentMultiValue.getX());
@@ -633,9 +633,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             DJGroup columnsGroup = (DJGroup) iter.next();
             JRDesignGroup jgroup = this.getJRGroupFromDJGroup(columnsGroup);
 
-            jgroup.setStartNewPage(columnsGroup.getStartInNewPage().booleanValue());
-            jgroup.setStartNewColumn(columnsGroup.getStartInNewColumn().booleanValue());
-            jgroup.setReprintHeaderOnEachPage(columnsGroup.getReprintHeaderOnEachPage().booleanValue());
+            jgroup.setStartNewPage(columnsGroup.isStartInNewPage());
+            jgroup.setStartNewColumn(columnsGroup.isStartInNewColumn());
+            jgroup.setReprintHeaderOnEachPage(columnsGroup.isReprintHeaderOnEachPage());
 
             JRDesignSection headerSection = (JRDesignSection) jgroup.getGroupHeaderSection();
             JRDesignSection footerSection = (JRDesignSection) jgroup.getGroupFooterSection();
@@ -653,9 +653,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                 footerSection.addBand(footer);
             }
 
-            header.setHeight(columnsGroup.getHeaderHeight().intValue());
+            header.setHeight(columnsGroup.getHeaderHeight());
             // footer.setHeight( getFooterVariableHeight(columnsGroup));
-            footer.setHeight(columnsGroup.getFooterHeight().intValue());
+            footer.setHeight(columnsGroup.getFooterHeight());
 
             header.setSplitType(LayoutUtils.getSplitTypeFromBoolean(columnsGroup.isAllowHeaderSplit()));
             footer.setSplitType(LayoutUtils.getSplitTypeFromBoolean(columnsGroup.isAllowFooterSplit()));
@@ -738,13 +738,13 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                 if (label.getLabelPosition() == LabelPosition.LEFT) {
                     DJGroupVariable lmvar = this.findLeftMostColumn(footerVariables);
 
-                    x = col.getPosX().intValue(); // label starts in the
-                                                  // column-to-group-by x
-                                                  // position
+                    x = col.getPosX(); // label starts in the
+                                       // column-to-group-by x
+                                       // position
                     y = this.findYOffsetForGroupLabel(band);
                     if (lmvar != null) {
                         AbstractColumn lmColumn = lmvar.getColumnToApplyOperation();
-                        width = lmColumn.getPosX().intValue() - x;
+                        width = lmColumn.getPosX() - x;
                     } else {
                         width -= x;
                     }
@@ -754,25 +754,25 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
                     if (rmvar != null) {
                         AbstractColumn rmColumn = rmvar.getColumnToApplyOperation();
-                        x = rmColumn.getPosX().intValue() + rmColumn.getWidth().intValue();
+                        x = rmColumn.getPosX() + rmColumn.getWidth();
                     } else {
-                        x = col.getPosX().intValue(); // label starts in the
-                                                      // column-to-group-by x
-                                                      // position
+                        x = col.getPosX(); // label starts in the
+                                           // column-to-group-by x
+                                           // position
                     }
                     y = this.findYOffsetForGroupLabel(band);
                     width -= x;
                     height = this.getFooterVariableHeight(columnsGroup);
                 } else if (label.getLabelPosition() == LabelPosition.TOP) {
-                    x = col.getPosX().intValue(); // label starts in the
-                                                  // column-to-group-by x
-                                                  // position
+                    x = col.getPosX(); // label starts in the
+                                       // column-to-group-by x
+                                       // position
                     width -= x;
                     yOffset = height;
                 } else if (label.getLabelPosition() == LabelPosition.BOTTOM) {
-                    x = col.getPosX().intValue(); // label starts in the
-                                                  // column-to-group-by x
-                                                  // position
+                    x = col.getPosX(); // label starts in the
+                                       // column-to-group-by x
+                                       // position
                     y = this.getFooterVariableHeight(columnsGroup);
                     width -= x;
                 }
@@ -794,10 +794,10 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
         exp.setText("\"" + this.getColumnFromVirtualColumn(col).getTitle() + "\"");
         exp.setValueClass(String.class);
         designStaticText.setExpression(exp);
-        designStaticText.setHeight(columnsGroup.getHeaderHeight().intValue());
-        designStaticText.setWidth(col.getWidth().intValue());
-        designStaticText.setX(col.getPosX().intValue());
-        designStaticText.setY(col.getPosY().intValue());
+        designStaticText.setHeight(columnsGroup.getHeaderHeight());
+        designStaticText.setWidth(col.getWidth());
+        designStaticText.setX(col.getPosX());
+        designStaticText.setY(col.getPosY());
         Style headerStyle = columnsGroup.getColumnHeaderStyle(col);
 
         if (headerStyle == null) {
@@ -858,9 +858,9 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                 }
                 labelTf = new JRDesignTextField();
                 labelTf.setExpression(labelExp);
-                labelTf.setWidth(col.getWidth().intValue());
+                labelTf.setWidth(col.getWidth());
                 labelTf.setHeight(label.getHeight());
-                labelTf.setX(col.getPosX().intValue());
+                labelTf.setX(col.getPosX());
                 labelTf.setY(yOffset);
                 yOffsetGlabel = labelTf.getHeight();
                 if (inFooter) {
@@ -927,7 +927,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
                         / (this.hColsPositions.size() == 0 ? 1 : this.hColsPositions.size())) * posColumn);
             }
 
-            textField.setX(col.getPosX().intValue());
+            textField.setX(col.getPosX());
 
             // if (yOffset!=0)
             textField.setY(yOffset + yOffsetGlabel);
@@ -935,7 +935,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             textField.setHeight(0 + height); // XXX be carefull with the
                                              // "2+ ..."
 
-            textField.setWidth(col.getWidth().intValue());
+            textField.setWidth(col.getWidth());
 
             textField.setKey("variable_for_column_" + this.getVisibleColumns().indexOf(col) + "_in_group_"
                     + this.getDesign().getGroupsList().indexOf(jgroup));
@@ -985,7 +985,7 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
             int totalWidth = 0;
 
             DJGroupVariable leftmostColumn = this.findLeftMostColumn(variables);
-            totalWidth = leftmostColumn.getColumnToApplyOperation().getPosX().intValue();
+            totalWidth = leftmostColumn.getColumnToApplyOperation().getPosX();
 
             GlobalGroupColumn globalCol = (GlobalGroupColumn) djGroup.getColumnToGroupBy();
 
@@ -1044,15 +1044,15 @@ public class CustomClassicLayoutManager extends ClassicLayoutManager {
 
         exp.setValueClassName(col.getValueClassNameForExpression());
         textField.setExpression(exp);
-        textField.setWidth(col.getWidth().intValue());
-        textField.setX(col.getPosX().intValue());
-        textField.setY(col.getPosY().intValue());
+        textField.setWidth(col.getWidth());
+        textField.setX(col.getPosX());
+        textField.setY(col.getPosY());
         textField.setHeight(height);
-        textField.setBlankWhenNull(col.getBlankWhenNull());
+        textField.setBlankWhenNull(col.isBlankWhenNull());
 
         textField.setPattern(col.getPattern());
 
-        textField.setPrintRepeatedValues(col.getPrintRepeatedValues().booleanValue());
+        textField.setPrintRepeatedValues(col.isPrintRepeatedValues());
 
         textField.setPrintWhenDetailOverflows(true);
 

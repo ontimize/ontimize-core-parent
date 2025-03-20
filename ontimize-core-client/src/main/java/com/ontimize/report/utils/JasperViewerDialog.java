@@ -17,7 +17,7 @@ import com.ontimize.gui.container.EJDialog;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.view.JRViewer;
+import net.sf.jasperreports.swing.JRViewer;
 
 public class JasperViewerDialog extends EJDialog {
 
