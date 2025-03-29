@@ -111,7 +111,7 @@
         <poi.version>3.9</poi.version>
         <systray4j.version>2.4.1</systray4j.version>
         <quartz.version>1.5.2</quartz.version>
-        <junit.version>4.11</junit.version>
+        <junit.version>4.13.1</junit.version>
         <jcommon.version>1.0.15</jcommon.version>
         <redmine-java-api.version>3.0.0</redmine-java-api.version>
         <servlet-api.version>2.5</servlet-api.version>
