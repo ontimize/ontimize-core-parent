@@ -22,6 +22,8 @@ import com.ontimize.db.handler.SQLStatementHandler;
 import com.ontimize.gui.SearchValue;
 import com.ontimize.util.ParseTools;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * The <code>SQLStatementBuilder</code> class builds SQL statements
  * <p>
@@ -92,6 +94,7 @@ public abstract class SQLStatementBuilder {
             .setUseAsInSubqueries(useAsInSubqueries);
     }
 
+    @XmlRootElement
     public static class SQLOrder implements Serializable {
 
         public static final String ASC = " ASC ";
@@ -101,6 +104,13 @@ public abstract class SQLStatementBuilder {
         protected String columnName = null;
 
         protected boolean ascendent = true;
+
+        /**
+         * No-args contructor for JAXB
+         */
+        public SQLOrder() {
+            //no-args contructor for JAXB
+        }
 
         public SQLOrder(String columnName) {
             this.columnName = columnName;
