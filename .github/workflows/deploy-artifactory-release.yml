@@ -43,9 +43,10 @@ jobs:
           git checkout -b sync/$version
           mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.nextMinorVersion}.0-SNAPSHOT versions:commit
           git add .
-          git commit -m "New develop version → $version"
+          dev_version=$(mvn help:evaluate -q -Dexpression=project.version -DforceStdout)
+          git commit -m "New develop version → $dev_version"
           git push origin sync/$version
       - name: Create pull request
         run: |
           version=${{ steps.tag.outputs.version }}
-          gh pr create -B develop -H sync/$version --title "Backmerge from release/$version into develop" --body "Created by a GitHub Action → Resync develop branch with main branch and increase project version"
+          gh pr create -B develop -H sync/$version --title "Backmerge from release/$version into develop" --body "Created by a GitHub Action → Resync develop branch with main branch and increased project version"
