@@ -246,7 +246,7 @@ public abstract class CellRenderer extends DefaultTableCellRenderer {
                         if ((table == null) || table.isEnabled()) {
                             this.component.setBackground(CellRenderer.oddRowBackgroundColor);
                         } else {
-                            this.component.setBackground(DataComponent.VERY_LIGHT_GRAY);
+                            this.component.setBackground(CellRenderer.getDarker(CellRenderer.oddRowBackgroundColor));
                         }
                     } else {
                         if (this.remarkLines) {
@@ -260,7 +260,7 @@ public abstract class CellRenderer extends DefaultTableCellRenderer {
                             if ((table == null) || table.isEnabled()) {
                                 this.component.setBackground(CellRenderer.oddRowBackgroundColor);
                             } else {
-                                this.component.setBackground(DataComponent.VERY_LIGHT_GRAY);
+                                this.component.setBackground(CellRenderer.getDarker(CellRenderer.oddRowBackgroundColor));
                             }
                         }
                     }
